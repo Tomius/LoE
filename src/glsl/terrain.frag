@@ -10,7 +10,7 @@ in vec3  w_vNormal;
 in vec3  c_vPos, w_vPos;
 in vec2  vTexCoord;
 in mat3  vNormalMatrix;
-in float vInvalid, vLevel, vMorph;
+in float vLevel, vMorph;
 
 uniform mat4 uCameraMatrix;
 uniform sampler2D uGrassMap0, uGrassMap1, uGrassNormalMap;
@@ -33,9 +33,6 @@ void CalculateLighting(vec3 c_normal, vec3 c_light_dir,
 }
 
 void main() {
-  if (vInvalid != 0.0) {
-    discard;
-  }
   if (w_vPos.y == 0) {
     gl_FragColor = vec4(0, 0, 1, 1);
     return;
