@@ -32,9 +32,9 @@ void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
 
   gl::BindToTexUnit(height_map_tex_, tex_unit);
   height_map_.upload(height_map_tex_);
-  height_map_tex_.generateMipmap();
-  height_map_tex_.minFilter(gl::kLinear);
-  height_map_tex_.magFilter(gl::kLinear);
+  //height_map_tex_.generateMipmap();
+  height_map_tex_.minFilter(gl::kNearest);
+  height_map_tex_.magFilter(gl::kNearest);
   gl::Unbind(height_map_tex_);
 }
 

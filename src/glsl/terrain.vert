@@ -8,24 +8,26 @@ uniform mat4 uProjectionMatrix, uCameraMatrix, uModelMatrix;
 uniform vec2 CDLODTerrain_uTexSize;
 
 out vec3  w_vNormal;
-out vec3  c_vPos, w_vPos;
+out vec3  c_vPos, w_vPos, m_vPos;
 out vec2  vTexCoord;
 out mat3  vNormalMatrix;
 out float vLevel, vMorph;
 
 int CDLODTerrain_uLevel;
-float CDLODTerrain_fetchHeight(vec2 tex_coord);
+float CDLODTerrain_fetchHeight(vec2 tex_coord, float morph);
 
 void main() {
-  vec4 temp = CDLODTerrain_worldPos();
-  vec3 w_pos = temp.xyz;
+  vec4 temp = CDLODTerrain_modelPos();
+  vec3 m_pos = temp.xyz;
   vMorph = temp.w;
-  w_pos.xz = clamp(w_pos.xz, vec2(1), CDLODTerrain_uTexSize - vec2(1));
-  w_pos.y = CDLODTerrain_fetchHeight(w_pos.xz);
+  m_pos.xz = clamp(m_pos.xz, vec2(1), CDLODTerrain_uTexSize - vec2(1));
+  m_pos.y = CDLODTerrain_fetchHeight(m_pos.xz, temp.w);
+  m_vPos = m_pos;
 
-  vec2 tex_coord = CDLODTerrain_texCoord(w_pos);
+  vec2 tex_coord = CDLODTerrain_texCoord(m_pos);
+
+  vec3 w_pos = CDLODTerrain_worldPos(m_pos);
   vec3 offseted_w_pos = (uModelMatrix * vec4(w_pos, 1)).xyz;
-
 
   w_vPos = offseted_w_pos;
   vTexCoord = tex_coord;
@@ -33,7 +35,7 @@ void main() {
   vec4 c_pos = uCameraMatrix * vec4(offseted_w_pos, 1);
   c_vPos = vec3(c_pos);
 
-  vec3 w_normal = CDLODTerrain_normal(w_pos);
+  vec3 w_normal = CDLODTerrain_normal(vec4(m_pos, temp.w));
   w_vNormal = w_normal;
 
   vNormalMatrix = CDLODTerrain_normalMatrix(w_normal);

@@ -7,7 +7,7 @@
 #include "hemisphere_lighting.frag"
 
 in vec3  w_vNormal;
-in vec3  c_vPos, w_vPos;
+in vec3  c_vPos, w_vPos, m_vPos;
 in vec2  vTexCoord;
 in mat3  vNormalMatrix;
 in float vLevel, vMorph;
@@ -33,7 +33,7 @@ void CalculateLighting(vec3 c_normal, vec3 c_light_dir,
 }
 
 void main() {
-  if (w_vPos.y == 0) {
+  if (m_vPos.y == 0) {
     gl_FragColor = vec4(0, 0, 1, 1);
     return;
   }
@@ -63,7 +63,7 @@ void main() {
   vec3 rock_color_0 = texture2D(uGrassMap1, vTexCoord*256).rgb;
   vec3 rock_color_1 = texture2D(uGrassMap1, vTexCoord*16).rgb;
 
-  float height_factor = clamp(sqrt(max(w_vPos.y - 80, 0) / 128), 0, 1);
+  float height_factor = clamp(sqrt(max(m_vPos.y - 80, 0) / 128), 0, 1);
 
   vec3 color_0 = mix(grass_color_0, rock_color_0, height_factor);
   vec3 color_1 = mix(grass_color_1, rock_color_1, height_factor/2);
@@ -71,5 +71,6 @@ void main() {
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
-  gl_FragColor = vec4(final_color, 1);
+  //gl_FragColor = vec4(final_color, 1);
+  gl_FragColor = /*vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01**/vec4(final_color, 1);
 }

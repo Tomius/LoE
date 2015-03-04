@@ -63,8 +63,8 @@ void QuadTree::Node::countMinMaxOfArea(const HeightMapInterface& hmap,
     *max = std::max(tl_max, std::max(tr_max, std::max(bl_max, br_max)));
   }
 
-  bbox = BoundingBox{glm::vec3(min_xz.x, *min, min_xz.y),
-                     glm::vec3(max_xz.x, *max, max_xz.y)};
+  bbox = BoundingSphericalSector{glm::vec3(min_xz.x, *min, min_xz.y),
+                                 glm::vec3(max_xz.x, *max, max_xz.y)};
 }
 
 void QuadTree::Node::selectNodes(const glm::vec3& cam_pos,
@@ -74,7 +74,7 @@ void QuadTree::Node::selectNodes(const glm::vec3& cam_pos,
   float scale = 1 << level;
   float lod_range = scale * node_dimension;
 
-  if (!bbox.collidesWithFrustum(frustum)) { return; }
+  //if (!bbox.collidesWithFrustum(frustum)) { return; }
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox.collidesWithSphere(cam_pos, lod_range) || level == 0) {

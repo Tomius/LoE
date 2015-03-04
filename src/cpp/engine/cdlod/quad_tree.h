@@ -7,7 +7,9 @@
 #include "./quad_grid_mesh.h"
 #include "../camera.h"
 #include "../collision/bounding_box.h"
+#include "../collision/bounding_spherical_sector.h"
 #include "../height_map_interface.h"
+#include "../../oglwrap/debug/insertion.h"
 
 namespace engine {
 namespace cdlod {
@@ -18,7 +20,7 @@ class QuadTree {
 
   struct Node {
     GLshort x, z;
-    BoundingBox bbox;
+    BoundingSphericalSector bbox;
     GLushort size;
     GLubyte level;
     std::unique_ptr<Node> tl, tr, bl, br;
@@ -70,10 +72,30 @@ class QuadTree {
     mesh_.setupRenderData(attrib);
   }
 
+  // static glm::vec3 cartesianToSpherical(glm::vec3 const& v) {
+  //   glm::vec3 ret;
+  //   ret.y = glm::length(v);
+  //   ret.x = atan2(v.y, v.x);
+  //   ret.z = atan2(glm::length(glm::vec2(v.y, v.x)), v.z);
+  //   return ret;
+  // }
+
+  // static glm::vec3 globalToPlanar(glm::vec3 const& v) {
+  //   glm::vec3 ret = cartesianToSpherical(v);
+  //   ret.y -= 10000;
+  //   // to degree
+  //   ret.x *= 180 / 3.14159265359;
+  //   ret.z *= 180 / 3.14159265359;
+  //   // to tex coords
+  //   ret.x *= 5400*4/360;
+  //   ret.z *= 2700*4/180;
+  //   return ret;
+  // }
+
   void render(const engine::Camera& cam) {
     mesh_.clearRenderList();
-    root_.selectNodes(cam.transform()->pos(), cam.frustum(),
-                      mesh_, node_dimension_);
+    glm::vec3 cam_pos = cam.transform()->pos();
+    root_.selectNodes(cam_pos, cam.frustum(), mesh_, node_dimension_);
     mesh_.render();
   }
 };

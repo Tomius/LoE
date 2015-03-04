@@ -7,7 +7,6 @@
 
 Terrain::Terrain(engine::GameObject* parent)
     : engine::GameObject(parent)
-    , height_map_("src/resources/terrain/180_60.jpg")
     , mesh_(scene_->shader_manager(), height_map_)
     , prog_(scene_->shader_manager()->get("terrain.vert"),
             scene_->shader_manager()->get("terrain.frag"))

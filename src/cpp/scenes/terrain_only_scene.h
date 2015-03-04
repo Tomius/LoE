@@ -26,8 +26,9 @@ class TerrainOnlyScene : public engine::Scene {
     auto skybox = addComponent<Skybox>();
     skybox->set_group(-1);
     addComponent<Terrain>();
-    camera_ = addComponent<engine::FreeFlyCamera>(M_PI/3, 1, 15000,
-        glm::vec3(1030, 200, 1030), glm::vec3(1024, 200, 1024), 500, 2);
+    camera_ = addComponent<engine::FreeFlyCamera>(M_PI/3, 2, 150000,
+        glm::vec3(5000, 5000, 5000), glm::vec3(0, 0, 0), 500, 2);
+    //camera_->transform()->set_up({0, -1, 0});
     set_camera(camera_);
     auto after_effects = addComponent<AfterEffects>(skybox);
     after_effects->set_group(1);

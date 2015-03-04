@@ -35,15 +35,11 @@ std::string destFilePath(std::string src) {
   } else {
     fail(src);
   }
-  // There's no info about the north pole.
-  if (y == 20) {
-    y = 0;
-  }
 
   if (sx == 'e' || sx == 'E') {
-    x = 180 - x;
-  } else if (sx == 'w' || sx == 'W') {
     x = x + 180;
+  } else if (sx == 'w' || sx == 'W') {
+    x = 180 - x;
   } else {
     fail(src);
   }

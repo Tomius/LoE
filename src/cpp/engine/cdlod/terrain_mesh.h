@@ -27,7 +27,7 @@ class TerrainMesh {
 
  private:
   QuadTree mesh_;
-  gl::Texture2D height_map_tex_;
+  gl::Texture2DArray height_map_tex_;
   std::unique_ptr<gl::LazyUniform<glm::vec3>> uCamPos_;
   std::unique_ptr<gl::LazyUniform<GLfloat>> uNodeDimension_;
   const HeightMapInterface& height_map_;

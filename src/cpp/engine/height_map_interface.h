@@ -37,6 +37,8 @@ class HeightMapInterface {
 
   // Uploads the heightmap to a texture object
   virtual void upload(gl::Texture2D& tex) const = 0;
+  virtual void upload(gl::Texture2DArray& tex) const {};
+
 
   // Returns a pointer to the heightfield data
   virtual const void* data() const = 0;
