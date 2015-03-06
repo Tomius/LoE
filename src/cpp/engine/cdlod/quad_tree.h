@@ -51,7 +51,7 @@ class QuadTree {
   Node root_;
 
  public:
-  QuadTree(const HeightMapInterface& hmap, int node_dimension = 128)
+  QuadTree(const HeightMapInterface& hmap, int node_dimension = 32)
       : mesh_(node_dimension), node_dimension_(node_dimension)
       , root_(hmap.w()/2, hmap.h()/2,
         std::max(ceil(log2(std::max(hmap.w(), hmap.h())) - log2(node_dimension)), 0.0),

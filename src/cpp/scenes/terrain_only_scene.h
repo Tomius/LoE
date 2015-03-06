@@ -20,7 +20,7 @@ class TerrainOnlyScene : public engine::Scene {
       glfwSetInputMode(window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     #endif
 
-    LoadingScreen().render();
+    LoadingScreen();
     glfwSwapBuffers(window());
 
     auto skybox = addComponent<Skybox>();

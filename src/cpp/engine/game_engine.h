@@ -20,7 +20,9 @@ class GameEngine {
   static void Destroy() {
     delete scene_;
     delete new_scene_;
-    glfwDestroyWindow(window_);
+    if (window_) {
+      glfwDestroyWindow(window_);
+    }
     glfwTerminate();
   }
 

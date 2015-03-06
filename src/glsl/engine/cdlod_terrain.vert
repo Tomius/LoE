@@ -7,7 +7,6 @@
 #export vec3 CDLODTerrain_worldPos2(vec3 model_pos);
 #export vec2 CDLODTerrain_texCoord(vec3 pos);
 #export vec3 CDLODTerrain_normal(vec4 pos);
-#export mat3 CDLODTerrain_normalMatrix(vec3 normal);
 
 in vec2 CDLODTerrain_aPosition; // I hate the lack of namespaces
 
@@ -75,11 +74,15 @@ vec3 CDLODTerrain_worldPos2(vec3 model_pos) {
 vec4 CDLODTerrain_modelPos() {
   vec2 pos = CDLODTerrain_uOffset + CDLODTerrain_uScale * CDLODTerrain_aPosition;
 
-  float max_dist = 1.9 * CDLODTerrain_uScale * CDLODTerrain_uNodeDimension;
-  vec3 estimated_pos = vec3(pos.x, CDLODTerrain_fetchHeight(pos, 0), pos.y);
-  float dist = length(CDLODTerrain_uCamPos - CDLODTerrain_worldPos(estimated_pos));
+  float max_dist = 2.35*pow(2.5, CDLODTerrain_uLevel) * CDLODTerrain_uNodeDimension;
+  vec3 estimated_pos1 = vec3(pos.x, 0, pos.y);
+  vec3 estimated_pos2 = vec3(pos.x, 100, pos.y);
+  float dist = min(
+    length(CDLODTerrain_uCamPos - CDLODTerrain_worldPos(estimated_pos1)),
+    length(CDLODTerrain_uCamPos - CDLODTerrain_worldPos(estimated_pos2))
+  );
 
-  float start_dist = 0.99*max_dist - sqrt(0.99*max_dist);
+  float start_dist = max(2.15/2.35*max_dist, max_dist - sqrt(max_dist));
   float dist_from_start = dist - start_dist;
   float start_to_end_dist = max_dist - start_dist;
   float morph = dist_from_start / start_to_end_dist;
@@ -101,12 +104,4 @@ vec3 CDLODTerrain_normal(vec4 pos) {
   vec3 v = vec3(0.0f, CDLODTerrain_fetchHeight(pos.xz + vec2(0, 1), pos.w) -
                       CDLODTerrain_fetchHeight(pos.xz - vec2(0, 1), pos.w), 1.0f);
   return normalize(cross(u, -v));
-}
-
-mat3 CDLODTerrain_normalMatrix(vec3 normal) {
-  vec3 tangent = normalize(cross(normal, vec3(0.0, 0.0, 1.0)));
-  vec3 bitangent = normalize(cross(normal, tangent));
-  tangent = normalize(cross(bitangent, normal));
-
-  return mat3(tangent, bitangent, normal);
 }

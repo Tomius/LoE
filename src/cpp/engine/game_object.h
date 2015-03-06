@@ -20,7 +20,11 @@ class GameObject {
   template<typename Transform_t = Transform>
   explicit GameObject(GameObject* parent,
                       const Transform_t& initial_transform = Transform_t{});
-  virtual ~GameObject() {}
+  virtual ~GameObject() {
+    if (parent_) {
+      parent_->removeComponent(this);
+    }
+  }
 
   template<typename T, typename... Args>
   T* addComponent(Args&&... contructor_args);
