@@ -10,7 +10,6 @@ uniform vec2 CDLODTerrain_uTexSize;
 out vec3  w_vNormal;
 out vec3  c_vPos, w_vPos, m_vPos;
 out vec2  vTexCoord;
-out mat3  vNormalMatrix;
 out float vLevel, vMorph;
 
 int CDLODTerrain_uLevel;
@@ -35,10 +34,7 @@ void main() {
   vec4 c_pos = uCameraMatrix * vec4(offseted_w_pos, 1);
   c_vPos = vec3(c_pos);
 
-  vec3 w_normal = CDLODTerrain_normal(vec4(m_pos, temp.w));
-  w_vNormal = w_normal;
-
-  vNormalMatrix = CDLODTerrain_normalMatrix(w_normal);
+  w_vNormal = CDLODTerrain_normal(vec4(m_pos, temp.w));
   vLevel = CDLODTerrain_uLevel;
   gl_Position = uProjectionMatrix * c_pos;
 }

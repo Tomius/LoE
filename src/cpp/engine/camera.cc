@@ -79,8 +79,9 @@ void ThirdPersonalCamera::update() {
 
   // Mouse movement - update the coordinate system
   if (diff.x || diff.y) {
-    float dx(diff.x * mouse_sensitivity_ * dt / 16);
-    float dy(-diff.y * mouse_sensitivity_ * dt / 16);
+    float mouse_sensitivity = mouse_sensitivity_ * curr_dist_mod_ * dt / 64;
+    float dx(diff.x * mouse_sensitivity);
+    float dy(-diff.y * mouse_sensitivity);
 
     // If we are looking up / down, we don't want to be able
     // to rotate to the other side
@@ -97,48 +98,15 @@ void ThirdPersonalCamera::update() {
                              transform()->up()*dy);
   }
 
+  float dist_diff_mod = dest_dist_mod_ - curr_dist_mod_;
+  if (fabs(dist_diff_mod) > dt * 2 * mouse_scroll_sensitivity_) {
+    int sign = dist_diff_mod / fabs(dist_diff_mod);
+    curr_dist_mod_ += sign * dt * 2 * mouse_scroll_sensitivity_;
+  }
+
   // Update the position
   glm::vec3 tpos(target_->pos()), fwd(transform()->forward());
   glm::vec3 pos(tpos - fwd*curr_dist_mod_*initial_distance_);
-
-  const float collision_offset = 1.2f;
-
-  if (distanceOverTerrain(pos) > collision_offset) {
-    // Interpolate the mouseScrolled if there isn't any collision
-    float dist_diff_mod = dest_dist_mod_ - curr_dist_mod_;
-    float last_dist_mod = curr_dist_mod_;
-    if (fabs(dist_diff_mod) > dt * mouse_scroll_sensitivity_) {
-      int sign = dist_diff_mod / fabs(dist_diff_mod);
-      curr_dist_mod_ += sign * dt * mouse_scroll_sensitivity_;
-    }
-
-    // Check if we have just made the camera collide with the terrain
-    pos = tpos - fwd*curr_dist_mod_*initial_distance_;
-    if (distanceOverTerrain(pos) < collision_offset) {
-      // if we did, do the interpolation back
-      curr_dist_mod_ = last_dist_mod;
-    }
-  } else {
-    // If the camera collides the terrain, some magic is needed.
-    float collision_dist_mod = curr_dist_mod_;
-    do {
-      float dist = collision_dist_mod*initial_distance_;
-      pos = tpos - fwd*dist;
-      if (distanceOverTerrain(pos) > collision_offset) {
-        break;
-      } else {
-        collision_dist_mod *= 0.99f;
-      }
-    } while (collision_dist_mod > 0.001f);
-
-    float dist_over_terrain = fabs(collision_offset - distanceOverTerrain());
-    if (1.5f * dist_over_terrain >
-        fabs((collision_dist_mod - curr_dist_mod_)*initial_distance_)) {
-      curr_dist_mod_ += 15.0f*dt*(collision_dist_mod - curr_dist_mod_);
-    } else  {
-      raiseDistanceOverTerrain(dist_over_terrain);
-    }
-  }
 
   fwd = transform()->forward();
   pos = tpos - fwd*curr_dist_mod_*initial_distance_;

@@ -30,18 +30,6 @@ Terrain::Terrain(engine::GameObject* parent)
     grassMaps_[i].wrapT(gl::kRepeat);
   }
 
-  gl::UniformSampler(prog_, "uGrassNormalMap").set(4);
-  gl::Bind(grassNormalMap_);
-  {
-    // the normal map doesn't have an alpha channel, and is not is srgb space
-    grassNormalMap_.loadTexture("src/resources/textures/grass_normal.jpg", "CRGB");
-    grassNormalMap_.generateMipmap();
-    grassNormalMap_.minFilter(gl::kLinearMipmapLinear);
-    grassNormalMap_.magFilter(gl::kLinear);
-    grassNormalMap_.wrapS(gl::kRepeat);
-    grassNormalMap_.wrapT(gl::kRepeat);
-  }
-
   prog_.validate();
 }
 
@@ -56,10 +44,8 @@ void Terrain::render() {
 
   gl::BindToTexUnit(grassMaps_[0], 2);
   gl::BindToTexUnit(grassMaps_[1], 3);
-  gl::BindToTexUnit(grassNormalMap_, 4);
   mesh_.render(cam);
 
-  gl::UnbindFromTexUnit(grassNormalMap_, 4);
   gl::UnbindFromTexUnit(grassMaps_[1], 3);
   gl::UnbindFromTexUnit(grassMaps_[0], 2);
 }

@@ -8,22 +8,16 @@
 #include "../misc.h"
 #include "./frustum.h"
 #include "../global_terrain_setting.h"
+#include "../../oglwrap/debug/insertion.h"
 
 namespace engine {
 
-class BoundingSphericalSector {
-  glm::vec3 mins_;
-  glm::vec3 maxes_;
- public:
-  BoundingSphericalSector() = default;
-
-  BoundingSphericalSector(const glm::vec3& mins, const glm::vec3& maxes)
-      : mins_(mins), maxes_(maxes) {}
+class BoundingSphericalSector : public BoundingBox {
 
   static glm::vec3 transform(glm::vec3 model_pos) {
     glm::vec2 angles_degree{model_pos.x * 360 / global_terrain::w,
                             model_pos.z * 180 / global_terrain::h};
-    //angles_degree = vec2(angles_degree.x, /*180-*/angles_degree.y);
+    angles_degree = glm::vec2(360-angles_degree.x, 180-angles_degree.y);
     glm::vec2 angles = 1.001f * angles_degree * float(M_PI / 180);
     float r = global_terrain::sphere_radius + model_pos.y;
     glm::vec3 cartesian = glm::vec3(
@@ -35,19 +29,20 @@ class BoundingSphericalSector {
     return cartesian;
   }
 
-  bool collidesWithSphere(const glm::vec3& center, float radius) const {
-    for (float x = mins_.x; x <= maxes_.x; x += radius/2) {
-      //for (float y = mins_.y; y <= maxes_.y; y += radius/2) {
-        for (float z = mins_.z; z <= maxes_.z; z += radius/2) {
-          glm::vec3 point = transform({x, maxes_.y, z});
-          if (length(center - point) < radius) {
-            return true;
-          }
-        }
-      //}
-    }
+ public:
+  BoundingSphericalSector() = default;
 
-    return false;
+  BoundingSphericalSector(const glm::vec3& mins, const glm::vec3& maxes) {
+    glm::vec3 diff = maxes - mins;
+    mins_ = maxes_ = transform(maxes);
+    for (float x = mins.x; x < maxes.x; x += diff.x/5.0f) {
+      for (float y = mins.y; y < maxes.y; y += diff.y/5.0f) {
+        for (float z = mins.z; z < maxes.z; z += diff.z/5.0f) {
+          mins_ = glm::min(transform({x, y, z}), mins_);
+          maxes_ = glm::max(transform({x, y, z}), maxes_);
+        }
+      }
+    }
   }
 };
 

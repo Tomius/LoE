@@ -11,6 +11,7 @@
 namespace engine {
 
 class BoundingBox {
+ protected:
   glm::vec3 mins_;
   glm::vec3 maxes_;
  public:

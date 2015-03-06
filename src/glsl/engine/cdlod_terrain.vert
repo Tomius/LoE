@@ -4,6 +4,7 @@
 
 #export vec4 CDLODTerrain_modelPos();
 #export vec3 CDLODTerrain_worldPos(vec3 model_pos);
+#export vec3 CDLODTerrain_worldPos2(vec3 model_pos);
 #export vec2 CDLODTerrain_texCoord(vec3 pos);
 #export vec3 CDLODTerrain_normal(vec4 pos);
 #export mat3 CDLODTerrain_normalMatrix(vec3 normal);
@@ -33,7 +34,7 @@ vec3 getAtlasTexcoord(vec2 absolute_coord) {
 }
 
 float CDLODTerrain_fetchHeight(vec2 tex_coord, float morph) {
-  return textureLod(CDLODTerrain_uHeightMap, getAtlasTexcoord(tex_coord), CDLODTerrain_uLevel + morph).x * 100;
+  return textureLod(CDLODTerrain_uHeightMap, getAtlasTexcoord(tex_coord), CDLODTerrain_uLevel + morph).x * 64;
 }
 
 vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
@@ -42,9 +43,8 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
-  //return model_pos;
   vec2 angles_degree = model_pos.xz * (vec2(360, 180) / vec2(5400*4, 2700*4));
-  angles_degree = vec2(angles_degree.x, /*180-*/angles_degree.y);
+  angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
   float M_PI = 3.14159265359;
   vec2 angles = 1.001 * angles_degree * M_PI / 180;
   float r = 5400*4/2/M_PI + model_pos.y;
@@ -57,14 +57,29 @@ vec3 CDLODTerrain_worldPos(vec3 model_pos) {
   return cartesian;
 }
 
+vec3 CDLODTerrain_worldPos2(vec3 model_pos) {
+  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / vec2(5400*4, 2700*4));
+  angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
+  float M_PI = 3.14159265359;
+  vec2 angles = 1.001 * angles_degree * M_PI / 180;
+  vec3 cartesian = vec3(
+    sin(angles.y)*cos(angles.x),
+    sin(angles.y)*sin(angles.x),
+    cos(angles.y)
+  );
+
+  return cartesian;
+}
+
+
 vec4 CDLODTerrain_modelPos() {
   vec2 pos = CDLODTerrain_uOffset + CDLODTerrain_uScale * CDLODTerrain_aPosition;
 
-  float max_dist = 2.0 * CDLODTerrain_uScale * CDLODTerrain_uNodeDimension;
+  float max_dist = 1.9 * CDLODTerrain_uScale * CDLODTerrain_uNodeDimension;
   vec3 estimated_pos = vec3(pos.x, CDLODTerrain_fetchHeight(pos, 0), pos.y);
   float dist = length(CDLODTerrain_uCamPos - CDLODTerrain_worldPos(estimated_pos));
 
-  float start_dist = max_dist - sqrt(max_dist);
+  float start_dist = 0.99*max_dist - sqrt(0.99*max_dist);
   float dist_from_start = dist - start_dist;
   float start_to_end_dist = max_dist - start_dist;
   float morph = dist_from_start / start_to_end_dist;

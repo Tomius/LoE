@@ -9,11 +9,10 @@
 in vec3  w_vNormal;
 in vec3  c_vPos, w_vPos, m_vPos;
 in vec2  vTexCoord;
-in mat3  vNormalMatrix;
 in float vLevel, vMorph;
 
 uniform mat4 uCameraMatrix;
-uniform sampler2D uGrassMap0, uGrassMap1, uGrassNormalMap;
+uniform sampler2D uGrassMap0, uGrassMap1;
 
 const float kSpecularShininess = 64.0;
 
@@ -39,12 +38,7 @@ void main() {
   }
 
   // Normals
-  mat3 normal_matrix;
-  normal_matrix[0] = normalize(vNormalMatrix[0]);
-  normal_matrix[1] = normalize(vNormalMatrix[1]);
-  normal_matrix[2] = normalize(vNormalMatrix[2]);
-  vec3 normal_offset = texture2D(uGrassNormalMap, vTexCoord*256).rgb;
-  vec3 w_normal = normalize(normal_matrix[2] + normal_matrix * normal_offset);
+  vec3 w_normal = normalize(w_vNormal);
   vec3 c_normal = mat3(uCameraMatrix) * w_normal;
 
   // Lighting
@@ -71,6 +65,6 @@ void main() {
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
-  //gl_FragColor = vec4(final_color, 1);
-  gl_FragColor = /*vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01**/vec4(final_color, 1);
+  gl_FragColor = vec4(final_color, 1);
+  //gl_FragColor = vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01*vec4(final_color, 1);
 }

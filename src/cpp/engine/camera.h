@@ -182,7 +182,6 @@ class ThirdPersonalCamera : public Camera {
                       float z_near,
                       float z_far,
                       const glm::vec3& position,
-                      const engine::HeightMapInterface& height_map,
                       float mouse_sensitivity = 1.0f,
                       float mouse_scroll_sensitivity = 1.0f)
       : Camera(parent, fov, z_near, z_far)
@@ -193,8 +192,7 @@ class ThirdPersonalCamera : public Camera {
       , initial_distance_(glm::length(target_->pos() - position))
       , cos_max_pitch_angle_(0.98f)
       , mouse_sensitivity_(mouse_sensitivity)
-      , mouse_scroll_sensitivity_(mouse_scroll_sensitivity)
-      , height_map_(height_map) {
+      , mouse_scroll_sensitivity_(mouse_scroll_sensitivity) {
     transform()->set_pos(position);
     transform()->set_forward(target_->pos() - position);
   }
@@ -215,32 +213,14 @@ class ThirdPersonalCamera : public Camera {
   const float initial_distance_, cos_max_pitch_angle_,
                mouse_sensitivity_, mouse_scroll_sensitivity_;
 
-  // The camera should collide with the terrain.
-  const engine::HeightMapInterface& height_map_;
-
   virtual void update() override;
-
-  double distanceOverTerrain(const glm::vec3& pos) const {
-    return pos.y - height_map_.heightAt(pos.x, pos.z);
-  }
-
-  double distanceOverTerrain() const {
-    glm::vec3 tpos(target_->pos()), fwd(transform()->forward());
-    return distanceOverTerrain(tpos - fwd*curr_dist_mod_*initial_distance_);
-  }
-
-  void raiseDistanceOverTerrain(double diff) {
-    transform()->set_forward(
-        transform()->forward() * curr_dist_mod_ * initial_distance_ -
-        glm::vec3(0, diff, 0));
-  }
 
   virtual void mouseScrolled(double, double yoffset) override {
     dest_dist_mod_ -= yoffset / 4.0f * mouse_scroll_sensitivity_;
     if (dest_dist_mod_ < 0.25f) {
       dest_dist_mod_ = 0.25f;
-    } else if (dest_dist_mod_ > 2.0f) {
-      dest_dist_mod_ = 2.0f;
+    } else if (dest_dist_mod_ > 4.0f) {
+      dest_dist_mod_ = 4.0f;
     }
   }
 };  // ThirdPersonalCamera

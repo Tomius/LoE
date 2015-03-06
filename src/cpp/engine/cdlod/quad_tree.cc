@@ -74,7 +74,7 @@ void QuadTree::Node::selectNodes(const glm::vec3& cam_pos,
   float scale = 1 << level;
   float lod_range = scale * node_dimension;
 
-  //if (!bbox.collidesWithFrustum(frustum)) { return; }
+  if (!bbox.collidesWithFrustum(frustum)) { return; }
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox.collidesWithSphere(cam_pos, lod_range) || level == 0) {
