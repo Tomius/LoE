@@ -27,12 +27,6 @@ class Scene : public Behaviour {
  public:
   Scene();
   virtual ~Scene() {
-    // The GameObject's destructor have to run here
-    // as they might use the scene ptr in their destructor
-    for (auto& comp_ptr : components_) {
-      comp_ptr.reset();
-    }
-
     // close the physics thread
     physics_thread_should_quit_ = true;
     physics_can_run_.set();

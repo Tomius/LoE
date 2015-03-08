@@ -40,7 +40,7 @@ class FontData {
 
  public:
   FontData(const std::string& filename = "src/resources/fonts/Vera.ttf", float size = 12)
-      : filename_(filename), atlas_(texture_atlas_new(1<<13, 1<<13, 1))
+      : filename_(filename), atlas_(texture_atlas_new(1<<11, 1<<11, 1))
       , font_(texture_font_new_from_file(atlas_, size, filename.c_str()))
       , size_(size) {
     load_glyphs();

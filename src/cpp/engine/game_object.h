@@ -21,6 +21,12 @@ class GameObject {
   explicit GameObject(GameObject* parent,
                       const Transform_t& initial_transform = Transform_t{});
   virtual ~GameObject() {
+    // The childrens destructor have to run before this one's,
+    // as those functions might try to access this object via the parent_ ptr
+    for (auto& comp_ptr : components_) {
+      comp_ptr.reset();
+    }
+    // this shouldn't be neccessary, but just in case...
     if (parent_) {
       parent_->removeComponent(this);
     }

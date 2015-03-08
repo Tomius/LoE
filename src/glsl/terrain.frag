@@ -12,7 +12,7 @@ in vec2  vTexCoord;
 in float vLevel, vMorph;
 
 uniform mat4 uCameraMatrix;
-uniform sampler2D uGrassMap0, uGrassMap1;
+uniform sampler2D uDiffuseTexture;
 
 const float kSpecularShininess = 64.0;
 
@@ -32,11 +32,6 @@ void CalculateLighting(vec3 c_normal, vec3 c_light_dir,
 }
 
 void main() {
-  if (m_vPos.y == 0) {
-    gl_FragColor = vec4(0, 0, 1, 1);
-    return;
-  }
-
   // Normals
   vec3 w_normal = normalize(w_vNormal);
   vec3 c_normal = mat3(uCameraMatrix) * w_normal;
@@ -51,17 +46,7 @@ void main() {
   specular_power *= pow(SunPower(), 0.3);
   lighting += SunColor() * (diffuse_power + specular_power);
 
-  vec3 grass_color_0 = texture2D(uGrassMap0, vTexCoord*256).rgb;
-  vec3 grass_color_1 = texture2D(uGrassMap0, vTexCoord*16).rgb;
-
-  vec3 rock_color_0 = texture2D(uGrassMap1, vTexCoord*256).rgb;
-  vec3 rock_color_1 = texture2D(uGrassMap1, vTexCoord*16).rgb;
-
-  float height_factor = clamp(sqrt(max(m_vPos.y - 80, 0) / 128), 0, 1);
-
-  vec3 color_0 = mix(grass_color_0, rock_color_0, height_factor);
-  vec3 color_1 = mix(grass_color_1, rock_color_1, height_factor/2);
-  vec3 diffuse_color = mix(color_0, color_1, 0.5);
+  vec3 diffuse_color = texture2D(uDiffuseTexture, vTexCoord).rgb;
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 

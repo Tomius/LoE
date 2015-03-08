@@ -6,7 +6,7 @@
 #include <typeinfo>
 #include "./scene.h"
 
-//#define ENGINE_NO_FULLSCREEN 1
+#define ENGINE_NO_FULLSCREEN 1
 
 namespace engine {
 
@@ -19,9 +19,12 @@ class GameEngine {
 
   static void Destroy() {
     delete scene_;
+    scene_ = nullptr;
     delete new_scene_;
+    new_scene_ = nullptr;
     if (window_) {
       glfwDestroyWindow(window_);
+      window_ = nullptr;
     }
     glfwTerminate();
   }
@@ -49,9 +52,13 @@ class GameEngine {
   static ShaderManager* shader_manager() { return shader_manager_; }
 
   static glm::vec2 window_size() {
-    int width, height;
-    glfwGetWindowSize(window(), &width, &height);
-    return glm::vec2(width, height);
+    if (window_) {
+      int width, height;
+      glfwGetWindowSize(window_, &width, &height);
+      return glm::vec2(width, height);
+    } else {
+      return glm::vec2{};
+    }
   }
 
   static void Run();

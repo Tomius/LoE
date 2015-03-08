@@ -32,6 +32,9 @@ class TerrainOnlyScene : public engine::Scene {
     set_camera(tp_camera_);
     auto after_effects = addComponent<AfterEffects>(skybox);
     after_effects->set_group(1);
+    addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},
+      engine::gui::Font{"src/resources/fonts/Vera.ttf", 30,
+      glm::vec4(1, 0, 0, 1)});
     auto fps = addComponent<FpsDisplay>();
     fps->set_group(2);
   }
