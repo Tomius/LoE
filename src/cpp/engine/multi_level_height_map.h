@@ -95,10 +95,6 @@ class GlobalHeightMap : public HeightMapInterface {
   virtual const void* data() const override {
     throw new std::logic_error("data");
   }
-
-  virtual glm::dvec2 getMinMaxOfArea(int x, int y, int w, int h) const override {
-    return glm::dvec2{0, 100};
-  }
 };
 
 }  // namespace engine

@@ -20,32 +20,24 @@ class QuadTree {
 
   struct Node {
     GLshort x, z;
-    BoundingSphericalSector bbox;
-    GLushort size;
+    GLushort dimension;
     GLubyte level;
+    BoundingSphericalSector bbox;
     std::unique_ptr<Node> tl, tr, bl, br;
 
-    Node(GLshort x, GLshort z, GLubyte level, int dimension, bool root = false);
+    Node(GLshort x, GLshort z, GLubyte level, int dimension);
 
-    // Helper to create the quadtree in four threads
-    static void Init(GLshort x, GLshort z, GLubyte level,
-                     int dimension, std::unique_ptr<Node>* node);
+    GLushort size() { return dimension*(1 << level); }
 
     bool collidesWithSphere(const glm::vec3& center, float radius) {
       return bbox.collidesWithSphere(center, radius);
     }
 
-    void countMinMaxOfArea(const HeightMapInterface& hmap,
-                           double *min, double *max, bool root = false);
+    void initChildren();
 
-    // Helper to run countMinMaxOfArea in thread
-    static void CountMinMaxOfArea(Node* node, const HeightMapInterface& hmap,
-                                  double *min, double *max) {
-      node->countMinMaxOfArea(hmap, min, max);
-    }
-
-    void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
-                     QuadGridMesh& grid_mesh, int node_dimension);
+    void selectNodes(const glm::vec3& cam_pos,
+                     const Frustum& frustum,
+                     QuadGridMesh& grid_mesh);
   };
 
   Node root_;
@@ -54,11 +46,9 @@ class QuadTree {
   QuadTree(const HeightMapInterface& hmap, int node_dimension = 32)
       : mesh_(node_dimension), node_dimension_(node_dimension)
       , root_(hmap.w()/2, hmap.h()/2,
-        std::max(ceil(log2(std::max(hmap.w(), hmap.h())) - log2(node_dimension)), 0.0),
-        node_dimension, true) {
-    double min, max;
-    root_.countMinMaxOfArea(hmap, &min, &max, true);
-  }
+          std::max(ceil(log2(std::max(hmap.w(), hmap.h()))
+                        - log2(node_dimension)), 0.0),
+          node_dimension) {}
 
   int node_dimension() const {
     return node_dimension_;
@@ -75,7 +65,7 @@ class QuadTree {
   void render(const engine::Camera& cam) {
     mesh_.clearRenderList();
     glm::vec3 cam_pos = cam.transform()->pos();
-    root_.selectNodes(cam_pos, cam.frustum(), mesh_, node_dimension_);
+    root_.selectNodes(cam_pos, cam.frustum(), mesh_);
     mesh_.render();
   }
 };
