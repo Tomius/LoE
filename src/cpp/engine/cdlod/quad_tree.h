@@ -5,11 +5,9 @@
 
 #include <memory>
 #include "./quad_grid_mesh.h"
+#include "./quad_tree_node.h"
 #include "../camera.h"
-#include "../collision/bounding_box.h"
-#include "../collision/bounding_spherical_sector.h"
 #include "../height_map_interface.h"
-#include "../../oglwrap/debug/insertion.h"
 
 namespace engine {
 namespace cdlod {
@@ -18,29 +16,7 @@ class QuadTree {
   QuadGridMesh mesh_;
   int node_dimension_;
 
-  struct Node {
-    GLshort x, z;
-    GLushort dimension;
-    GLubyte level;
-    BoundingSphericalSector bbox;
-    std::unique_ptr<Node> tl, tr, bl, br;
-
-    Node(GLshort x, GLshort z, GLubyte level, int dimension);
-
-    GLushort size() { return dimension*(1 << level); }
-
-    bool collidesWithSphere(const glm::vec3& center, float radius) {
-      return bbox.collidesWithSphere(center, radius);
-    }
-
-    void initChildren();
-
-    void selectNodes(const glm::vec3& cam_pos,
-                     const Frustum& frustum,
-                     QuadGridMesh& grid_mesh);
-  };
-
-  Node root_;
+  QuadTreeNode root_;
 
  public:
   QuadTree(const HeightMapInterface& hmap, int node_dimension = 32)
@@ -63,9 +39,13 @@ class QuadTree {
   }
 
   void render(const engine::Camera& cam) {
+    //Node::statistics.clear();
     mesh_.clearRenderList();
     glm::vec3 cam_pos = cam.transform()->pos();
     root_.selectNodes(cam_pos, cam.frustum(), mesh_);
+    /*for (auto iter : Node::statistics) {
+      std::cout << "Level " << iter.first << ": " << iter.second << std::endl;
+    }*/
     mesh_.render();
   }
 };

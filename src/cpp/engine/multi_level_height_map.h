@@ -4,7 +4,6 @@
 #define ENGINE_MULTI_LEVEL_HEIGHT_MAP_H_
 
 #include <climits>
-#include "../oglwrap/debug/insertion.h"
 #include "./transform.h"
 #include "./height_map_interface.h"
 #include "./texture_source.h"

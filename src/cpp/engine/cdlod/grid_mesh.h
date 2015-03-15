@@ -9,7 +9,6 @@
 #include "../../oglwrap/uniform.h"
 
 namespace engine {
-
 namespace cdlod {
 
 // A two-dimensional vector of GLshort values

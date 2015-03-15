@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <GL/glew.h>
-#include "../../oglwrap/debug/insertion.h"
 #include "../transform.h"
 
 using Transform = engine::Transformation<double>;

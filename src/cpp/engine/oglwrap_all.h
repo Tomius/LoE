@@ -17,5 +17,6 @@
 
 #include "../oglwrap/glew.h"
 #include "../oglwrap/oglwrap.h"
+#include "../oglwrap/debug/insertion.h"
 
 #endif

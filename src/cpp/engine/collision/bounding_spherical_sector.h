@@ -3,12 +3,8 @@
 #ifndef ENGINE_COLLISION_BOUNDING_SPHERICAL_SECTOR_H_
 #define ENGINE_COLLISION_BOUNDING_SPHERICAL_SECTOR_H_
 
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include "../misc.h"
-#include "./frustum.h"
+#include "./bounding_box.h"
 #include "../global_terrain_setting.h"
-#include "../../oglwrap/debug/insertion.h"
 
 namespace engine {
 

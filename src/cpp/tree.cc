@@ -2,7 +2,6 @@
 
 #include "./tree.h"
 #include "engine/scene.h"
-#include "oglwrap/debug/insertion.h"
 
 Tree::Tree(GameObject *parent, const engine::HeightMapInterface& height_map)
     : GameObject(parent)
