@@ -1,15 +1,14 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_GUI_TEXT_FIELD_H_
 #define ENGINE_GUI_TEXT_FIELD_H_
 
 #include <string>
 
-#include "../oglwrap_config.h"
-#include "../../oglwrap/smart_enums.h"
 
 #include "./box.h"
 #include "./font.h"
+#include "../oglwrap_all.h"
 #include "../scene.h"
 #include "../behaviour.h"
 

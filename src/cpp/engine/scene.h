@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_SCENE_H_
 #define ENGINE_SCENE_H_
@@ -7,17 +7,13 @@
 #include <memory>
 #include <btBulletDynamicsCommon.h>
 
-#include "./oglwrap_config.h"
-#include "../oglwrap/oglwrap.h"
-
 #include "./timer.h"
 #include "./camera.h"
-#include "./game_object.h"
 #include "./behaviour.h"
+#include "./game_object.h"
+#include "./oglwrap_all.h"
 #include "./shader_manager.h"
 #include "./auto_reset_event.h"
-
-#include "../shadow.h"
 
 namespace engine {
 
@@ -51,10 +47,6 @@ class Scene : public Behaviour {
   Camera* camera() { return camera_; }
   void set_camera(Camera* camera) { camera_ = camera; }
 
-  const Shadow* shadow() const { return shadow_; }
-  Shadow* shadow() { return shadow_; }
-  void set_shadow(Shadow* shadow) { shadow_ = shadow; }
-
   ShaderManager* shader_manager();
 
   GLFWwindow* window() const { return window_; }
@@ -79,7 +71,6 @@ class Scene : public Behaviour {
     physics_finished_.waitOne();
     updateAll();
     physics_can_run_.set();
-    shadowRenderAll();
     renderAll();
     render2DAll();
   }
@@ -99,7 +90,6 @@ class Scene : public Behaviour {
 
   // Own data
   Camera* camera_;
-  Shadow* shadow_;
   Timer game_time_, environment_time_, camera_time_;
   GLFWwindow* window_;
 
@@ -109,14 +99,6 @@ class Scene : public Behaviour {
     camera_time_.tick();
 
     Behaviour::updateAll();
-  }
-
-  virtual void shadowRenderAll() override {
-    if (camera_ && shadow_) {
-      shadow_->begin(); {
-        Behaviour::shadowRenderAll();
-      } shadow_->end();
-    }
   }
 
   virtual void renderAll() override {

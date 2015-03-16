@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_AUTO_RESET_EVENT_H
 #define ENGINE_AUTO_RESET_EVENT_H

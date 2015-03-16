@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 // This shader is based on an oglplus example:
 // http://oglplus.org/oglplus/html/oglplus_2023_sky_8cpp-example.html
 

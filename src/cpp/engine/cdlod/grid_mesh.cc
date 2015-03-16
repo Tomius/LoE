@@ -1,7 +1,7 @@
-#include "grid_mesh.h"
+// Copyright (c) 2015, Tamas Csala
 
-#include "../../oglwrap/context.h"
-#include "../../oglwrap/smart_enums.h"
+#include "grid_mesh.h"
+#include "../oglwrap_all.h"
 
 namespace engine {
 namespace cdlod {

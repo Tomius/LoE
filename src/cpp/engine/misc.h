@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_MISC_H
 #define ENGINE_MISC_H

@@ -1,7 +1,6 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #include "./skybox.h"
-#include "oglwrap/smart_enums.h"
 
 const float day_duration = 256.0f, day_start = day_duration/8;
 

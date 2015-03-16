@@ -1,11 +1,10 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_TEXTURE_SOURCE_INL_H_
 #define ENGINE_TEXTURE_SOURCE_INL_H_
 
-#include "texture_source.h"
-#include "../oglwrap/smart_enums.h"
-#include "../oglwrap/context/pixel_ops.h"
+#include "./texture_source.h"
+#include "./oglwrap_all.h"
 
 namespace engine {
 

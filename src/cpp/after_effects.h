@@ -1,15 +1,9 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef LOD_AFTER_EFFECTS_H_
 #define LOD_AFTER_EFFECTS_H_
 
-#include "engine/oglwrap_config.h"
-#include "oglwrap/shader.h"
-#include "oglwrap/uniform.h"
-#include "oglwrap/framebuffer.h"
-#include "oglwrap/shapes/rectangle_shape.h"
-#include "oglwrap/textures/texture_2D.h"
-
+#include "engine/oglwrap_all.h"
 #include "engine/behaviour.h"
 #include "engine/shader_manager.h"
 

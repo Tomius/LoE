@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #include "./scene.h"
 #include "./game_object.h"

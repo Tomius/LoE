@@ -1,12 +1,9 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_CDLOD_GRID_MESH_H_
 #define ENGINE_CDLOD_GRID_MESH_H_
 
-#include "../oglwrap_config.h"
-#include "../../oglwrap/buffer.h"
-#include "../../oglwrap/vertex_attrib.h"
-#include "../../oglwrap/uniform.h"
+#include "../oglwrap_all.h"
 
 namespace engine {
 namespace cdlod {

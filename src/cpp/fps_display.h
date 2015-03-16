@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef LOD_FPS_DISPLAY_H_
 #define LOD_FPS_DISPLAY_H_

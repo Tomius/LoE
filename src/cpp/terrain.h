@@ -1,12 +1,11 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef LOD_TERRAIN_H_
 #define LOD_TERRAIN_H_
 
 #include "./skybox.h"
 #include "./shadow.h"
-#include "engine/oglwrap_config.h"
-
+#include "engine/oglwrap_all.h"
 #include "engine/multi_level_height_map.h"
 #include "engine/game_object.h"
 #include "engine/shader_manager.h"

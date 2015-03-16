@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_CDLOD_QUAD_TREE_H_
 #define ENGINE_CDLOD_QUAD_TREE_H_
@@ -23,8 +23,7 @@ class QuadTree {
       : mesh_(node_dimension), node_dimension_(node_dimension)
       , root_(hmap.w()/2, hmap.h()/2,
           std::max(ceil(log2(std::max(hmap.w(), hmap.h()))
-                        - log2(node_dimension)), 0.0),
-          node_dimension) {}
+                        - log2(node_dimension)), 0.0), node_dimension) {}
 
   int node_dimension() const {
     return node_dimension_;

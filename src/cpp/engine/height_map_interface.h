@@ -1,10 +1,9 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_HEIGHT_MAP_INTERFACE_H_
 #define ENGINE_HEIGHT_MAP_INTERFACE_H_
 
-#include "./oglwrap_config.h"
-#include "../oglwrap/textures/texture_2D.h"
+#include "./oglwrap_all.h"
 
 namespace engine {
 

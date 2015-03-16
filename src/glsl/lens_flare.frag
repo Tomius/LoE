@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 // Lens flare based on musk's.
 // See the original at: https://www.shadertoy.com/view/4sX3Rs
 

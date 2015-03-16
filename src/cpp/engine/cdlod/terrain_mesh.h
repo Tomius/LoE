@@ -1,16 +1,10 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_CDLOD_TERRAIN_MESH_H_
 #define ENGINE_CDLOD_TERRAIN_MESH_H_
 
-#include "../oglwrap_config.h"
-
-#include "../../oglwrap/shader.h"
-#include "../../oglwrap/uniform.h"
-#include "../../oglwrap/context.h"
-#include "../../oglwrap/textures/texture_2D.h"
-
 #include "./quad_tree.h"
+#include "../oglwrap_all.h"
 #include "../shader_manager.h"
 
 namespace engine {

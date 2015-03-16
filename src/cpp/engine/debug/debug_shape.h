@@ -1,14 +1,9 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_DEBUG_DEBUG_SHAPE_H_
 #define ENGINE_DEBUG_DEBUG_SHAPE_H_
 
-#include "../oglwrap_config.h"
-#include "../../oglwrap/shader.h"
-#include "../../oglwrap/uniform.h"
-#include "../../oglwrap/shapes/cube_shape.h"
-#include "../../oglwrap/shapes/sphere_shape.h"
-
+#include "../oglwrap_all.h"
 #include "../scene.h"
 #include "../game_object.h"
 

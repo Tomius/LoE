@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_GUI_FONT_MANAGER_H_
 #define ENGINE_GUI_FONT_MANAGER_H_

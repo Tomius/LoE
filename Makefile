@@ -1,11 +1,11 @@
-# Copyright (c) 2014, Tamas Csala
+# Copyright (c) 2015, Tamas Csala
 
 BINARY = a.out
-SRC_DIR = src/cpp
+SRC_DIR = src
 OBJ_DIR = .obj
-PRECOMPILED_HEADER_SRC = $(SRC_DIR)/engine/oglwrap_all.h
+PRECOMPILED_HEADER_SRC = $(SRC_DIR)/cpp/engine/oglwrap_all.h
 
-TP_DIR = thirdparty
+TP_DIR = $(SRC_DIR)/thirdparty
 FREETYPE_GL_DIR = $(TP_DIR)/freetype-gl
 FREETYPE_GL_INCL = $(FREETYPE_GL_DIR)
 FREETYPE_GL_LIB = $(FREETYPE_GL_DIR)
@@ -19,7 +19,14 @@ GLFW_ARCHIVE = $(GLFW_DIR)/src/libglfw3.a
 GLM_DIR = $(TP_DIR)/glm
 GLM_INCL = $(GLM_DIR)
 
-TP_CXXFLAGS = -isystem $(FREETYPE_GL_INCL) -isystem $(GLFW_INCL) -isystem $(GLM_INCL)
+OGLWRAP_DIR = $(TP_DIR)/oglwrap
+OGLWRAP_INCL = $(OGLWRAP_DIR)
+
+GLEW_DIR = $(TP_DIR)/glew
+GLEW_INCL = $(GLEW_DIR)
+
+TP_CXXFLAGS = -isystem $(FREETYPE_GL_INCL) -isystem $(GLFW_INCL) \
+							-isystem $(GLM_INCL) -isystem $(OGLWRAP_INCL) -isystem $(GLEW_INCL)
 TP_LDFLAGS = -L$(FREETYPE_GL_LIB) -lfreetype-gl -L$(GLFW_LIB) -lglfw3
 
 DEPENDENCIES_DIR = .deps
@@ -36,7 +43,7 @@ PKG_CONFIG_CXXFLAGS_ := $(shell pkg-config --cflags $(PKG_CONFIG_LIB_NAMES))
 PKG_CONFIG_CXXFLAGS := $(filter-out -fopenmp,$(PKG_CONFIG_CXXFLAGS_))
 PKG_CONFIG_LDFLAGS := $(shell pkg-config --libs $(PKG_CONFIG_LIB_NAMES))
 
-CPP_FILES := $(shell find -L $(SRC_DIR) -name '*.cc')
+CPP_FILES := $(shell find -L $(SRC_DIR)/cpp -name '*.cc')
 OBJECTS := $(subst $(SRC_DIR),$(OBJ_DIR),$(CPP_FILES:.cc=.o))
 DEPS := $(OBJECTS:.o=.d)
 

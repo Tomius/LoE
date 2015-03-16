@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #include "./scene.h"
 #include "./game_engine.h"
@@ -16,7 +16,7 @@ Scene::Scene()
         physics_finished_.set();
       }
     }}
-    , camera_(nullptr), shadow_(nullptr), window_(GameEngine::window()) {
+    , camera_(nullptr), window_(GameEngine::window()) {
   set_scene(this);
 }
 

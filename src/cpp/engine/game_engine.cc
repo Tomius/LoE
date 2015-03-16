@@ -1,11 +1,9 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #include <string>
-
-#include "./oglwrap_config.h"
+#include "./oglwrap_all.h"
 #include <GLFW/glfw3.h>
 
-#include "../oglwrap/smart_enums.h"
 #include "./game_engine.h"
 
 static double last_debug_time = 0;
@@ -45,10 +43,10 @@ void GameEngine::InitContext() {
     const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
 #if ENGINE_NO_FULLSCREEN
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,
-                               "Land of Dreams", nullptr, nullptr);
+                               "Land of Önlab", nullptr, nullptr);
 #else
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,
-                               "Land of Dreams", monitor, nullptr);
+                               "Land of Önlab", monitor, nullptr);
 #endif
 
     if (!window_) {

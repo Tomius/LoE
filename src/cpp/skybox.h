@@ -1,14 +1,9 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef LOD_SKYBOX_H_
 #define LOD_SKYBOX_H_
 
-#include "engine/oglwrap_config.h"
-#include "oglwrap/shader.h"
-#include "oglwrap/uniform.h"
-#include "oglwrap/shapes/cube_shape.h"
-#include "oglwrap/textures/texture_cube.h"
-
+#include "engine/oglwrap_all.h"
 #include "engine/scene.h"
 #include "engine/behaviour.h"
 

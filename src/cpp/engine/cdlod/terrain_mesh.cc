@@ -1,7 +1,7 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #include "./terrain_mesh.h"
-#include "../../oglwrap/smart_enums.h"
+#include "../oglwrap_all.h"
 
 namespace engine {
 namespace cdlod {

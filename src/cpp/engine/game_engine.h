@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_GAME_ENGINE_H_
 #define ENGINE_GAME_ENGINE_H_
@@ -6,7 +6,7 @@
 #include <typeinfo>
 #include "./scene.h"
 
-#define ENGINE_NO_FULLSCREEN 1
+//#define ENGINE_NO_FULLSCREEN 1
 
 namespace engine {
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef ENGINE_MULTI_LEVEL_HEIGHT_MAP_H_
 #define ENGINE_MULTI_LEVEL_HEIGHT_MAP_H_

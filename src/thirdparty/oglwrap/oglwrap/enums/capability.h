@@ -1,0 +1,102 @@
+// Copyright (c) 2014, Tamas Csala
+
+#ifndef OGLWRAP_ENUMS_CAPABILITY_H_
+#define OGLWRAP_ENUMS_CAPABILITY_H_
+
+#include "../config.h"
+
+namespace OGLWRAP_NAMESPACE_NAME {
+namespace enums {
+
+enum class Capability : GLenum {
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_BLEND)
+  kBlend = GL_BLEND,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_CLIP_DISTANCE)
+  kClipDistance = GL_CLIP_DISTANCE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_COLOR_LOGIC_OP)
+  kColorLogicOp = GL_COLOR_LOGIC_OP,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_CULL_FACE)
+  kCullFace = GL_CULL_FACE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEBUG_OUTPUT)
+  kDebugOutput = GL_DEBUG_OUTPUT,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEBUG_OUTPUT_SYNCHRONOUS)
+  kDebugOutputSynchronous = GL_DEBUG_OUTPUT_SYNCHRONOUS,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEPTH_CLAMP)
+  kDepthClamp = GL_DEPTH_CLAMP,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEPTH_TEST)
+  kDepthTest = GL_DEPTH_TEST,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DITHER)
+  kDither = GL_DITHER,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_FRAMEBUFFER_SRGB)
+  kFramebufferSrgb = GL_FRAMEBUFFER_SRGB,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_LINE_SMOOTH)
+  kLineSmooth = GL_LINE_SMOOTH,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_MULTISAMPLE)
+  kMultisample = GL_MULTISAMPLE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_POLYGON_OFFSET_FILL)
+  kPolygonOffsetFill = GL_POLYGON_OFFSET_FILL,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_POLYGON_OFFSET_LINE)
+  kPolygonOffsetLine = GL_POLYGON_OFFSET_LINE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_POLYGON_OFFSET_POINT)
+  kPolygonOffsetPoint = GL_POLYGON_OFFSET_POINT,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_POLYGON_SMOOTH)
+  kPolygonSmooth = GL_POLYGON_SMOOTH,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_PRIMITIVE_RESTART)
+  kPrimitiveRestart = GL_PRIMITIVE_RESTART,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_PRIMITIVE_RESTART_FIXED_INDEX)
+  kPrimitiveRestartFixedIndex = GL_PRIMITIVE_RESTART_FIXED_INDEX,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_RASTERIZER_DISCARD)
+  kRasterizerDiscard = GL_RASTERIZER_DISCARD,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SAMPLE_ALPHA_TO_COVERAGE)
+  kSampleAlphaToCoverage = GL_SAMPLE_ALPHA_TO_COVERAGE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SAMPLE_ALPHA_TO_ONE)
+  kSampleAlphaToOne = GL_SAMPLE_ALPHA_TO_ONE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SAMPLE_COVERAGE)
+  kSampleCoverage = GL_SAMPLE_COVERAGE,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SAMPLE_SHADING)
+  kSampleShading = GL_SAMPLE_SHADING,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SAMPLE_MASK)
+  kSampleMask = GL_SAMPLE_MASK,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SCISSOR_TEST)
+  kScissorTest = GL_SCISSOR_TEST,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_STENCIL_TEST)
+  kStencilTest = GL_STENCIL_TEST,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TEXTURE_CUBE_MAP_SEAMLESS)
+  kTextureCubeMapSeamless = GL_TEXTURE_CUBE_MAP_SEAMLESS,
+#endif
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_PROGRAM_POINT_SIZE)
+  kProgramPointSize = GL_PROGRAM_POINT_SIZE,
+#endif
+};
+
+}  // namespace enums
+using namespace enums;
+}  // namespace oglwrap
+
+#endif
