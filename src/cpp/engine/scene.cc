@@ -7,16 +7,8 @@ namespace engine {
 
 Scene::Scene()
     : Behaviour(nullptr)
-    , physics_thread_should_quit_(false)
-    , physics_thread_{[this](){
-      while (true) {
-        physics_can_run_.waitOne();
-        if (physics_thread_should_quit_) { return; }
-        updatePhysics();
-        physics_finished_.set();
-      }
-    }}
-    , camera_(nullptr), window_(GameEngine::window()) {
+    , camera_(nullptr)
+    , window_(GameEngine::window()) {
   set_scene(this);
 }
 

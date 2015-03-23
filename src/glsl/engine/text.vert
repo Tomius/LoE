@@ -1,9 +1,9 @@
 // Copyright (c) 2015, Tamas Csala
 
-#version 440
+#version 130
 
-attribute vec4 aPosition;
-attribute vec2 aTexCoord;
+in vec4 aPosition;
+in vec2 aTexCoord;
 
 uniform mat4 uProjectionMatrix;
 uniform vec2 uOffset;

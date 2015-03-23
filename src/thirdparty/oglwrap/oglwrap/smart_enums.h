@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 #ifndef OGLWRAP_SMART_ENUMS_H_
 #define OGLWRAP_SMART_ENUMS_H_

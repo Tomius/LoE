@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 /** @file vertex_attrib.h
     @brief Implements a wrapper for the VertexAttrib.

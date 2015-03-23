@@ -14,31 +14,35 @@ FREETYPE_GL_ARCHIVE = $(FREETYPE_GL_DIR)/libfreetype-gl.a
 GLFW_DIR = $(TP_DIR)/glfw
 GLFW_INCL = $(GLFW_DIR)/include
 GLFW_LIB = $(GLFW_DIR)/src
-GLFW_ARCHIVE = $(GLFW_DIR)/src/libglfw3.a
+GLFW_ARCHIVE = $(GLFW_LIB)/libglfw3.a
 
 GLM_DIR = $(TP_DIR)/glm
 GLM_INCL = $(GLM_DIR)
 
 OGLWRAP_DIR = $(TP_DIR)/oglwrap
 OGLWRAP_INCL = $(OGLWRAP_DIR)
+OGLWRAP_LIB = $(OGLWRAP_DIR)/oglwrap
+OGLWRAP_ARCHIVE = $(OGLWRAP_LIB)/liboglwrap.a
+OGLWRAP_ARCHIVE_SRC = $(OGLWRAP_LIB)/oglwrap.cc
 
 GLEW_DIR = $(TP_DIR)/glew
 GLEW_INCL = $(GLEW_DIR)
+GLEW_LIB = $(GLEW_DIR)/GL
+GLEW_ARCHIVE = $(GLEW_LIB)/libglew.a
+GLEW_ARCHIVE_SRC = $(GLEW_LIB)/glew.c
+GLEW_DEPS = $(shell find $(GLEW_INCL) -type f -name *.h -or -name *.c)
 
 TP_CXXFLAGS = -isystem $(FREETYPE_GL_INCL) -isystem $(GLFW_INCL) \
-							-isystem $(GLM_INCL) -isystem $(OGLWRAP_INCL) -isystem $(GLEW_INCL)
-TP_LDFLAGS = -L$(FREETYPE_GL_LIB) -lfreetype-gl -L$(GLFW_LIB) -lglfw3
+							-isystem $(GLM_INCL) -I $(OGLWRAP_INCL) -isystem $(GLEW_INCL)
+TP_LDFLAGS = -L$(FREETYPE_GL_LIB) -lfreetype-gl -L$(GLFW_LIB) -lglfw3 \
+						 -L$(GLEW_LIB) -lglew -lGL -L$(OGLWRAP_LIB) -loglwrap
 
 DEPENDENCIES_DIR = .deps
-GLEW_FOUND = $(DEPENDENCIES_DIR)/glew.found
 MAGICKPP_FOUND = $(DEPENDENCIES_DIR)/magickpp.found
-ASSIMP_FOUND = $(DEPENDENCIES_DIR)/assimp.found
 FREETYPE2_FOUND = $(DEPENDENCIES_DIR)/freetype2.found
-BULLET_FOUND = $(DEPENDENCIES_DIR)/bullet.found
-THIRD_PARTY_LIBS_FOUND = $(GLEW_FOUND) $(MAGICKPP_FOUND) $(ASSIMP_FOUND) \
-                         $(FREETYPE2_FOUND) $(BULLET_FOUND)
+THIRD_PARTY_LIBS_FOUND = $(MAGICKPP_FOUND) $(FREETYPE2_FOUND)
 
-PKG_CONFIG_LIB_NAMES = glew assimp Magick++ freetype2 bullet
+PKG_CONFIG_LIB_NAMES = Magick++ freetype2
 PKG_CONFIG_CXXFLAGS_ := $(shell pkg-config --cflags $(PKG_CONFIG_LIB_NAMES))
 PKG_CONFIG_CXXFLAGS := $(filter-out -fopenmp,$(PKG_CONFIG_CXXFLAGS_))
 PKG_CONFIG_LDFLAGS := $(shell pkg-config --libs $(PKG_CONFIG_LIB_NAMES))
@@ -47,6 +51,7 @@ CPP_FILES := $(shell find -L $(SRC_DIR)/cpp -name '*.cc')
 OBJECTS := $(subst $(SRC_DIR),$(OBJ_DIR),$(CPP_FILES:.cc=.o))
 DEPS := $(OBJECTS:.o=.d)
 
+C = clang
 CXX = clang++
 CXX_PRECOMPILED_HEADER_EXTENSION = pch
 
@@ -132,7 +137,7 @@ endif
 	@ if [ ! -f $@ ]; then mkdir -p $(dir $@); touch $(@:.d=.d2); fi;
 
 	@ # create the dependency list using clang -MM
-	@ $(CXX) $(CXXFLAGS) -MM $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.d=.cc)) -MT $(@:.d=.o) -MF $@
+	@ $(CXX) $(CXXFLAGS) -M $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.d=.cc)) -MT $(@:.d=.o) -MF $@
 
 	@ # Manually insert the precompiled header as a dependency
 	@ sed -i 's,.o: ,.o: $(PRECOMPILED_HEADER) \\\n  ,' $@
@@ -141,7 +146,7 @@ endif
 $(PRECOMPILED_HEADER_DEP):
 	@ if mkdir $(OBJ_DIR)/deps 2> /dev/null; then $(call printf,[  0%] ,Scanning dependencies,$(YELLOW)); fi;
 	@ if [ ! -f $@ ]; then mkdir -p $(dir $@); touch $(@:.d=.d2); fi;
-	@ $(CXX) $(CXXFLAGS) -x c++-header -MM $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.$(CXX_PRECOMPILED_HEADER_EXTENSION).d=)) -MT $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.d=)) -MF $@
+	@ $(CXX) $(CXXFLAGS) -x c++-header -M $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.$(CXX_PRECOMPILED_HEADER_EXTENSION).d=)) -MT $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.d=)) -MF $@
 
 %.o:
 	@ $(call printf,$(shell scripts/get_build_progress.sh) ,Building object $@,$(GREEN))
@@ -176,7 +181,13 @@ $(GLFW_ARCHIVE):
 	@ $(call printf,$(shell scripts/get_build_progress.sh) ,Building archive for glfw3,$(GREEN))
 	@ cd $(GLFW_DIR) && cmake . > /dev/null && $(MAKE) all > /dev/null
 
-$(BINARY): $(THIRD_PARTY_LIBS_FOUND) $(OBJECTS) $(FREETYPE_GL_ARCHIVE) $(GLFW_ARCHIVE)
+$(GLEW_ARCHIVE): $(GLEW_DEPS)
+	@ $(C) -c -isystem $(GLEW_INCL) $(GLEW_ARCHIVE_SRC) -o $@
+
+$(OGLWRAP_ARCHIVE): $(PRECOMPILED_HEADER)
+	@ $(CXX) -c $(CXXFLAGS) $(CXXFLAG_PRECOMPILED_HEADER) $(OGLWRAP_ARCHIVE_SRC) -o $@
+
+$(BINARY): $(THIRD_PARTY_LIBS_FOUND) $(OBJECTS) $(FREETYPE_GL_ARCHIVE) $(GLFW_ARCHIVE) $(GLEW_ARCHIVE) $(OGLWRAP_ARCHIVE)
 	@ $(call printf,[100%] ,Linking executable $@,$(BOLD)$(RED))
 	@ $(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
@@ -189,17 +200,8 @@ $(BINARY): $(THIRD_PARTY_LIBS_FOUND) $(OBJECTS) $(FREETYPE_GL_ARCHIVE) $(GLFW_AR
 %:
 	@
 
-$(GLEW_FOUND):
-	@if `pkg-config --atleast-version=1.8 glew`; then touch $(GLEW_FOUND); else /bin/echo -e "$(RED)GLEW version 1.8 or newer is required $(NORMAL)"; exit 1; fi;
-
 $(MAGICKPP_FOUND):
 	@if `pkg-config --atleast-version=6.0 Magick++`; then touch $(MAGICKPP_FOUND); else /bin/echo -e "$(RED)Magick++ version 6.0 or newer is required $(NORMAL)"; exit 1; fi;
 
-$(ASSIMP_FOUND):
-	@if `pkg-config --atleast-version=3.0 assimp`; then touch $(ASSIMP_FOUND); else /bin/echo -e "$(RED)Assimp version 3.0 or newer is required $(NORMAL)"; exit 1; fi;
-
 $(FREETYPE2_FOUND):
 	@if `pkg-config --atleast-version=15.0 freetype2`; then touch $(FREETYPE2_FOUND); else /bin/echo -e "$(RED)FreeType2 version 15.0 or newer is required $(NORMAL)"; exit 1; fi;
-
-$(BULLET_FOUND):
-	@if `pkg-config --atleast-version=2.8 bullet`; then touch $(BULLET_FOUND); else /bin/echo -e "$(RED)Bullet version 2.8 or newer is required $(NORMAL)"; exit 1; fi;

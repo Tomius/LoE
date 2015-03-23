@@ -15,8 +15,14 @@
   #define OGLWRAP_DEFAULT_SHADER_PATH "src/glsl/"
 #endif
 
-#include <oglwrap/glew.h>
-#include <oglwrap/oglwrap.h>
-#include <oglwrap/debug/insertion.h>
+#ifdef OGLWRAP_SYSTEM_HEADERS
+  #include <oglwrap/glew.h>
+  #include <oglwrap/oglwrap.h>
+  #include <oglwrap/debug/insertion.h>
+#else
+  #include "oglwrap/glew.h"
+  #include "oglwrap/oglwrap.h"
+  #include "oglwrap/debug/insertion.h"
+#endif
 
 #endif

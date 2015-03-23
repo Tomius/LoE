@@ -1,6 +1,6 @@
 // Copyright (c) 2015, Tamas Csala
 
-#version 440
+#version 130
 
 #include "sky.frag"
 #include "lens_flare.frag"

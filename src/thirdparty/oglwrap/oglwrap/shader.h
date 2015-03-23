@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 /** @file shader.h
     @brief Implements GLSL shaders related classes.
@@ -112,10 +112,21 @@ class Shader {
         str << "Compile failure in shader '";
         str << filename_ << "' :" << std::endl << str_info_log.get();
 
-      OGLWRAP_PRINT_ERROR(
-        "Shader compile failure",
-        str.str()
-      )
+      OGLWRAP_PRINT_ERROR("Shader compile failure", str.str());
+    } else {
+      GLint info_log_length;
+      gl(GetShaderiv(shader_, GL_INFO_LOG_LENGTH, &info_log_length));
+
+      if (info_log_length > 1) { // empty compile info == one new line character
+        std::unique_ptr<GLchar> str_info_log{ new GLchar[info_log_length + 1] };
+        gl(GetShaderInfoLog(shader_, info_log_length, nullptr, str_info_log.get()));
+
+        std::stringstream str;
+          str << "Compile warning in shader '";
+          str << filename_ << "' :" << std::endl << str_info_log.get();
+
+        OGLWRAP_PRINT_ERROR("Shader compile warning", str.str());
+      }
     }
     #endif
   }

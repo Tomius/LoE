@@ -1,8 +1,8 @@
 // Copyright (c) 2015, Tamas Csala
 
-#version 440
+#version 130
 
-attribute vec4 aPosition;
+in vec4 aPosition;
 
 void main() {
   gl_Position = aPosition;

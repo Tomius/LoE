@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <memory>
-#include <btBulletDynamicsCommon.h>
 
 #include "./timer.h"
 #include "./camera.h"
@@ -22,17 +21,8 @@ class GameObject;
 class Scene : public Behaviour {
  public:
   Scene();
-  virtual ~Scene() {
-    // close the physics thread
-    physics_thread_should_quit_ = true;
-    physics_can_run_.set();
-    physics_thread_.join();
-  }
 
   virtual float gravity() const { return 9.81f; }
-
-  const btDynamicsWorld* world() const { return world_.get(); }
-  btDynamicsWorld* world() { return world_.get(); }
 
   const Timer& game_time() const { return game_time_; }
   Timer& game_time() { return game_time_; }
@@ -68,27 +58,12 @@ class Scene : public Behaviour {
   }
 
   virtual void turn() {
-    physics_finished_.waitOne();
     updateAll();
-    physics_can_run_.set();
     renderAll();
     render2DAll();
   }
 
  protected:
-  // Bullet classes
-  std::unique_ptr<btCollisionConfiguration> collision_config_;
-  std::unique_ptr<btDispatcher> dispatcher_;
-  std::unique_ptr<btBroadphaseInterface> broadphase_;
-  std::unique_ptr<btConstraintSolver> solver_;
-  std::unique_ptr<btDynamicsWorld> world_;
-
-  // physics thread data
-  AutoResetEvent physics_can_run_{false}, physics_finished_{true};
-  bool physics_thread_should_quit_;
-  std::thread physics_thread_;
-
-  // Own data
   Camera* camera_;
   Timer game_time_, environment_time_, camera_time_;
   GLFWwindow* window_;
@@ -112,12 +87,6 @@ class Scene : public Behaviour {
     gl::BlendFunc(gl::kSrcAlpha, gl::kOneMinusSrcAlpha);
 
     Behaviour::render2DAll();
-  }
-
-  virtual void updatePhysics() {
-    if (world_) {
-      world_->stepSimulation(game_time().dt, 0);
-    }
   }
 };
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2015, Tamas Csala
 
-#version 440
+#version 130
 
 #export vec4 CDLODTerrain_modelPos();
 #export vec3 CDLODTerrain_worldPos(vec3 model_pos);

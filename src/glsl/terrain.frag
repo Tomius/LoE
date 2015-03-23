@@ -1,6 +1,6 @@
 // Copyright (c) 2015, Tamas Csala
 
-#version 440
+#version 130
 
 #include "sky.frag"
 #include "fog.frag"
@@ -13,6 +13,8 @@ in float vLevel, vMorph;
 
 uniform mat4 uCameraMatrix;
 uniform sampler2D uDiffuseTexture;
+
+out vec4 fragColor;
 
 const float kSpecularShininess = 64.0;
 
@@ -38,6 +40,6 @@ void main() {
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
-  gl_FragColor = vec4(final_color, 1);
-  //gl_FragColor = vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01*vec4(final_color, 1);
+  fragColor = vec4(final_color, 1);
+  //fragColor = vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01*vec4(final_color, 1);
 }

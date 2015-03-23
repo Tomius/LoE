@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Tamas Csala
+// Copyright (c) 2015, Tamas Csala
 
 /** @file cube_shape.h
     @brief Implements a cube shape wrapper.
