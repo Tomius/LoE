@@ -1,0 +1,44 @@
+{
+  "settings":
+  {
+    "spell_check": false,
+    "tab_size": 2,
+    "sublimegdb_workingdir": "${folder:${project_path:a.out}}",
+    "sublimegdb_commandline": "optirun gdb --interpreter=mi ./a.out",
+    "rulers": [80]
+  },
+
+  "folders":
+  [
+    {
+      "follow_symlinks": true,
+      "path": ".",
+      "folder_exclude_patterns": [
+        ".obj",
+        "src/resources",
+        ".deps",
+        "thirdparty/freetype-gl",
+        "thirdparty/glew",
+        "thirdparty/glfw",
+        "thirdparty/glm"
+      ], "file_exclude_patterns": ["a.out", "*.h.pch"]
+    }
+  ],
+
+  "build_systems":
+    [
+      {
+        "name": "Make",
+        "cmd": ["make -j4 nocolor"],
+        "working_dir": "${project_path}",
+        "shell": true,
+
+        "variants": [
+          {
+            "name": "Run",
+            "cmd": ["./a.out"]
+          }
+        ]
+      }
+  ]
+}

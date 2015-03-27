@@ -1,3 +1,4 @@
 a.out
 .obj
 .deps
+*.sublime-workspace

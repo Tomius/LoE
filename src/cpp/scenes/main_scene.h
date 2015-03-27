@@ -10,6 +10,7 @@
 #include "../loading_screen.h"
 #include "../skybox.h"
 #include "../terrain.h"
+#include "../tex_terrain.h"
 #include "../fps_display.h"
 #include "../after_effects.h"
 
@@ -26,6 +27,7 @@ class MainScene : public engine::Scene {
     auto skybox = addComponent<Skybox>();
     skybox->set_group(-1);
     addComponent<Terrain>();
+    addComponent<TexTerrain>();
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
       M_PI/3, 2, 150000, glm::vec3(-5000, 0, 0), 0.5, 0.1);
 
