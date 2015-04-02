@@ -49,6 +49,7 @@ class TexQuadTree {
   void render(const engine::Camera& cam) {
     glm::vec3 cam_pos = cam.transform()->pos();
     root_.selectNodes(cam_pos, cam.frustum());
+    root_.age();
   }
 };
 

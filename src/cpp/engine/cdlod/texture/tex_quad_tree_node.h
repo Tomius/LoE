@@ -19,7 +19,8 @@ class TexQuadTreeNode {
   }
 
   void load();
-  void initChildren();
+  void age();
+  void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum);
 
   int center_x() const { return x_; }
@@ -29,11 +30,13 @@ class TexQuadTreeNode {
   int level() const { return level_; }
 
  private:
-  GLubyte *data_ = nullptr;
   int x_, z_, sx_, sz_;
+  int last_used_ = 0;
   GLubyte level_;
   BoundingSphericalSector bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
+  std::unique_ptr<GLubyte> data_;
+  static int time_to_live_;
 };
 
 }

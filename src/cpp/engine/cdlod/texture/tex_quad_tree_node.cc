@@ -7,6 +7,9 @@
 namespace engine {
 namespace cdlod {
 
+// If a node is not used for this much time (frames), it will be unloaded.
+int TexQuadTreeNode::time_to_live_ = 256;
+
 TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
     : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
     , bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 100, z+(sz-sz/2)}} {}
@@ -22,53 +25,82 @@ void TexQuadTreeNode::load() {
   Magick::Image image(path);
   size_t w = image.columns();
   size_t h = image.rows();
-  data_ = new GLubyte[w*h];
-  image.write(0, 0, w, h, "R", MagickCore::CharPixel, data_);
+  data_ = std::unique_ptr<GLubyte>{new GLubyte[w*h]};
+  image.write(0, 0, w, h, "R", MagickCore::CharPixel, data_.get());
 }
 
-void TexQuadTreeNode::initChildren() {
+void TexQuadTreeNode::age() {
+  last_used_++;
+
+  for (auto& child : children_) {
+    if (child) {
+      // unload child if its age would exceed the ttl
+      if (child->last_used_ >= time_to_live_) {
+        child.reset();
+      } else {
+        child->age();
+      }
+    }
+  }
+}
+
+void TexQuadTreeNode::initChild(int i) {
   assert(level_ > 0);
 
-  // Chilren node sizes (tl = top left, br = bottom right)
-  int tl_sx = sx_/2,       tl_sz = sz_/2;
-  int tr_sx = sx_ - sx_/2, tr_sz = sz_/2;
-  int bl_sx = sx_/2,       bl_sz = sz_ - sz_/2;
-  int br_sx = sx_ - sx_/2, br_sz = sz_ - sz_/2;
-
-  // top left
-  children_[0] = make_unique<TexQuadTreeNode>(
-    x_ - (tl_sx - tl_sx/2), z_ - (tl_sz - tl_sz/2), tl_sx, tl_sz, level_-1);
-  // top right
-  children_[1] = make_unique<TexQuadTreeNode>(
-    x_ + tr_sx/2, z_ - (tr_sz - tr_sz/2), tr_sx, tr_sz, level_-1);
-  // bottom left
-  children_[2] = make_unique<TexQuadTreeNode>(
-    x_ - (bl_sx - bl_sx/2), z_ + bl_sz/2, bl_sx, bl_sz, level_-1);
-  // bottom right
-  children_[3] = make_unique<TexQuadTreeNode>(
-    x_ + br_sx/2, z_ + br_sz/2, br_sx, br_sz, level_-1);
+  switch (i) {
+    case 0: { // top left
+      int sx = sx_/2, sz = sz_/2;
+      children_[0] = make_unique<TexQuadTreeNode>(
+          x_ - (sx - sx/2), z_ - (sz - sz/2), sx, sz, level_-1);
+    } break;
+    case 1: { // top right
+      int sx = sx_ - sx_/2, sz = sz_/2;
+      children_[1] = make_unique<TexQuadTreeNode>(
+          x_ + sx/2, z_ - (sz - sz/2), sx, sz, level_-1);
+    } break;
+    case 2: { // bottom left
+      int sx = sx_/2, sz = sz_ - sz_/2;
+      children_[2] = make_unique<TexQuadTreeNode>(
+          x_ - (sx - sx/2), z_ + sz/2, sx, sz, level_-1);
+    } break;
+    case 3: { // bottom right
+      int sx = sx_ - sx_/2, sz = sz_ - sz_/2;
+      children_[3] = make_unique<TexQuadTreeNode>(
+          x_ + sx/2, z_ + sz/2, sx, sz, level_-1);
+    } break;
+    default: {
+      throw new std::out_of_range("Tried to index "
+          + std::to_string(i) + "th child of a quadtree node.");
+    }
+  }
 }
 
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum) {
   float lod_range = 1.01 * std::max(sx_, sz_);
 
-  if (!bbox_.collidesWithFrustum(frustum)) { return; }
+  // check if the node is visible
+  if (!bbox_.collidesWithFrustum(frustum)) {
+    return;
+  }
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
     load(); // load in the texture
   } else {
-    // generate children nodes if we can't cover the whole area
-    if (!children_[0]) {
-      initChildren();
-    }
-
-    bool children_cover_whole_area = false;
+    bool children_cover_whole_area = true;
     for (int i = 0; i < 4; ++i) {
-      if (children_[i]->collidesWithSphere(cam_pos, lod_range)) {
-        children_[i]->selectNodes(cam_pos, frustum);
-        children_cover_whole_area = true;
+      auto& child = children_[i];
+
+      if (!child) {
+        initChild(i);
+      }
+
+      // call selectNodes on the child (recursive)
+      if (child->collidesWithSphere(cam_pos, lod_range)) {
+        child->selectNodes(cam_pos, frustum);
+      } else {
+        children_cover_whole_area = false;
       }
     }
 
@@ -77,6 +109,8 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
       load();
     }
   }
+
+  last_used_ = 0;
 }
 
 }  // namespace cdlod
