@@ -18,12 +18,25 @@ class QuadTree {
 
   QuadTreeNode root_;
 
+  GLubyte max_node_level(int w, int h) const {
+    int x_depth = 1;
+    while (w >> x_depth > node_dimension_) {
+      x_depth++;
+    }
+    int y_depth = 1;
+    while (h >> y_depth > node_dimension_) {
+      y_depth++;
+    }
+
+    // The x_depth and y_depth go one past the desired value
+    return std::max(x_depth, y_depth) - 1;
+  }
+
  public:
   QuadTree(const HeightMapInterface& hmap, int node_dimension = 32)
       : mesh_(node_dimension), node_dimension_(node_dimension)
       , root_(hmap.w()/2, hmap.h()/2,
-          std::max(ceil(log2(std::max(hmap.w(), hmap.h()))
-                        - log2(node_dimension)), 0.0), node_dimension) {}
+              max_node_level(hmap.w(), hmap.h()), node_dimension) {}
 
   int node_dimension() const {
     return node_dimension_;
@@ -38,13 +51,9 @@ class QuadTree {
   }
 
   void render(const engine::Camera& cam) {
-    //Node::statistics.clear();
     mesh_.clearRenderList();
     glm::vec3 cam_pos = cam.transform()->pos();
     root_.selectNodes(cam_pos, cam.frustum(), mesh_);
-    /*for (auto iter : Node::statistics) {
-      std::cout << "Level " << iter.first << ": " << iter.second << std::endl;
-    }*/
     mesh_.render();
   }
 };

@@ -21,6 +21,10 @@ void TexQuadTreeNode::load() {
     return;
   }
 
+  // if (level_ == 0) {
+  //   std::cout << sx_ << ", " << sz_ << std::endl;
+  // }
+
   std::string path = "src/resources/gmted2010/4/000_000.jpg";
   Magick::Image image(path);
   size_t w = image.columns();
@@ -80,9 +84,9 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   float lod_range = 1.01 * std::max(sx_, sz_);
 
   // check if the node is visible
-  if (!bbox_.collidesWithFrustum(frustum)) {
-    return;
-  }
+  // if (!bbox_.collidesWithFrustum(frustum)) {
+  //   return;
+  // }
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {

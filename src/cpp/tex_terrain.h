@@ -9,7 +9,7 @@
 class TexTerrain : public engine::GameObject {
  public:
   explicit TexTerrain(engine::GameObject* parent)
-    : GameObject(parent), quad_tree_(global_terrain::w*8, global_terrain::h*8) {}
+    : GameObject(parent), quad_tree_(global_terrain::w, global_terrain::h) {}
 
  private:
   engine::cdlod::TexQuadTree quad_tree_;

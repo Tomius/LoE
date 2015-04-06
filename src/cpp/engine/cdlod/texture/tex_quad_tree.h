@@ -17,16 +17,17 @@ class TexQuadTree {
   TexQuadTreeNode root_;
 
   GLubyte max_node_level(int w, int h) const {
-    int x_depth = 0;
+    int x_depth = 1;
     while (w >> x_depth > min_node_size_.x) {
       x_depth++;
     }
-    int y_depth = 0;
+    int y_depth = 1;
     while (h >> y_depth > min_node_size_.y) {
       y_depth++;
     }
 
-    return std::max(std::max(x_depth, y_depth), 0);
+    // The x_depth and y_depth go one past the desired value
+    return std::max(x_depth, y_depth) - 1;
   }
 
  public:

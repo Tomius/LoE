@@ -7,7 +7,6 @@
 namespace engine {
 namespace cdlod {
 
-//std::map<int, int> QuadTreeNode::statistics;
 
 QuadTreeNode::QuadTreeNode(GLshort x, GLshort z, GLubyte level, int dimension)
     : x_(x), z_(z), dimension_(dimension), level_(level)
@@ -33,7 +32,6 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
     grid_mesh.addToRenderList(x_, z_, scale, level_);
-    //statistics[level_]++;
   } else {
     if (!tl_) {
       initChildren();
@@ -58,9 +56,6 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     }
 
     // Render, what the childs didn't do
-    /*if (!btl || !btr || !bbl || !bbr) {
-      statistics[level_]++;
-    }*/
     grid_mesh.addToRenderList(x_, z_, scale, level_, !btl, !btr, !bbl, !bbr);
   }
 }
