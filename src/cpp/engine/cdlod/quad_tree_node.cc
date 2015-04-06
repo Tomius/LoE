@@ -7,21 +7,40 @@
 namespace engine {
 namespace cdlod {
 
-
-QuadTreeNode::QuadTreeNode(GLshort x, GLshort z, GLubyte level, int dimension)
+QuadTreeNode::QuadTreeNode(int x, int z, GLubyte level, int dimension)
     : x_(x), z_(z), dimension_(dimension), level_(level)
-    , bbox_{{x-size()/2, 0, z-size()/2}, {x+size()/2, 100, z+size()/2}}
-    , tl_(nullptr), tr_(nullptr), bl_(nullptr), br_(nullptr) {}
+    , bbox_{{x-size()/2, 0, z-size()/2}, {x+size()/2, 100, z+size()/2}} {}
 
-void QuadTreeNode::initChildren() {
-  assert(level_ > 0);
-  tl_ = make_unique<QuadTreeNode>(x_-size()/4, z_+size()/4, level_-1, dimension_);
-  tr_ = make_unique<QuadTreeNode>(x_+size()/4, z_+size()/4, level_-1, dimension_);
-  bl_ = make_unique<QuadTreeNode>(x_-size()/4, z_-size()/4, level_-1, dimension_);
-  br_ = make_unique<QuadTreeNode>(x_+size()/4, z_-size()/4, level_-1, dimension_);
+bool QuadTreeNode::isOutsideUsefulArea(const HeightMapInterface& hmap,
+                                       int x, int z, int level, int dimension) {
+  return false;
+  int size = dimension << level;
+  return !(x+size < 0 || x < hmap.w() || z+size < 0 || z < hmap.h());
 }
 
-void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
+void QuadTreeNode::initChildren(const HeightMapInterface& hmap) {
+  assert(level_ > 0);
+  children_inited_ = true;
+  if (!isOutsideUsefulArea(hmap, x_-size()/4, z_+size()/4, level_-1, dimension_)) {
+    children_[0] = make_unique<QuadTreeNode>(
+        x_-size()/4, z_+size()/4, level_-1, dimension_);
+  }
+  if (!isOutsideUsefulArea(hmap, x_+size()/4, z_+size()/4, level_-1, dimension_)) {
+    children_[1] = make_unique<QuadTreeNode>(
+        x_+size()/4, z_+size()/4, level_-1, dimension_);
+  }
+  if (!isOutsideUsefulArea(hmap, x_-size()/4, z_-size()/4, level_-1, dimension_)) {
+    children_[2] = make_unique<QuadTreeNode>(
+        x_-size()/4, z_-size()/4, level_-1, dimension_);
+  }
+  if (!isOutsideUsefulArea(hmap, x_+size()/4, z_-size()/4, level_-1, dimension_)) {
+    children_[3] = make_unique<QuadTreeNode>(
+        x_+size()/4, z_-size()/4, level_-1, dimension_);
+  }
+}
+
+void QuadTreeNode::selectNodes(const HeightMapInterface& hmap,
+                               const glm::vec3& cam_pos,
                                const Frustum& frustum,
                                QuadGridMesh& grid_mesh) {
   float scale = 1 << level_;
@@ -33,30 +52,24 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
     grid_mesh.addToRenderList(x_, z_, scale, level_);
   } else {
-    if (!tl_) {
-      initChildren();
+    if (!children_inited_) {
+      initChildren(hmap);
     }
-    bool btl = tl_->collidesWithSphere(cam_pos, lod_range);
-    bool btr = tr_->collidesWithSphere(cam_pos, lod_range);
-    bool bbl = bl_->collidesWithSphere(cam_pos, lod_range);
-    bool bbr = br_->collidesWithSphere(cam_pos, lod_range);
+    bool cc[4]{}; // children collision
 
-    // Ask childs to render what we can't
-    if (btl) {
-      tl_->selectNodes(cam_pos, frustum, grid_mesh);
-    }
-    if (btr) {
-      tr_->selectNodes(cam_pos, frustum, grid_mesh);
-    }
-    if (bbl) {
-      bl_->selectNodes(cam_pos, frustum, grid_mesh);
-    }
-    if (bbr) {
-      br_->selectNodes(cam_pos, frustum, grid_mesh);
+    for (int i = 0; i < 4; ++i) {
+      if (children_[i]) {
+        cc[i] = children_[i]->collidesWithSphere(cam_pos, lod_range);
+        if (cc[i]) {
+          // Ask child to render what we can't
+          children_[i]->selectNodes(hmap, cam_pos, frustum, grid_mesh);
+        }
+      }
     }
 
     // Render, what the childs didn't do
-    grid_mesh.addToRenderList(x_, z_, scale, level_, !btl, !btr, !bbl, !bbr);
+    grid_mesh.addToRenderList(
+        x_, z_, scale, level_, !cc[0], !cc[1], !cc[2], !cc[3]);
   }
 }
 

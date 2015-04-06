@@ -13,7 +13,7 @@ namespace cdlod {
 
 class QuadTreeNode {
  public:
-  QuadTreeNode(GLshort x, GLshort z, GLubyte level, int dimension);
+  QuadTreeNode(int x, int z, GLubyte level, int dimension);
 
   GLushort size() { return dimension_ << level_; }
 
@@ -21,19 +21,23 @@ class QuadTreeNode {
     return bbox_.collidesWithSphere(center, radius);
   }
 
-  void initChildren();
+  static bool isOutsideUsefulArea(const HeightMapInterface& hmap,
+                                  int x, int z, int level, int dimension);
 
-  void selectNodes(const glm::vec3& cam_pos,
+  void initChildren(const HeightMapInterface& hmap);
+
+  void selectNodes(const HeightMapInterface& hmap,
+                   const glm::vec3& cam_pos,
                    const Frustum& frustum,
                    QuadGridMesh& grid_mesh);
 
  private:
-  GLshort x_, z_;
+  int x_, z_;
   GLushort dimension_;
   GLubyte level_;
   BoundingSphericalSector bbox_;
-  std::unique_ptr<QuadTreeNode> tl_, tr_, bl_, br_;
-  //static std::map<int, int> statistics;
+  std::unique_ptr<QuadTreeNode> children_[4];
+  bool children_inited_ = false;
 };
 
 }

@@ -14,29 +14,29 @@ namespace cdlod {
 
 class QuadTree {
   QuadGridMesh mesh_;
-  int node_dimension_;
-
+  int node_dimension_; // must be initialized before root
   QuadTreeNode root_;
+  const HeightMapInterface& hmap_;
 
   GLubyte max_node_level(int w, int h) const {
-    int x_depth = 1;
-    while (w >> x_depth > node_dimension_) {
+    int x_depth = 0;
+    while ((node_dimension_ << x_depth) < w) {
       x_depth++;
     }
-    int y_depth = 1;
-    while (h >> y_depth > node_dimension_) {
+    int y_depth = 0;
+    while ((node_dimension_ << y_depth) < h) {
       y_depth++;
     }
 
-    // The x_depth and y_depth go one past the desired value
-    return std::max(x_depth, y_depth) - 1;
+    return std::max(x_depth, y_depth);
   }
 
  public:
   QuadTree(const HeightMapInterface& hmap, int node_dimension = 32)
       : mesh_(node_dimension), node_dimension_(node_dimension)
       , root_(hmap.w()/2, hmap.h()/2,
-              max_node_level(hmap.w(), hmap.h()), node_dimension) {}
+              max_node_level(hmap.w(), hmap.h()), node_dimension)
+      , hmap_(hmap) {}
 
   int node_dimension() const {
     return node_dimension_;
@@ -53,7 +53,7 @@ class QuadTree {
   void render(const engine::Camera& cam) {
     mesh_.clearRenderList();
     glm::vec3 cam_pos = cam.transform()->pos();
-    root_.selectNodes(cam_pos, cam.frustum(), mesh_);
+    root_.selectNodes(hmap_, cam_pos, cam.frustum(), mesh_);
     mesh_.render();
   }
 };
