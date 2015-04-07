@@ -15,7 +15,7 @@ class QuadTreeNode {
  public:
   QuadTreeNode(int x, int z, GLubyte level, int dimension);
 
-  GLushort size() { return dimension_ << level_; }
+  int size() { return dimension_ << level_; }
 
   bool collidesWithSphere(const glm::vec3& center, float radius) {
     return bbox_.collidesWithSphere(center, radius);

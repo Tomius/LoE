@@ -3,6 +3,7 @@
 #ifndef ENGINE_CDLOD_GRID_MESH_H_
 #define ENGINE_CDLOD_GRID_MESH_H_
 
+#include <map>
 #include "../oglwrap_all.h"
 
 namespace engine {
@@ -32,6 +33,7 @@ class GridMesh {
   gl::ArrayBuffer aPositions_, aRenderData_;
   int index_count_, dimension_;
   std::vector<glm::vec4> render_data_; // xy: offset, z: scale, w: level
+  std::map<int, int> statistics_;
 
   GLushort indexOf(int x, int y);
 
@@ -48,6 +50,8 @@ class GridMesh {
   void render();
 
   int dimension() const {return dimension_;}
+  size_t node_count() const { return render_data_.size(); }
+  std::map<int, int> const& statistics() const { return statistics_; }
 };
 
 } // namespace cdlod

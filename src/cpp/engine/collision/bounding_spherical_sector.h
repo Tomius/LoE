@@ -9,6 +9,12 @@
 namespace engine {
 
 class BoundingSphericalSector : public BoundingBox {
+  bool invalid_ = true;
+
+  static bool isValid(glm::vec3 model_pos) {
+    return 0 <= model_pos.x && model_pos.x <= global_terrain::w &&
+           0 <= model_pos.z && model_pos.z <= global_terrain::h;
+  }
 
   static glm::vec3 transform(glm::vec3 model_pos) {
     glm::vec2 angles_degree{model_pos.x * 360 / global_terrain::w,
@@ -30,14 +36,40 @@ class BoundingSphericalSector : public BoundingBox {
 
   BoundingSphericalSector(const glm::vec3& mins, const glm::vec3& maxes) {
     glm::vec3 diff = maxes - mins;
-    mins_ = maxes_ = transform(maxes);
-    for (float x = mins.x; x < maxes.x; x += diff.x/2.01f) {
-      for (float y = mins.y; y < maxes.y; y += diff.y/2.01f) {
-        for (float z = mins.z; z < maxes.z; z += diff.z/2.01f) {
-          mins_ = glm::min(transform({x, y, z}), mins_);
-          maxes_ = glm::max(transform({x, y, z}), maxes_);
+    glm::vec3 step = diff / 16.001f;
+    for (float x = mins.x; x < maxes.x; x += step.x) {
+      for (float y = mins.y; y < maxes.y; y += step.y) {
+        for (float z = mins.z; z < maxes.z; z += step.z) {
+          glm::vec3 vec{x, y, z};
+          if (isValid(vec)) {
+            glm::vec3 tvec{transform(vec)};
+            if (invalid_) {
+              mins_ = tvec;
+              maxes_ = tvec;
+              invalid_ = false;
+            } else {
+              mins_ = glm::min(tvec, mins_);
+              maxes_ = glm::max(tvec, maxes_);
+            }
+          }
         }
       }
+    }
+  }
+
+  virtual bool collidesWithSphere(const glm::vec3& center, float radius) const {
+    if (invalid_) {
+      return false;
+    } else {
+      return BoundingBox::collidesWithSphere(center, radius);
+    }
+  }
+
+  virtual bool collidesWithFrustum(const Frustum& frustum) const {
+    if (invalid_) {
+      return false;
+    } else {
+      return BoundingBox::collidesWithFrustum(frustum);
     }
   }
 };

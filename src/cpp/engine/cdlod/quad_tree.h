@@ -54,6 +54,10 @@ class QuadTree {
     mesh_.clearRenderList();
     glm::vec3 cam_pos = cam.transform()->pos();
     root_.selectNodes(hmap_, cam_pos, cam.frustum(), mesh_);
+    /*std::cout << "Node count: " << mesh_.node_count() << std::endl;
+    for (std::pair<int, int> pair : mesh_.statistics()) {
+      std::cout << pair.first << ": " << pair.second << std::endl;
+    }*/
     mesh_.render();
   }
 };

@@ -25,7 +25,7 @@ class BoundingBox {
   glm::vec3 center() const { return (maxes_+mins_) / 2.0f; }
   glm::vec3 extent() const { return maxes_-mins_; }
 
-  bool collidesWithSphere(const glm::vec3& center, float radius) const {
+  virtual bool collidesWithSphere(const glm::vec3& center, float radius) const {
     float dmin = 0;
     for (int i = 0; i < 3; ++i) {
       if (center[i] < mins_[i]) {
@@ -37,7 +37,7 @@ class BoundingBox {
     return dmin <= sqr(radius);
   }
 
-  bool collidesWithFrustum(const Frustum& frustum) const {
+  virtual bool collidesWithFrustum(const Frustum& frustum) const {
     glm::vec3 center = this->center();
     glm::vec3 extent = this->extent();
 
