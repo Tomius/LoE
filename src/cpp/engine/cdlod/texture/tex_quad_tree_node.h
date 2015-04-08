@@ -22,6 +22,8 @@ class TexQuadTreeNode {
   void age();
   void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum);
+  void createImage();
+  bool isImageReady();
 
   int center_x() const { return x_; }
   int center_z() const { return z_; }

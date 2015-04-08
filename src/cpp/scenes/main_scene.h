@@ -18,17 +18,17 @@ class MainScene : public engine::Scene {
  public:
   MainScene() {
     #if !ENGINE_NO_FULLSCREEN
-      glfwSetInputMode(window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      //glfwSetInputMode(window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     #endif
 
-    LoadingScreen();
-    glfwSwapBuffers(window());
+    //LoadingScreen();
+    //glfwSwapBuffers(window());
 
-    auto skybox = addComponent<Skybox>();
-    skybox->set_group(-1);
-    addComponent<Terrain>();
+    //auto skybox = addComponent<Skybox>();
+    //skybox->set_group(-1);
+    //addComponent<Terrain>();
     addComponent<TexTerrain>();
-    tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
+    /*tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
       M_PI/3, 2, 150000, glm::vec3(-5000, 0, 0), 0.5, 0.1);
 
     set_camera(tp_camera_);
@@ -38,7 +38,7 @@ class MainScene : public engine::Scene {
       engine::gui::Font{"src/resources/fonts/Vera.ttf", 30,
       glm::vec4(1, 0, 0, 1)});
     auto fps = addComponent<FpsDisplay>();
-    fps->set_group(2);
+    fps->set_group(2);*/
   }
   private:
     engine::FreeFlyCamera* free_fly_camera_ = nullptr;
