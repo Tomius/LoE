@@ -29,7 +29,7 @@ class MainScene : public engine::Scene {
     addComponent<Terrain>();
     addComponent<TexTerrain>();
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
-      M_PI/3, 2, 150000, glm::vec3(-5000, 0, 0), 0.5, 0.1);
+      M_PI/3, 2, 150000, glm::vec3(-5000, 0, 0), 0.2, 0.1);
 
     set_camera(tp_camera_);
     auto after_effects = addComponent<AfterEffects>(skybox);

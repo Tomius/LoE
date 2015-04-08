@@ -21,12 +21,11 @@ void TexQuadTreeNode::load() {
     return;
   }
 
-  // if (level_ == 0) {
-  //   std::cout << sx_ << ", " << sz_ << std::endl;
-  // }
+  char str[100];
+  int tx = x_ - sx_/2, ty = z_ - sz_/2;
+  sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level_, tx, ty);
 
-  std::string path = "src/resources/gmted2010/4/000_000.jpg";
-  Magick::Image image(path);
+  Magick::Image image(str);
   size_t w = image.columns();
   size_t h = image.rows();
   data_ = std::unique_ptr<GLubyte>{new GLubyte[w*h]};
