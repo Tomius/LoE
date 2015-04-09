@@ -7,7 +7,7 @@
 #include "./quad_grid_mesh.h"
 #include "./quad_tree_node.h"
 #include "../camera.h"
-#include "../height_map_interface.h"
+#include "../global_height_map.h"
 
 namespace engine {
 namespace cdlod {
@@ -16,7 +16,6 @@ class QuadTree {
   QuadGridMesh mesh_;
   int node_dimension_; // must be initialized before root
   QuadTreeNode root_;
-  const HeightMapInterface& hmap_;
 
   GLubyte max_node_level(int w, int h) const {
     int x_depth = 0;
@@ -32,11 +31,11 @@ class QuadTree {
   }
 
  public:
-  QuadTree(const HeightMapInterface& hmap, int node_dimension = 32)
+  QuadTree(int node_dimension = 64)
       : mesh_(node_dimension), node_dimension_(node_dimension)
-      , root_(hmap.w()/2, hmap.h()/2,
-              max_node_level(hmap.w(), hmap.h()), node_dimension)
-      , hmap_(hmap) {}
+      , root_(GlobalHeightMap::w/2, GlobalHeightMap::h/2,
+              max_node_level(GlobalHeightMap::w, GlobalHeightMap::h),
+              node_dimension) {}
 
   int node_dimension() const {
     return node_dimension_;
@@ -53,7 +52,7 @@ class QuadTree {
   void render(const engine::Camera& cam) {
     mesh_.clearRenderList();
     glm::vec3 cam_pos = cam.transform()->pos();
-    root_.selectNodes(hmap_, cam_pos, cam.frustum(), mesh_);
+    root_.selectNodes(cam_pos, cam.frustum(), mesh_);
     /*std::cout << "Node count: " << mesh_.node_count() << std::endl;
     for (std::pair<int, int> pair : mesh_.statistics()) {
       std::cout << pair.first << ": " << pair.second << std::endl;

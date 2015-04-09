@@ -12,7 +12,6 @@
 #include "./game_object.h"
 #include "./oglwrap_all.h"
 #include "./shader_manager.h"
-#include "./auto_reset_event.h"
 
 namespace engine {
 

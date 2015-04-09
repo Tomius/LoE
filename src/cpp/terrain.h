@@ -6,7 +6,7 @@
 #include "./skybox.h"
 #include "./shadow.h"
 #include "engine/oglwrap_all.h"
-#include "engine/multi_level_height_map.h"
+#include "engine/global_height_map.h"
 #include "engine/game_object.h"
 #include "engine/shader_manager.h"
 #include "engine/cdlod/terrain_mesh.h"
@@ -16,10 +16,7 @@ class Terrain : public engine::GameObject {
   explicit Terrain(engine::GameObject* parent);
   virtual ~Terrain() {}
 
-  const engine::HeightMapInterface& height_map() { return height_map_; }
-
  private:
-  engine::GlobalHeightMap height_map_;
   engine::cdlod::TerrainMesh mesh_;
   engine::ShaderProgram prog_;  // has to be inited after mesh_
 

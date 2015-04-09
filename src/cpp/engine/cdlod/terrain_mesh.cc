@@ -6,9 +6,7 @@
 namespace engine {
 namespace cdlod {
 
-TerrainMesh::TerrainMesh(engine::ShaderManager* manager,
-                         const HeightMapInterface& height_map)
-    : mesh_(height_map), height_map_(height_map) {
+TerrainMesh::TerrainMesh(engine::ShaderManager* manager) {
   gl::ShaderSource vs_src{"engine/cdlod_terrain.vert"};
   manager->publish("engine/cdlod_terrain.vert", vs_src);
 }
@@ -25,13 +23,13 @@ void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
   tex_unit_ = tex_unit;
   gl::UniformSampler(program, "CDLODTerrain_uHeightMap") = tex_unit;
   gl::Uniform<glm::vec2>(program, "CDLODTerrain_uTexSize") =
-      glm::vec2(height_map_.w(), height_map_.h());
+      glm::vec2(GlobalHeightMap::w, GlobalHeightMap::h);
   gl::Uniform<float>(program, "CDLODTerrain_uNodeDimension") =
       mesh_.node_dimension();
 
 
   gl::BindToTexUnit(height_map_tex_, tex_unit);
-  height_map_.upload(height_map_tex_);
+  GlobalHeightMap::upload(height_map_tex_);
   height_map_tex_.minFilter(gl::kLinearMipmapLinear);
   height_map_tex_.magFilter(gl::kNearest);
   height_map_tex_.wrapS(gl::kClampToEdge);

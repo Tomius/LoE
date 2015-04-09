@@ -8,23 +8,19 @@
 #include "../shader_manager.h"
 
 namespace engine {
-
 namespace cdlod {
 
 class TerrainMesh {
  public:
-  explicit TerrainMesh(engine::ShaderManager* manager,
-                       const HeightMapInterface& height_map);
+  explicit TerrainMesh(engine::ShaderManager* manager);
   void setup(const gl::Program& program, int tex_unit);
   void render(const Camera& cam);
-  const HeightMapInterface& height_map() { return height_map_; }
 
  private:
   QuadTree mesh_;
   gl::Texture2DArray height_map_tex_;
   std::unique_ptr<gl::LazyUniform<glm::vec3>> uCamPos_;
   std::unique_ptr<gl::LazyUniform<GLfloat>> uNodeDimension_;
-  const HeightMapInterface& height_map_;
   int tex_unit_;
 };
 

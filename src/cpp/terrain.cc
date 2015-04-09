@@ -7,7 +7,7 @@
 
 Terrain::Terrain(engine::GameObject* parent)
     : engine::GameObject(parent)
-    , mesh_(scene_->shader_manager(), height_map_)
+    , mesh_(scene_->shader_manager())
     , prog_(scene_->shader_manager()->get("terrain.vert"),
             scene_->shader_manager()->get("terrain.frag"))
     , uProjectionMatrix_(prog_, "uProjectionMatrix")

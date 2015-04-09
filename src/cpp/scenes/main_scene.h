@@ -7,10 +7,10 @@
 #include "../engine/behaviour.h"
 #include "../engine/debug/debug_shape.h"
 #include "../engine/gui/label.h"
+#include "../engine/cdlod/texture/tex_quad_tree.h"
 #include "../loading_screen.h"
 #include "../skybox.h"
 #include "../terrain.h"
-#include "../tex_terrain.h"
 #include "../fps_display.h"
 #include "../after_effects.h"
 
@@ -27,7 +27,7 @@ class MainScene : public engine::Scene {
     auto skybox = addComponent<Skybox>();
     skybox->set_group(-1);
     addComponent<Terrain>();
-    addComponent<TexTerrain>();
+    addComponent<engine::cdlod::TexQuadTree>();
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
       M_PI/3, 2, 150000, glm::vec3(-5000, 0, 0), 0.2, 0.1);
 

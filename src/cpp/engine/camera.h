@@ -10,7 +10,6 @@
 
 #include "./timer.h"
 #include "./behaviour.h"
-#include "./height_map_interface.h"
 #include "collision/frustum.h"
 
 namespace engine {

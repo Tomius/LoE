@@ -5,7 +5,7 @@
 
 #include <memory>
 #include "./quad_grid_mesh.h"
-#include "../height_map_interface.h"
+#include "../global_height_map.h"
 #include "../collision/bounding_spherical_sector.h"
 
 namespace engine {
@@ -21,13 +21,11 @@ class QuadTreeNode {
     return bbox_.collidesWithSphere(center, radius);
   }
 
-  static bool isOutsideUsefulArea(const HeightMapInterface& hmap,
-                                  int x, int z, int level, int dimension);
+  static bool isOutsideUsefulArea(int x, int z, int level, int dimension);
 
-  void initChildren(const HeightMapInterface& hmap);
+  void initChildren();
 
-  void selectNodes(const HeightMapInterface& hmap,
-                   const glm::vec3& cam_pos,
+  void selectNodes(const glm::vec3& cam_pos,
                    const Frustum& frustum,
                    QuadGridMesh& grid_mesh);
 
