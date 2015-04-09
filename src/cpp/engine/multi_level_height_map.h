@@ -53,14 +53,15 @@ class GlobalHeightMap : public HeightMapInterface {
 
   virtual void upload(gl::Texture2DArray& tex) const override {
     std::string dir = global_terrain::base_path;
-    //glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_R8,
-                   global_terrain::atlas_elem_w,
-                   global_terrain::atlas_elem_h,
-                   global_terrain::atlas_elem_num);
-    int i = 0;
+    int w = global_terrain::atlas_elem_w;
+    int h = global_terrain::atlas_elem_h;
+    int d = global_terrain::atlas_elem_num;
+    int levels = 1 + std::floor(std::log2(std::max(w, h)));
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, levels, GL_R8, w, h, d);
+
+    int level = 0;
     for (int y = 0; y < 180; y += 20) {
-      for (int x = 0; x < 360; x += 30, ++i) {
+      for (int x = 0; x < 360; x += 30, ++level) {
         char filename[12];
         sprintf(filename, "%03d_%03d.jpg", x, y);
 
@@ -79,7 +80,7 @@ class GlobalHeightMap : public HeightMapInterface {
           gl::PixelStore(gl::kUnpackAlignment, 1);
         }
 
-        tex.subUpload(0, 0, i, w, h, 1, gl::kRed, gl::kUnsignedByte, data);
+        tex.subUpload(0, 0, level, w, h, 1, gl::kRed, gl::kUnsignedByte, data);
 
         if (bad_alignment) {
           gl::PixelStore(gl::kUnpackAlignment, unpack_aligment);
