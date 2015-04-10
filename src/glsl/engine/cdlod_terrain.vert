@@ -22,8 +22,10 @@ uniform vec2 CDLODTerrain_uTexSize;
 uniform vec3 CDLODTerrain_uCamPos;
 uniform float CDLODTerrain_uNodeDimension;
 
+ivec2 CDLODTerrain_hmap_size = ivec2(172800, 86400);
+
 vec3 getAtlasTexcoord(vec2 absolute_coord) {
-  ivec2 tex_size = ivec2(5400*4, 2700*4);
+  ivec2 tex_size = CDLODTerrain_hmap_size;
   ivec2 atlas_size = ivec2(12, 9);
   ivec2 atlas_elem_size = tex_size / atlas_size;
   ivec2 coord = ivec2(absolute_coord);
@@ -33,6 +35,7 @@ vec3 getAtlasTexcoord(vec2 absolute_coord) {
 }
 
 float CDLODTerrain_fetchHeight(vec2 tex_coord, float morph) {
+  return 10*CDLODTerrain_uLevel + 5*morph;
   // return texelFetch(CDLODTerrain_uHeightMap,
   //                   ivec3(getAtlasTexcoord(tex_coord)
   //                     * vec3(textureSize(CDLODTerrain_uHeightMap, CDLODTerrain_uLevel).xy, 1)),
@@ -48,11 +51,11 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / vec2(5400*4, 2700*4));
+  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_hmap_size);
   angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
   float M_PI = 3.14159265359;
   vec2 angles = 1.001 * angles_degree * M_PI / 180;
-  float r = 5400*4/2/M_PI + model_pos.y;
+  float r = CDLODTerrain_hmap_size.x/2/M_PI + model_pos.y;
   vec3 cartesian = vec3(
     r*sin(angles.y)*cos(angles.x),
     r*sin(angles.y)*sin(angles.x),
@@ -63,7 +66,7 @@ vec3 CDLODTerrain_worldPos(vec3 model_pos) {
 }
 
 vec3 CDLODTerrain_worldPos2(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / vec2(5400*4, 2700*4));
+  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_hmap_size);
   angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
   float M_PI = 3.14159265359;
   vec2 angles = 1.001 * angles_degree * M_PI / 180;
