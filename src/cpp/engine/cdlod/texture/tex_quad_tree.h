@@ -14,7 +14,10 @@ namespace cdlod {
 
 class TexQuadTree : public engine::GameObject {
   glm::ivec2 min_node_size_;
+  GLubyte max_node_level_;
   TexQuadTreeNode root_;
+  std::vector<GLubyte> texture_data_;
+  gl::TextureBuffer tex_buffer_;
 
   GLubyte max_node_level(int w, int h) const {
     int x_depth = 1;
@@ -36,11 +39,12 @@ class TexQuadTree : public engine::GameObject {
               int h = GlobalHeightMap::h,
               glm::ivec2 min_node_size = {256, 128})
       : GameObject(parent), min_node_size_{min_node_size}
-      , root_{w/2, h/2, w, h, max_node_level(w, h)} {}
+      , max_node_level_(max_node_level(w, h))
+      , root_{w/2, h/2, w, h, max_node_level_} {}
 
   TexQuadTree(GameObject* parent, int w, int h, GLubyte max_depth)
       : GameObject(parent), min_node_size_{w >> max_depth, h >> max_depth}
-      , root_{w/2, h/2, w, h, max_depth} {}
+      , max_node_level_(max_depth), root_{w/2, h/2, w, h, max_depth} {}
 
   glm::ivec2 min_node_size() const {
     return min_node_size_;
@@ -53,8 +57,11 @@ class TexQuadTree : public engine::GameObject {
   virtual void render() override {
     auto cam = scene_->camera();
     glm::vec3 cam_pos = cam->transform()->pos();
-    root_.selectNodes(cam_pos, cam->frustum());
+    texture_data_.clear();
+    root_.selectNodes(cam_pos, cam->frustum(), texture_data_);
     root_.age();
+    gl::Bind(tex_buffer_);
+    tex_buffer_.data(texture_data_, gl::kDynamicDraw);
   }
 };
 

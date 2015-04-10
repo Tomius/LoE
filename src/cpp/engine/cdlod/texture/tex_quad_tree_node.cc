@@ -14,13 +14,7 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
     : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
     , bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 100, z+(sz-sz/2)}} {}
 
-// TODO
-// it just decodes a jpg files to examine performance
 void TexQuadTreeNode::load() {
-  if (data_) {
-    return;
-  }
-
   char str[100];
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
   sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level_, tx, ty);
@@ -28,8 +22,16 @@ void TexQuadTreeNode::load() {
   Magick::Image image(str);
   size_t w = image.columns();
   size_t h = image.rows();
-  data_ = std::unique_ptr<GLubyte>{new GLubyte[w*h]};
-  image.write(0, 0, w, h, "R", MagickCore::CharPixel, data_.get());
+  data_.resize(w*h);
+  image.write(0, 0, w, h, "R", MagickCore::CharPixel, data_.data());
+}
+
+void TexQuadTreeNode::upload(std::vector<GLubyte>& texture_data) {
+  if (data_.empty()) {
+    load();
+  }
+
+  texture_data.insert(texture_data.end(), data_.begin(), data_.end());
 }
 
 void TexQuadTreeNode::age() {
@@ -79,8 +81,9 @@ void TexQuadTreeNode::initChild(int i) {
 }
 
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
-                                  const Frustum& frustum) {
-  float lod_range = 1.01 * std::max(sx_, sz_);
+                                  const Frustum& frustum,
+                                  std::vector<GLubyte>& texture_data) {
+  float lod_range = 1.01 * sqrt(sx_*sx_ + sz_*sz_);
 
   // check if the node is visible
   // if (!bbox_.collidesWithFrustum(frustum)) {
@@ -89,7 +92,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
-    load(); // load in the texture
+    upload(texture_data);
   } else {
     bool children_cover_whole_area = true;
     for (int i = 0; i < 4; ++i) {
@@ -101,7 +104,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
       // call selectNodes on the child (recursive)
       if (child->collidesWithSphere(cam_pos, lod_range)) {
-        child->selectNodes(cam_pos, frustum);
+        child->selectNodes(cam_pos, frustum, texture_data);
       } else {
         children_cover_whole_area = false;
       }
@@ -109,7 +112,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
     // If we have to render something, we have to load the texture too.
     if (!children_cover_whole_area) {
-      load();
+      upload(texture_data);
     }
   }
 

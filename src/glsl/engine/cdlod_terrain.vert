@@ -36,10 +36,10 @@ float CDLODTerrain_fetchHeight(vec2 tex_coord, float morph) {
   // return texelFetch(CDLODTerrain_uHeightMap,
   //                   ivec3(getAtlasTexcoord(tex_coord)
   //                     * vec3(textureSize(CDLODTerrain_uHeightMap, CDLODTerrain_uLevel).xy, 1)),
-  //                   CDLODTerrain_uLevel).x * 64;
+  //                   CDLODTerrain_uLevel).x * 100;
   return textureLod(CDLODTerrain_uHeightMap,
                     getAtlasTexcoord(tex_coord),
-                    CDLODTerrain_uLevel + morph).x * 64;
+                    CDLODTerrain_uLevel + morph).x * 100;
 }
 
 vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {

@@ -41,8 +41,8 @@ enum class BufferBinding : GLenum {
 #if OGLWRAP_DEFINE_EVERYTHING || defined(GL_SHADER_STORAGE_BUFFER_BINDING)
   kShaderStorageBufferBinding = GL_SHADER_STORAGE_BUFFER_BINDING,
 #endif
-#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TEXTURE_BINDING_BUFFER)
-  kTextureBindingBuffer = GL_TEXTURE_BINDING_BUFFER,
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TEXTURE_BUFFER_BINDING)
+  kTextureBufferBinding = GL_TEXTURE_BUFFER_BINDING,
 #endif
 #if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TRANSFORM_FEEDBACK_BUFFER_BINDING)
   kTransformFeedbackBufferBinding = GL_TRANSFORM_FEEDBACK_BUFFER_BINDING,
@@ -118,10 +118,10 @@ inline BufferBinding GetBindingTarget(BufferType type) {
       DebugOutput::LastUsedBindTarget() = "GL_SHADER_STORAGE_BUFFER_BINDING";
       break;
 #endif
-#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TEXTURE_BINDING_BUFFER) && defined(GL_TEXTURE_BUFFER)
+#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TEXTURE_BUFFER_BINDING) && defined(GL_TEXTURE_BUFFER)
     case BufferType::kTextureBuffer:
-      target = BufferBinding::kTextureBindingBuffer;
-      DebugOutput::LastUsedBindTarget() = "GL_TEXTURE_BINDING_BUFFER";
+      target = BufferBinding::kTextureBufferBinding;
+      DebugOutput::LastUsedBindTarget() = "GL_TEXTURE_BUFFER_BINDING";
       break;
 #endif
 #if OGLWRAP_DEFINE_EVERYTHING || defined(GL_TRANSFORM_FEEDBACK_BUFFER_BINDING) && defined(GL_TRANSFORM_FEEDBACK_BUFFER)
