@@ -1,4 +1,4 @@
-#version 130
+#version 330
 
 #export vec4 CDLODTerrain_modelPos();
 #export vec3 CDLODTerrain_worldPos(vec3 model_pos);
@@ -15,22 +15,22 @@ vec2 CDLODTerrain_uOffset = CDLODTerrain_uRenderData.xy;
 float CDLODTerrain_uScale = CDLODTerrain_uRenderData.z;
 int CDLODTerrain_uLevel = int(CDLODTerrain_uRenderData.w);
 
-uniform sampler2DArray CDLODTerrain_uHeightMap;
 uniform ivec2 CDLODTerrain_uTexSize;
 uniform vec3 CDLODTerrain_uCamPos;
 uniform float CDLODTerrain_uNodeDimension;
 
-uniform int max_level;
-uniform usamplerBuffer uHeightMap;
-uniform usamplerBuffer uHeightMapIndex;
+uniform int CDLODTerrain_max_level;
+uniform usamplerBuffer CDLODTerrain_uHeightMap;
+uniform usamplerBuffer CDLODTerrain_uHeightMapIndex;
 
-struct Node {
+struct CDLODTerrain_Node {
   ivec2 center, size;
   int level, index;
-}
+};
 
-Node getChildOf(Node node, ivec2 tex_coord) {
-  Node child;
+CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
+                                          ivec2 tex_coord) {
+  CDLODTerrain_Node child;
   if (tex_coord.y < node.center.y) {
     if (tex_coord.x < node.center.x) {
       // top left
@@ -46,16 +46,16 @@ Node getChildOf(Node node, ivec2 tex_coord) {
       child.index = 4*node.index + 2;
     }
   } else {
-    if (tex_coord.x < center.x) {
+    if (tex_coord.x < node.center.x) {
       // bottom left
       child.size = ivec2(node.size.x/2, node.size.y - node.size.y/2);
       child.center = node.center + ivec2(-child.size.x + child.size.x/2,
                                          child.size.y/2);
       child.index = 4*node.index + 3;
 
-      size = ivec2(size.x/2, size.y - size.y/2);
-      center += ivec2(-size.x - size.x/2, size.y/2);
-      index = 4*index + 3;
+      child.size = ivec2(node.size.x/2, node.size.y - node.size.y/2);
+      child.center += ivec2(-child.size.x - child.size.x/2, child.size.y/2);
+      child.index = 4*node.index + 3;
     } else {
       // bottom right
       child.size = ivec2(node.size.x - node.size.x/2,
@@ -70,8 +70,8 @@ Node getChildOf(Node node, ivec2 tex_coord) {
 }
 
 // bilinear sampling
-void bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
-                    out ivec4 offsets, out vec4 weights) {
+void CDLODTerrain_bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
+                                 out ivec4 offsets, out vec4 weights) {
   vec2 sp = coord * tex_size; // sample position in the texture
 
   // get the four nearest points
@@ -87,7 +87,7 @@ void bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
   weights.w = (br.x - sp.x)*(br.y - sp.y);
 
   // clamp to edge
-  tl = max(tl, tex_size-1); // this shouldn't do anything
+  tl = max(tl, tex_size-1);
   tr = max(tr, tex_size-1);
   bl = max(bl, tex_size-1);
   br = max(br, tex_size-1);
@@ -99,21 +99,21 @@ void bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
   offsets.w = base_offset + br.y * tex_size.y + br.x;
 }
 
-void calculateOffset(Node node, vec2 sample,
-                     out ivec4 offsets, out vec4 weights) {
-  ivec4 data = texelFetch(uHeightMapIndex, index);
-  int base_offset = data.r;
+void CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
+                                  out ivec4 offsets, out vec4 weights) {
+  uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
+  int base_offset = int(data.x);
   ivec2 top_left = node.center - node.size/2;
   // the [0-1]x[0-1] coordinate of the sample in the node
   vec2 coord = (sample - vec2(top_left)) / vec2(node.size);
-  ivec2 tex_size = ivec2(data.g & 0xFFFF0000, data.g & 0x0000FFFF);
-  bilinearSample(base_offset, coord, tex_size, offsets, weights);
+  ivec2 tex_size = ivec2(data.y & uint(0xFFFF0000), data.y & uint(0x0000FFFF));
+  CDLODTerrain_bilinearSample(base_offset, coord, tex_size, offsets, weights);
 }
 
-float fetchHeight(ivec4 offsets, vec4 weights) {
+float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
   float height = 0.0;
   for (int i = 0; i < 4; ++i) {
-    height += texelFetch(uHeightMap, offsets[i]) * weights[i];
+    height += texelFetch(CDLODTerrain_uHeightMap, offsets[i]).x * weights[i];
   }
   return height;
 }
@@ -123,23 +123,23 @@ float CDLODTerrain_getHeight(vec2 sample, float morph) {
       || sample.y < 0 || CDLODTerrain_uTexSize.y < sample.y) {
     return 0.0;
   } else {
-    Node node;
+    CDLODTerrain_Node node;
     // Root node
     node.center = CDLODTerrain_uTexSize/2;
     node.size = CDLODTerrain_uTexSize;
-    node.level = max_level;
+    node.level = CDLODTerrain_max_level;
     node.index = 0;
 
     // Find the node that contains the given point (sample),
     // and its level is CDLODTerrain_uLevel.
     while (node.level > CDLODTerrain_uLevel) {
-      node = getChildOf(node, sample);
+      node = CDLODTerrain_getChildOf(node, ivec2(sample));
     }
 
     ivec4 offsets;
     vec4 weights;
-    calculateOffset(node, sample, offsets, weights);
-    return fetchHeight(offsets, weights);
+    CDLODTerrain_calculateOffset(node, sample, offsets, weights);
+    return CDLODTerrain_fetchHeight(offsets, weights);
   }
 }
 
