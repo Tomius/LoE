@@ -5,7 +5,7 @@
 #include "engine/cdlod_terrain.vert"
 
 uniform mat4 uProjectionMatrix, uCameraMatrix, uModelMatrix;
-uniform vec2 CDLODTerrain_uTexSize;
+uniform ivec2 CDLODTerrain_uTexSize;
 
 out vec3  w_vNormal;
 out vec3  c_vPos, w_vPos, m_vPos;
@@ -13,14 +13,14 @@ out vec2  vTexCoord;
 out float vLevel, vMorph;
 
 int CDLODTerrain_uLevel;
-float CDLODTerrain_fetchHeight(vec2 tex_coord, float morph);
+float CDLODTerrain_getHeight(vec2 tex_coord, float morph);
 
 void main() {
   vec4 temp = CDLODTerrain_modelPos();
   vec3 m_pos = temp.xyz;
   vMorph = temp.w;
   m_pos.xz = clamp(m_pos.xz, vec2(1), CDLODTerrain_uTexSize - vec2(1));
-  m_pos.y = CDLODTerrain_fetchHeight(m_pos.xz, temp.w);
+  m_pos.y = CDLODTerrain_getHeight(m_pos.xz, temp.w);
   m_vPos = m_pos;
 
   vec2 tex_coord = CDLODTerrain_texCoord(m_pos);

@@ -22,20 +22,10 @@ void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
 
   tex_unit_ = tex_unit;
   gl::UniformSampler(program, "CDLODTerrain_uHeightMap") = tex_unit;
-  gl::Uniform<glm::vec2>(program, "CDLODTerrain_uTexSize") =
-      glm::vec2(GlobalHeightMap::w, GlobalHeightMap::h);
+  gl::Uniform<glm::ivec2>(program, "CDLODTerrain_uTexSize") =
+      glm::ivec2(GlobalHeightMap::w, GlobalHeightMap::h);
   gl::Uniform<float>(program, "CDLODTerrain_uNodeDimension") =
       mesh_.node_dimension();
-
-
-  gl::BindToTexUnit(height_map_tex_, tex_unit);
-  GlobalHeightMap::upload(height_map_tex_);
-  height_map_tex_.minFilter(gl::kLinearMipmapLinear);
-  height_map_tex_.magFilter(gl::kNearest);
-  height_map_tex_.wrapS(gl::kClampToEdge);
-  height_map_tex_.wrapT(gl::kClampToEdge);
-  height_map_tex_.wrapP(gl::kClampToEdge);
-  gl::Unbind(height_map_tex_);
 }
 
 void TerrainMesh::render(const Camera& cam) {
