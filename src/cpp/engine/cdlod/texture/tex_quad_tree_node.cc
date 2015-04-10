@@ -20,18 +20,10 @@ void TexQuadTreeNode::load() {
   sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level_, tx, ty);
 
   Magick::Image image(str);
-  size_t w = image.columns();
-  size_t h = image.rows();
-  data_.resize(w*h);
-  image.write(0, 0, w, h, "R", MagickCore::CharPixel, data_.data());
-}
-
-void TexQuadTreeNode::upload(std::vector<GLubyte>& texture_data) {
-  if (data_.empty()) {
-    load();
-  }
-
-  texture_data.insert(texture_data.end(), data_.begin(), data_.end());
+  tex_w_ = image.columns();
+  tex_h_ = image.rows();
+  data_.resize(tex_w_*tex_h_);
+  image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::CharPixel, data_.data());
 }
 
 void TexQuadTreeNode::age() {
@@ -82,7 +74,9 @@ void TexQuadTreeNode::initChild(int i) {
 
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
-                                  std::vector<GLubyte>& texture_data) {
+                                  int index,
+                                  std::vector<GLubyte>& texture_data,
+                                  TexQuadTreeNodeIndex* indices) {
   float lod_range = 1.01 * sqrt(sx_*sx_ + sz_*sz_);
 
   // check if the node is visible
@@ -92,7 +86,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
-    upload(texture_data);
+    upload(index, texture_data, indices);
   } else {
     bool children_cover_whole_area = true;
     for (int i = 0; i < 4; ++i) {
@@ -104,7 +98,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
       // call selectNodes on the child (recursive)
       if (child->collidesWithSphere(cam_pos, lod_range)) {
-        child->selectNodes(cam_pos, frustum, texture_data);
+        child->selectNodes(cam_pos, frustum, 4*index+i+1, texture_data, indices);
       } else {
         children_cover_whole_area = false;
       }
@@ -112,11 +106,22 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
     // If we have to render something, we have to load the texture too.
     if (!children_cover_whole_area) {
-      upload(texture_data);
+      upload(index, texture_data, indices);
     }
   }
 
   last_used_ = 0;
+}
+
+void TexQuadTreeNode::upload(int index, std::vector<GLubyte>& texture_data,
+                             TexQuadTreeNodeIndex* indices) {
+  if (data_.empty()) {
+    load();
+  }
+
+  GLint offset = sizeof(TexQuadTreeNodeIndex) * texture_data.size();
+  indices[index] = TexQuadTreeNodeIndex{offset, tex_w_, tex_h_};
+  texture_data.insert(texture_data.end(), data_.begin(), data_.end());
 }
 
 }  // namespace cdlod

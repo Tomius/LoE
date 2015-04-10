@@ -1,4 +1,4 @@
-#version 130
+#version 330
 
 #include "sky.frag"
 #include "depth_of_field.frag"

@@ -1,6 +1,6 @@
 // Copyright (c) 2015, Tamas Csala
 
-#version 130
+#version 330
 
 attribute vec2 aPosition, aTexCoord;
 

@@ -9,6 +9,11 @@
 namespace engine {
 namespace cdlod {
 
+struct TexQuadTreeNodeIndex {
+  GLint data_offset;
+  GLint tex_size_x, tex_size_y;
+};
+
 class TexQuadTreeNode {
  public:
   TexQuadTreeNode(int center_x, int center_z,
@@ -19,11 +24,13 @@ class TexQuadTreeNode {
   }
 
   void load();
-  void upload(std::vector<GLubyte>& texture_data);
   void age();
   void initChild(int i);
-  void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
-                   std::vector<GLubyte>& texture_data);
+  void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum, int index,
+                   std::vector<GLubyte>& texture_data,
+                   TexQuadTreeNodeIndex* indices);
+  void upload(int index, std::vector<GLubyte>& texture_data,
+              TexQuadTreeNodeIndex* indices);
 
   int center_x() const { return x_; }
   int center_z() const { return z_; }
@@ -32,7 +39,7 @@ class TexQuadTreeNode {
   int level() const { return level_; }
 
  private:
-  int x_, z_, sx_, sz_;
+  int x_, z_, sx_, sz_, tex_w_, tex_h_;
   int last_used_ = 0;
   GLubyte level_;
   BoundingSphericalSector bbox_;

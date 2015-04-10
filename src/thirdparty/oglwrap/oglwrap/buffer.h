@@ -129,6 +129,9 @@ class BufferObject {
     size_t count() const { return size_ / sizeof(T); }
 
     /// Returns a pointer to the data
+    T* data() { return static_cast<T*>(data_); }
+
+    /// Returns a pointer to the data
     const T* data() const { return static_cast<const T*>(data_); }
 
    private:

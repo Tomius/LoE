@@ -2,7 +2,7 @@
 // This shader is based on an oglplus example:
 // http://oglplus.org/oglplus/html/oglplus_2023_sky_8cpp-example.html
 
-#version 130
+#version 330
 
 #export vec3 SkyColor(vec3 look_dir);
 #export vec3 SunPos();
