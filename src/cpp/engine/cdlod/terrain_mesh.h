@@ -4,6 +4,7 @@
 #define ENGINE_CDLOD_TERRAIN_MESH_H_
 
 #include "./quad_tree.h"
+#include "./texture/tex_quad_tree.h"
 #include "../oglwrap_all.h"
 #include "../shader_manager.h"
 
@@ -17,7 +18,8 @@ class TerrainMesh {
   void render(const Camera& cam);
 
  private:
-  QuadTree mesh_;
+  QuadTree quad_tree_;
+  TexQuadTree tex_quad_tree_;
   gl::Texture2DArray height_map_tex_;
   std::unique_ptr<gl::LazyUniform<glm::vec3>> uCamPos_;
   std::unique_ptr<gl::LazyUniform<GLfloat>> uNodeDimension_;

@@ -12,7 +12,7 @@
 namespace engine {
 namespace cdlod {
 
-class TexQuadTree : public engine::Behaviour {
+class TexQuadTree {
   glm::ivec2 min_node_size_;
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
@@ -47,18 +47,17 @@ class TexQuadTree : public engine::Behaviour {
   }
 
  public:
-  TexQuadTree(GameObject* parent,
-              int w = GlobalHeightMap::w,
+  TexQuadTree(int w = GlobalHeightMap::w,
               int h = GlobalHeightMap::h,
               glm::ivec2 min_node_size = {256, 128})
-      : Behaviour(parent), min_node_size_{min_node_size}
+      : min_node_size_{min_node_size}
       , max_node_level_(max_node_level(w, h))
       , root_{w/2, h/2, w, h, max_node_level_} {
     initTexIndexBuffer();
   }
 
-  TexQuadTree(GameObject* parent, int w, int h, GLubyte max_depth)
-      : Behaviour(parent), min_node_size_{w >> max_depth, h >> max_depth}
+  TexQuadTree(int w, int h, GLubyte max_depth)
+      : min_node_size_{w >> max_depth, h >> max_depth}
       , max_node_level_(max_depth), root_{w/2, h/2, w, h, max_depth} {
     initTexIndexBuffer();
   }
@@ -71,15 +70,14 @@ class TexQuadTree : public engine::Behaviour {
     return root_;
   }
 
-  virtual void update() override {
+  void update(Camera const& cam) {
     gl::Bind(tex_index_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
 
-      auto cam = scene_->camera();
-      glm::vec3 cam_pos = cam->transform()->pos();
+      glm::vec3 cam_pos = cam.transform()->pos();
       texture_data_.clear();
-      root_.selectNodes(cam_pos, cam->frustum(), 0, texture_data_, indices);
+      root_.selectNodes(cam_pos, cam.frustum(), 0, texture_data_, indices);
       root_.age();
     } // unmap indices
 

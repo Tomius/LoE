@@ -27,7 +27,6 @@ class MainScene : public engine::Scene {
     auto skybox = addComponent<Skybox>();
     skybox->set_group(-1);
     addComponent<Terrain>();
-    addComponent<engine::cdlod::TexQuadTree>();
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
         M_PI/3, 2, 5*radius, glm::vec3(-1.5*radius, 0, 0), 0.2, 0.1);

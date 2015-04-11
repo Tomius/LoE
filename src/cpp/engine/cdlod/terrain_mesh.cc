@@ -14,8 +14,8 @@ TerrainMesh::TerrainMesh(engine::ShaderManager* manager) {
 void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
   gl::Use(program);
 
-  mesh_.setupPositions(program | "CDLODTerrain_aPosition");
-  mesh_.setupRenderData(program | "CDLODTerrain_uRenderData");
+  quad_tree_.setupPositions(program | "CDLODTerrain_aPosition");
+  quad_tree_.setupRenderData(program | "CDLODTerrain_uRenderData");
 
   uCamPos_ = engine::make_unique<gl::LazyUniform<glm::vec3>>(
       program, "CDLODTerrain_uCamPos");
@@ -25,14 +25,16 @@ void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
   gl::Uniform<glm::ivec2>(program, "CDLODTerrain_uTexSize") =
       glm::ivec2(GlobalHeightMap::w, GlobalHeightMap::h);
   gl::Uniform<float>(program, "CDLODTerrain_uNodeDimension") =
-      mesh_.node_dimension();
+      quad_tree_.node_dimension();
 }
 
-void TerrainMesh::render(const Camera& cam) {
+void TerrainMesh::render(Camera const& cam) {
   if (!uCamPos_) {
     throw std::logic_error("engine::cdlod::terrain requires a setup() call, "
                            "before the use of the render() function.");
   }
+
+  tex_quad_tree_.update(cam);
 
   gl::BindToTexUnit(height_map_tex_, tex_unit_);
 
@@ -41,7 +43,7 @@ void TerrainMesh::render(const Camera& cam) {
   gl::FrontFace(gl::kCcw);
   gl::TemporaryEnable cullface{gl::kCullFace};
 
-  mesh_.render(cam);
+  quad_tree_.render(cam);
 
   gl::UnbindFromTexUnit(height_map_tex_, tex_unit_);
 }
