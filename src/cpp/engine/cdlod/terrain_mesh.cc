@@ -3,6 +3,8 @@
 #include "./terrain_mesh.h"
 #include "../oglwrap_all.h"
 
+#define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
+
 namespace engine {
 namespace cdlod {
 
@@ -11,7 +13,8 @@ TerrainMesh::TerrainMesh(engine::ShaderManager* manager) {
   manager->publish("engine/cdlod_terrain.vert", vs_src);
 }
 
-void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
+void TerrainMesh::setup(const gl::Program& program,
+                        int tex_unit, int index_tex_unit) {
   gl::Use(program);
 
   quad_tree_.setupPositions(program | "CDLODTerrain_aPosition");
@@ -22,8 +25,15 @@ void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
 
   tex_unit_ = tex_unit;
   gl::UniformSampler(program, "CDLODTerrain_uHeightMap") = tex_unit;
+  index_tex_unit_ = index_tex_unit;
+  gl::UniformSampler(program, "CDLODTerrain_uHeightMapIndex") = index_tex_unit;
+
+  gl::Uniform<int>(program, "CDLODTerrain_max_level") =
+      tex_quad_tree_.max_node_level();
+
   gl::Uniform<glm::ivec2>(program, "CDLODTerrain_uTexSize") =
       glm::ivec2(GlobalHeightMap::w, GlobalHeightMap::h);
+
   gl::Uniform<float>(program, "CDLODTerrain_uNodeDimension") =
       quad_tree_.node_dimension();
 }
@@ -36,7 +46,10 @@ void TerrainMesh::render(Camera const& cam) {
 
   tex_quad_tree_.update(cam);
 
-  gl::BindToTexUnit(height_map_tex_, tex_unit_);
+  gl(ActiveTexture(GL_TEXTURE0 + tex_unit_));
+  gl(BindTexture(GL_TEXTURE_BUFFER, tex_quad_tree_.texture()));
+  gl(ActiveTexture(GL_TEXTURE0 + index_tex_unit_));
+  gl(BindTexture(GL_TEXTURE_BUFFER, tex_quad_tree_.index_texture()));
 
   uCamPos_->set(cam.transform()->pos());
 
@@ -45,8 +58,13 @@ void TerrainMesh::render(Camera const& cam) {
 
   quad_tree_.render(cam);
 
-  gl::UnbindFromTexUnit(height_map_tex_, tex_unit_);
+  gl(ActiveTexture(GL_TEXTURE0 + index_tex_unit_));
+  gl(BindTexture(GL_TEXTURE_BUFFER, 0));
+  gl(ActiveTexture(GL_TEXTURE0 + tex_unit_));
+  gl(BindTexture(GL_TEXTURE_BUFFER, 0));
 }
 
 }  // namespace cdlod
 }  // namespace engine
+
+#undef gl

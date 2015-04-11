@@ -139,7 +139,7 @@ class BufferObject {
     size_t size_;  // The size of the data fetched from the buffer.
   };
 
-  using Map = TypedMap<GLbyte>;
+  using Map = TypedMap<GLubyte>;
 #endif  // glMapBuffer && glUnmapBuffer && glMapBufferRange
 
  protected:

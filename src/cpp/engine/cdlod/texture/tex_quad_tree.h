@@ -8,6 +8,9 @@
 #include "./tex_quad_tree_node.h"
 #include "../../global_height_map.h"
 #include "../../camera.h"
+#include "../../oglwrap_all.h"
+
+#define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
 
 namespace engine {
 namespace cdlod {
@@ -18,7 +21,8 @@ class TexQuadTree {
   TexQuadTreeNode root_;
   std::vector<GLubyte> texture_data_;
   gl::TextureBuffer tex_buffer_;
-  gl::TextureBuffer tex_index_buffer_;
+  gl::TextureBuffer index_tex_buffer_;
+  GLuint textures_[2];
 
   GLubyte max_node_level(int w, int h) const {
     int x_depth = 1;
@@ -40,10 +44,10 @@ class TexQuadTree {
       node_count += 1 << (2*level); // pow(4, level)
     }
     size_t size = node_count*sizeof(TexQuadTreeNodeIndex);
-    gl::Bind(tex_index_buffer_);
-    tex_index_buffer_.data(size, nullptr, gl::kDynamicDraw);
-    std::memset(gl::TextureBuffer::TypedMap<GLubyte>{}.data(), 0, size);
-    gl::Unbind(tex_index_buffer_);
+    gl::Bind(index_tex_buffer_);
+    index_tex_buffer_.data(size, nullptr, gl::kDynamicDraw);
+    std::memset(gl::TextureBuffer::Map{}.data(), 0, size);
+    gl::Unbind(index_tex_buffer_);
   }
 
  public:
@@ -54,12 +58,18 @@ class TexQuadTree {
       , max_node_level_(max_node_level(w, h))
       , root_{w/2, h/2, w, h, max_node_level_} {
     initTexIndexBuffer();
+    gl(GenTextures(2, textures_));
   }
 
   TexQuadTree(int w, int h, GLubyte max_depth)
       : min_node_size_{w >> max_depth, h >> max_depth}
       , max_node_level_(max_depth), root_{w/2, h/2, w, h, max_depth} {
     initTexIndexBuffer();
+    gl(GenTextures(2, textures_));
+  }
+
+  ~TexQuadTree() {
+    gl(DeleteTextures(2, textures_));
   }
 
   glm::ivec2 min_node_size() const {
@@ -70,8 +80,20 @@ class TexQuadTree {
     return root_;
   }
 
+  int max_node_level() const {
+    return max_node_level_;
+  }
+
+  GLuint texture() const {
+    return textures_[0];
+  }
+
+  GLuint index_texture() const {
+    return textures_[1];
+  }
+
   void update(Camera const& cam) {
-    gl::Bind(tex_index_buffer_); {
+    gl::Bind(index_tex_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
 
@@ -81,12 +103,23 @@ class TexQuadTree {
       root_.age();
     } // unmap indices
 
+    gl(BindTexture(GL_TEXTURE_BUFFER, textures_[1]));
+    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG32UI, index_tex_buffer_.expose()));
+
     gl::Bind(tex_buffer_);
     tex_buffer_.data(texture_data_, gl::kStreamDraw);
+    gl::Unbind(tex_buffer_);
+
+    gl(BindTexture(GL_TEXTURE_BUFFER, textures_[0]));
+    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, tex_buffer_.expose()));
+
+    gl(BindTexture(GL_TEXTURE_BUFFER, 0));
   }
 };
 
 }  // namespace cdlod
 }  // namespace engine
+
+#undef gl
 
 #endif

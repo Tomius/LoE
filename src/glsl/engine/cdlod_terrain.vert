@@ -15,15 +15,13 @@ vec2 CDLODTerrain_uOffset = CDLODTerrain_uRenderData.xy;
 float CDLODTerrain_uScale = CDLODTerrain_uRenderData.z;
 int CDLODTerrain_uLevel = int(CDLODTerrain_uRenderData.w);
 
-uniform ivec2 CDLODTerrain_uTexSize;
+uniform ivec2 CDLODTerrain_uTexSize = ivec2(172800, 86400);
 uniform vec3 CDLODTerrain_uCamPos;
 uniform float CDLODTerrain_uNodeDimension;
 
 uniform int CDLODTerrain_max_level;
 uniform usamplerBuffer CDLODTerrain_uHeightMap;
 uniform usamplerBuffer CDLODTerrain_uHeightMapIndex;
-
-ivec2 CDLODTerrain_hmap_size = ivec2(172800, 86400);
 
 struct CDLODTerrain_Node {
   ivec2 center, size;
@@ -123,7 +121,7 @@ float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
 
 float CDLODTerrain_getHeight(vec2 sample, float morph) {
   // debug:
-  return 10*CDLODTerrain_uLevel + 5*morph;
+  //return 10*CDLODTerrain_uLevel + 5*morph;
   if (sample.x < 0 || CDLODTerrain_uTexSize.x < sample.x
       || sample.y < 0 || CDLODTerrain_uTexSize.y < sample.y) {
     return 0.0;
@@ -137,9 +135,9 @@ float CDLODTerrain_getHeight(vec2 sample, float morph) {
 
     // Find the node that contains the given point (sample),
     // and its level is CDLODTerrain_uLevel.
-    while (node.level > CDLODTerrain_uLevel) {
-      node = CDLODTerrain_getChildOf(node, ivec2(sample));
-    }
+    // while (node.level > CDLODTerrain_uLevel) {
+    //   node = CDLODTerrain_getChildOf(node, ivec2(sample));
+    // }
 
     ivec4 offsets;
     vec4 weights;
@@ -154,11 +152,11 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_hmap_size);
+  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_uTexSize);
   angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
   float M_PI = 3.14159265359;
   vec2 angles = 1.001 * angles_degree * M_PI / 180;
-  float r = CDLODTerrain_hmap_size.x/2/M_PI + model_pos.y;
+  float r = CDLODTerrain_uTexSize.x/2/M_PI + model_pos.y;
   vec3 cartesian = vec3(
     r*sin(angles.y)*cos(angles.x),
     r*sin(angles.y)*sin(angles.x),
@@ -169,7 +167,7 @@ vec3 CDLODTerrain_worldPos(vec3 model_pos) {
 }
 
 vec3 CDLODTerrain_worldPos2(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_hmap_size);
+  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_uTexSize);
   angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
   float M_PI = 3.14159265359;
   vec2 angles = 1.001 * angles_degree * M_PI / 180;
