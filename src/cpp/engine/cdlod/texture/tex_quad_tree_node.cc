@@ -17,7 +17,8 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
 void TexQuadTreeNode::load() {
   char str[100];
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
-  sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level_, tx, ty);
+  int level = level_;
+  sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level, tx, ty);
 
   Magick::Image image(str);
   tex_w_ = image.columns();
@@ -90,7 +91,8 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   }
 
   // if we can cover the whole area or if we are a leaf
-  if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
+  if (!bbox_.collidesWithSphere(cam_pos, lod_range)
+      || level_ == GlobalHeightMap::level_offset) {
     upload(index, texture_data, indices);
   } else {
     bool children_cover_whole_area = true;

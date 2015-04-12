@@ -6,6 +6,7 @@
 
 uniform mat4 uProjectionMatrix, uCameraMatrix, uModelMatrix;
 uniform ivec2 CDLODTerrain_uTexSize;
+float CDLODTerrain_getHeight(vec2 sample, float morph);
 
 out vec3  w_vNormal;
 out vec3  c_vPos, w_vPos, m_vPos;
@@ -18,10 +19,8 @@ void main() {
   vec4 temp = CDLODTerrain_modelPos();
   vec3 m_pos = temp.xyz;
   vMorph = temp.w;
-  if (m_pos.x < 0 || m_pos.x > CDLODTerrain_uTexSize.x ||
-      m_pos.z < 0 || m_pos.z > CDLODTerrain_uTexSize.y) {
-    m_pos = vec3(0.0);
-  }
+  m_pos.xz = clamp(m_pos.xz, vec2(1), CDLODTerrain_uTexSize - vec2(1));
+  m_pos.y = CDLODTerrain_getHeight(m_pos.xz, temp.w);
   m_vPos = m_pos;
 
   vec2 tex_coord = CDLODTerrain_texCoord(m_pos);

@@ -12,6 +12,7 @@ namespace engine {
 class GlobalHeightMap {
  public:
   static const char *base_path;
+  static size_t level_offset;
   static size_t w, h;
   static float sphere_radius;
 

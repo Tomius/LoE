@@ -63,7 +63,8 @@ class TexQuadTree {
 
   TexQuadTree(int w, int h, GLubyte max_depth)
       : min_node_size_{w >> max_depth, h >> max_depth}
-      , max_node_level_(max_depth), root_{w/2, h/2, w, h, max_depth} {
+      , max_node_level_(max_depth)
+      , root_{w/2, h/2, w, h, max_node_level_} {
     initTexIndexBuffer();
     gl(GenTextures(2, textures_));
   }

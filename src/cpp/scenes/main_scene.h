@@ -29,7 +29,7 @@ class MainScene : public engine::Scene {
     addComponent<Terrain>();
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
-        M_PI/3, 2, 5*radius, glm::vec3(-1.5*radius, 0, 0), 0.2, 0.1);
+        M_PI/3, 2, 5*radius, glm::vec3(-2.5*radius, 0, 0), 0.2, 0.1);
 
     set_camera(tp_camera_);
     auto after_effects = addComponent<AfterEffects>(skybox);
