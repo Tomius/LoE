@@ -2,7 +2,6 @@
 
 #export vec4 CDLODTerrain_modelPos();
 #export vec3 CDLODTerrain_worldPos(vec3 model_pos);
-#export vec3 CDLODTerrain_worldPos2(vec3 model_pos);
 #export vec2 CDLODTerrain_texCoord(vec3 pos);
 #export vec3 CDLODTerrain_normal(vec4 pos);
 
@@ -15,7 +14,7 @@ vec2 CDLODTerrain_uOffset = CDLODTerrain_uRenderData.xy;
 float CDLODTerrain_uScale = CDLODTerrain_uRenderData.z;
 int CDLODTerrain_uLevel = int(CDLODTerrain_uRenderData.w);
 
-uniform ivec2 CDLODTerrain_uTexSize = ivec2(172800, 86400);
+uniform ivec2 CDLODTerrain_uTexSize;
 uniform vec3 CDLODTerrain_uCamPos;
 uniform float CDLODTerrain_uNodeDimension;
 
@@ -166,20 +165,6 @@ vec3 CDLODTerrain_worldPos(vec3 model_pos) {
 
   return cartesian;
 }
-
-vec3 CDLODTerrain_worldPos2(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_uTexSize);
-  angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
-  vec2 angles = 1.001 * angles_degree * M_PI / 180;
-  vec3 cartesian = vec3(
-    sin(angles.y)*cos(angles.x),
-    sin(angles.y)*sin(angles.x),
-    cos(angles.y)
-  );
-
-  return cartesian;
-}
-
 
 vec4 CDLODTerrain_modelPos() {
   vec2 pos = CDLODTerrain_uOffset + CDLODTerrain_uScale * CDLODTerrain_aPosition;

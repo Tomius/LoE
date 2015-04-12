@@ -17,8 +17,7 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
 void TexQuadTreeNode::load() {
   char str[100];
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
-  int level = level_;
-  sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level, tx, ty);
+  sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level_, tx, ty);
 
   Magick::Image image(str);
   tex_w_ = image.columns();

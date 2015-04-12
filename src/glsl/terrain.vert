@@ -20,7 +20,7 @@ void main() {
   vec3 m_pos = temp.xyz;
   vMorph = temp.w;
   m_pos.xz = clamp(m_pos.xz, vec2(1), CDLODTerrain_uTexSize - vec2(1));
-  m_pos.y = CDLODTerrain_getHeight(m_pos.xz, temp.w);
+  m_pos.y = 0.0;
   m_vPos = m_pos;
 
   vec2 tex_coord = CDLODTerrain_texCoord(m_pos);
