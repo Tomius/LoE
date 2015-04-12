@@ -10,6 +10,7 @@ in vec3  w_vNormal;
 in vec3  c_vPos, w_vPos, m_vPos;
 in vec2  vTexCoord;
 in float vLevel, vMorph;
+in vec4 vData;
 
 uniform mat4 uCameraMatrix;
 uniform sampler2D uDiffuseTexture;
@@ -40,6 +41,7 @@ void main() {
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
-  fragColor = vec4(final_color, 1);
+  //fragColor = vec4(final_color, 1);
   //fragColor = vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01*vec4(final_color, 1);
+  fragColor = 0.5*vData + 0.5*vec4(final_color, 1);
 }

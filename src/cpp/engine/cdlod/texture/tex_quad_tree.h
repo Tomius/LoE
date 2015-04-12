@@ -97,11 +97,18 @@ class TexQuadTree {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
 
-      glm::vec3 cam_pos = cam.transform()->pos();
       texture_data_.clear();
+      glm::vec3 cam_pos = cam.transform()->pos();
       root_.selectNodes(cam_pos, cam.frustum(), 0, texture_data_, indices);
       root_.age();
     } // unmap indices
+    // for (int i = 0; i < 335*168; ++i) {
+    //   if (texture_data_[i] != 0) {
+    //     std::cout << std::dec << i << ":" << std::hex << (int)texture_data_[i] << " ";
+    //   }
+    // }
+    // std::cout << std::endl;
+    // std::terminate();
 
     gl(BindTexture(GL_TEXTURE_BUFFER, textures_[1]));
     gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG32UI, index_tex_buffer_.expose()));

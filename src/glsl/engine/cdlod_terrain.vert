@@ -28,6 +28,8 @@ struct CDLODTerrain_Node {
   int level, index;
 };
 
+out vec4 vData;
+
 CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
                                           ivec2 tex_coord) {
   CDLODTerrain_Node child;
@@ -81,33 +83,38 @@ void CDLODTerrain_bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
   ivec2 br = tl + ivec2(1, 1);
 
   // calculate weights (works even in case of clamping)
-  weights.x = (sp.x - tl.x)*(sp.y - tl.y);
-  weights.y = (tr.x - sp.x)*(sp.y - tr.y);
-  weights.z = (sp.x - bl.x)*(bl.y - sp.y);
-  weights.w = (br.x - sp.x)*(br.y - sp.y);
+  // Note: the weight scales with 1-distance, so basically
+  // the weight of top left, is the distance of bottom right
+  weights.x = (br.x - sp.x)*(br.y - sp.y); //tl
+  weights.y = (sp.x - bl.x)*(bl.y - sp.y); //tr
+  weights.z = (tr.x - sp.x)*(sp.y - tr.y); //bl
+  weights.w = (sp.x - tl.x)*(sp.y - tl.y); //br
 
   // clamp to edge
-  tl = max(tl, tex_size-1);
-  tr = max(tr, tex_size-1);
-  bl = max(bl, tex_size-1);
-  br = max(br, tex_size-1);
+  tl = min(tl, tex_size-1);
+  tr = min(tr, tex_size-1);
+  bl = min(bl, tex_size-1);
+  br = min(br, tex_size-1);
 
   // calculate offsets
-  offsets.x = base_offset + tl.y * tex_size.y + tl.x;
-  offsets.y = base_offset + tr.y * tex_size.y + tr.x;
-  offsets.z = base_offset + bl.y * tex_size.y + bl.x;
-  offsets.w = base_offset + br.y * tex_size.y + br.x;
+  offsets.x = base_offset + tl.y * tex_size.x + tl.x;
+  offsets.y = base_offset + tr.y * tex_size.x + tr.x;
+  offsets.z = base_offset + bl.y * tex_size.x + bl.x;
+  offsets.w = base_offset + br.y * tex_size.x + br.x;
 }
 
-void CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
+int CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
                                   out ivec4 offsets, out vec4 weights) {
   uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
-  int base_offset = int(data.x);
+  int base_offset = 0;//int(data.x);
   ivec2 top_left = node.center - node.size/2;
   // the [0-1]x[0-1] coordinate of the sample in the node
   vec2 coord = (sample - vec2(top_left)) / vec2(node.size);
-  ivec2 tex_size = ivec2(data.y & uint(0xFFFF0000), data.y & uint(0x0000FFFF));
+  ivec2 tex_size = ivec2(335, 168);//ivec2(data.y & uint(0xFFFF0000), data.y & uint(0x0000FFFF));
   CDLODTerrain_bilinearSample(base_offset, coord, tex_size, offsets, weights);
+
+  vec2 sp = coord * tex_size;
+  return base_offset + int(sp.y) * tex_size.x + int(sp.x);
 }
 
 float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
@@ -120,8 +127,6 @@ float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
 }
 
 float CDLODTerrain_getHeight(vec2 sample, float morph) {
-  // debug:
-  //return 10*CDLODTerrain_uLevel + 5*morph;
   if (sample.x < 0 || CDLODTerrain_uTexSize.x < sample.x
       || sample.y < 0 || CDLODTerrain_uTexSize.y < sample.y) {
     return 0.0;
@@ -141,8 +146,11 @@ float CDLODTerrain_getHeight(vec2 sample, float morph) {
 
     ivec4 offsets;
     vec4 weights;
-    CDLODTerrain_calculateOffset(node, sample, offsets, weights);
-    return CDLODTerrain_fetchHeight(offsets, weights);
+    int offset = CDLODTerrain_calculateOffset(node, sample, offsets, weights);
+    //float height = texelFetch(CDLODTerrain_uHeightMap, offset).x;
+    float height = CDLODTerrain_fetchHeight(offsets, weights);
+    vData = vec4(height/50, 0, 0, 1);
+    return height;
   }
 }
 

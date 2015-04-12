@@ -84,9 +84,11 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   //   return;
   // }
 
+  upload(index, texture_data, indices);
+
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
-    upload(index, texture_data, indices);
+    //upload(index, texture_data, indices);
   } else {
     bool children_cover_whole_area = true;
     for (int i = 0; i < 4; ++i) {
@@ -105,9 +107,9 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     }
 
     // If we have to render something, we have to load the texture too.
-    if (!children_cover_whole_area) {
-      upload(index, texture_data, indices);
-    }
+    // if (!children_cover_whole_area) {
+    //   upload(index, texture_data, indices);
+    // }
   }
 
   last_used_ = 0;
