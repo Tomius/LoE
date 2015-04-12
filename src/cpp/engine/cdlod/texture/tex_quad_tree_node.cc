@@ -122,7 +122,10 @@ void TexQuadTreeNode::upload(int index, std::vector<GLubyte>& texture_data,
   }
 
   GLint offset = sizeof(TexQuadTreeNodeIndex) * texture_data.size();
-  indices[index] = TexQuadTreeNodeIndex{offset, tex_w_, tex_h_};
+  indices[index] = TexQuadTreeNodeIndex{
+    GLushort(offset >> 16), GLushort(offset << 16 >> 16),
+    GLushort(tex_w_), GLushort(tex_h_)
+  };
   texture_data.insert(texture_data.end(), data_.begin(), data_.end());
 }
 

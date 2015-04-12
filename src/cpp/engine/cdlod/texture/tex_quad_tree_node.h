@@ -10,8 +10,8 @@ namespace engine {
 namespace cdlod {
 
 struct TexQuadTreeNodeIndex {
-  GLint data_offset;
-  GLint tex_size_x, tex_size_y;
+  GLushort data_offset_hi, data_offset_lo;
+  GLushort tex_size_x, tex_size_y;
 };
 
 class TexQuadTreeNode {

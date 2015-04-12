@@ -111,7 +111,7 @@ class TexQuadTree {
     // std::terminate();
 
     gl(BindTexture(GL_TEXTURE_BUFFER, textures_[1]));
-    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG32UI, index_tex_buffer_.expose()));
+    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA16UI, index_tex_buffer_.expose()));
 
     gl::Bind(tex_buffer_);
     tex_buffer_.data(texture_data_, gl::kStreamDraw);

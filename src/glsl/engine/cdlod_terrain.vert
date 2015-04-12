@@ -106,11 +106,11 @@ void CDLODTerrain_bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
 int CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
                                   out ivec4 offsets, out vec4 weights) {
   uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
-  int base_offset = 0;//int(data.x);
+  int base_offset = int(data.x << uint(16) + data.y);
   ivec2 top_left = node.center - node.size/2;
   // the [0-1]x[0-1] coordinate of the sample in the node
   vec2 coord = (sample - vec2(top_left)) / vec2(node.size);
-  ivec2 tex_size = ivec2(335, 168);//ivec2(data.y & uint(0xFFFF0000), data.y & uint(0x0000FFFF));
+  ivec2 tex_size = ivec2(data.z, data.w);
   CDLODTerrain_bilinearSample(base_offset, coord, tex_size, offsets, weights);
 
   vec2 sp = coord * tex_size;
@@ -147,7 +147,6 @@ float CDLODTerrain_getHeight(vec2 sample, float morph) {
     ivec4 offsets;
     vec4 weights;
     int offset = CDLODTerrain_calculateOffset(node, sample, offsets, weights);
-    //float height = texelFetch(CDLODTerrain_uHeightMap, offset).x;
     float height = CDLODTerrain_fetchHeight(offsets, weights);
     vData = vec4(height/50, 0, 0, 1);
     return height;
