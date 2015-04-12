@@ -79,7 +79,6 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   std::vector<GLubyte>& texture_data,
                                   TexQuadTreeNodeIndex* indices) {
   float lod_range = 1.01 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
-  //lod_range = long(lod_range) >> GlobalHeightMap::level_offset;
 
   // check if the node is visible
   if (!bbox_.collidesWithFrustum(frustum)) {
@@ -92,8 +91,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   }
 
   // if we can cover the whole area or if we are a leaf
-  if (!bbox_.collidesWithSphere(cam_pos, lod_range)
-      /*|| level_ == GlobalHeightMap::level_offset*/) {
+  if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
     upload(index, texture_data, indices);
   } else {
     bool children_cover_whole_area = true;

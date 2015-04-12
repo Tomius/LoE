@@ -94,6 +94,13 @@ class TexQuadTree {
   }
 
   void update(Camera const& cam) {
+    // static bool first_call = true;
+    // if (!first_call) {
+    //   return;
+    // } else {
+    //   first_call = false;
+    // }
+
     gl::Bind(index_tex_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
@@ -116,7 +123,7 @@ class TexQuadTree {
       //   // std::cout << std::endl;
       // }
 
-      // std::terminate();
+      //std::terminate();
     } // unmap indices
 
 

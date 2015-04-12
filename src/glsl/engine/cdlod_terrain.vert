@@ -56,10 +56,6 @@ CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
       child.center = node.center + ivec2(-child.size.x + child.size.x/2,
                                          child.size.y/2);
       child.index = 4*node.index + 3;
-
-      child.size = ivec2(node.size.x/2, node.size.y - node.size.y/2);
-      child.center += ivec2(-child.size.x - child.size.x/2, child.size.y/2);
-      child.index = 4*node.index + 3;
     } else {
       // bottom right
       child.size = ivec2(node.size.x - node.size.x/2,
@@ -108,7 +104,7 @@ void CDLODTerrain_bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
 void CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
                                   out ivec4 offsets, out vec4 weights) {
   uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
-  int base_offset = int(data.x << uint(16) + data.y);
+  int base_offset = int((data.x << uint(16)) + data.y);
   ivec2 top_left = node.center - node.size/2;
   // the [0-1]x[0-1] coordinate of the sample in the node
   vec2 coord = (sample - vec2(top_left)) / vec2(node.size);
