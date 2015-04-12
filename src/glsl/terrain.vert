@@ -13,7 +13,6 @@ out vec2  vTexCoord;
 out float vLevel, vMorph;
 
 int CDLODTerrain_uLevel;
-float CDLODTerrain_getHeight(vec2 tex_coord, float morph);
 
 void main() {
   vec4 temp = CDLODTerrain_modelPos();

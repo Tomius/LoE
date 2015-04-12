@@ -77,18 +77,21 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   int index,
                                   std::vector<GLubyte>& texture_data,
                                   TexQuadTreeNodeIndex* indices) {
-  float lod_range = 1.01 * sqrt(sx_*sx_ + sz_*sz_);
+  float lod_range = 1.01 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
 
   // check if the node is visible
-  // if (!bbox_.collidesWithFrustum(frustum)) {
-  //   return;
-  // }
+  if (!bbox_.collidesWithFrustum(frustum)) {
+    return;
+  }
 
-  upload(index, texture_data, indices);
+  // DEBUG
+  if (level_ == 9 || level_ == 8) {
+    upload(index, texture_data, indices);
+  }
 
   // if we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
-    //upload(index, texture_data, indices);
+    upload(index, texture_data, indices);
   } else {
     bool children_cover_whole_area = true;
     for (int i = 0; i < 4; ++i) {
@@ -107,9 +110,9 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     }
 
     // If we have to render something, we have to load the texture too.
-    // if (!children_cover_whole_area) {
-    //   upload(index, texture_data, indices);
-    // }
+    if (!children_cover_whole_area) {
+      upload(index, texture_data, indices);
+    }
   }
 
   last_used_ = 0;
@@ -123,7 +126,7 @@ void TexQuadTreeNode::upload(int index, std::vector<GLubyte>& texture_data,
 
   GLint offset = sizeof(TexQuadTreeNodeIndex) * texture_data.size();
   indices[index] = TexQuadTreeNodeIndex{
-    GLushort(offset >> 16), GLushort(offset << 16 >> 16),
+    GLushort(offset >> 16), GLushort(offset % (1 << 16)),
     GLushort(tex_w_), GLushort(tex_h_)
   };
   texture_data.insert(texture_data.end(), data_.begin(), data_.end());

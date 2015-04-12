@@ -101,14 +101,22 @@ class TexQuadTree {
       glm::vec3 cam_pos = cam.transform()->pos();
       root_.selectNodes(cam_pos, cam.frustum(), 0, texture_data_, indices);
       root_.age();
+
+      // for (int j = 1; j <= 4; ++j) {
+      //   std::cout << "w:" << indices[j].tex_size_x << ",h:" << indices[j].tex_size_y << std::endl;
+      //   for (int i = 0; i < indices[j].tex_size_x*indices[j].tex_size_y; ++i) {
+      //     int index = (indices[j].data_offset_hi << 16) + indices[j].data_offset_lo + i;
+      //     if (texture_data_[index] != 0) {
+      //       std::cout << std::dec << j << "," << i << ":"
+      //                 << std::hex << (int)texture_data_[index] << " ";
+      //     }
+      //   }
+      //   std::cout << std::endl;
+      // }
+
+      // std::terminate();
     } // unmap indices
-    // for (int i = 0; i < 335*168; ++i) {
-    //   if (texture_data_[i] != 0) {
-    //     std::cout << std::dec << i << ":" << std::hex << (int)texture_data_[i] << " ";
-    //   }
-    // }
-    // std::cout << std::endl;
-    // std::terminate();
+
 
     gl(BindTexture(GL_TEXTURE_BUFFER, textures_[1]));
     gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA16UI, index_tex_buffer_.expose()));

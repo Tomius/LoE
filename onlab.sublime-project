@@ -4,7 +4,7 @@
     "spell_check": false,
     "tab_size": 2,
     "sublimegdb_workingdir": "${folder:${project_path:a.out}}",
-    "sublimegdb_commandline": "optirun gdb --interpreter=mi ./a.out",
+    "sublimegdb_commandline": "gdb --interpreter=mi ./a.out",
     "rulers": [80]
   },
 
