@@ -19,8 +19,11 @@ void main() {
   vec4 temp = CDLODTerrain_modelPos();
   vec3 m_pos = temp.xyz;
   vMorph = temp.w;
-  m_pos.xz = clamp(m_pos.xz, vec2(1), CDLODTerrain_uTexSize - vec2(1));
-  m_pos.y = 0.0;
+  if (m_pos.x < -1 || CDLODTerrain_uTexSize.x + 1 < m_pos.x ||
+      m_pos.z < -1 || CDLODTerrain_uTexSize.y + 1 < m_pos.z) {
+    m_pos.xz = clamp(m_pos.xz, vec2(0), CDLODTerrain_uTexSize);
+    m_pos.y = CDLODTerrain_getHeight(m_pos.xz, 0.0);
+  }
   m_vPos = m_pos;
 
   vec2 tex_coord = CDLODTerrain_texCoord(m_pos);

@@ -31,7 +31,7 @@ class QuadTree {
   }
 
  public:
-  QuadTree(int node_dimension = 64)
+  QuadTree(int node_dimension = 16)
       : mesh_(node_dimension), node_dimension_(node_dimension)
       , root_(GlobalHeightMap::w/2, GlobalHeightMap::h/2,
               max_node_level(GlobalHeightMap::w, GlobalHeightMap::h),

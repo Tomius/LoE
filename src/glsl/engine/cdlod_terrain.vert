@@ -113,9 +113,13 @@ void CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
 
 float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
   float height = 0.0;
+#ifndef NO_BILINEAR_SAMPLING
   for (int i = 0; i < 4; ++i) {
     height += texelFetch(CDLODTerrain_uHeightMap, offsets[i]).x * weights[i];
   }
+#else
+  height = texelFetch(CDLODTerrain_uHeightMap, offsets[0]).x;
+#endif
   float scale = 100.0 / 255.0;
   return height * scale;
 }
@@ -155,12 +159,12 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
   vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_uTexSize);
   angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
-  vec2 angles = 1.001 * angles_degree * M_PI / 180;
+  vec2 angles = 1.000001f * angles_degree * M_PI / 180;
   float r = CDLODTerrain_uTexSize.x/2/M_PI + model_pos.y;
   vec3 cartesian = vec3(
     r*sin(angles.y)*cos(angles.x),
-    r*sin(angles.y)*sin(angles.x),
-    r*cos(angles.y)
+    -r*cos(angles.y),
+    r*sin(angles.y)*sin(angles.x)
   );
 
   return cartesian;

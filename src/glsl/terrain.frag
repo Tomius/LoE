@@ -9,8 +9,8 @@
 in vec3  w_vNormal;
 in vec3  c_vPos, w_vPos, m_vPos;
 in vec2  vTexCoord;
-in float vLevel, vMorph;
-in vec4 vData;
+in float vLevel, vMorph, vInvalid;
+in vec4  vData;
 
 uniform mat4 uCameraMatrix;
 uniform sampler2D uDiffuseTexture;
@@ -25,6 +25,10 @@ float CalculateLighting(vec3 c_normal, vec3 c_light_dir) {
 }
 
 void main() {
+  if (vInvalid != 0.0) {
+    discard;
+  }
+
   // Normals
   vec3 w_normal = normalize(w_vNormal);
   vec3 c_normal = mat3(uCameraMatrix) * w_normal;
