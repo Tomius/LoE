@@ -34,12 +34,12 @@ void main() {
   vec3 c_normal = mat3(uCameraMatrix) * w_normal;
 
   // Lighting
-  //vec3 lighting = HemisphereLighting(w_normal);
+  vec3 lighting = HemisphereLighting(w_normal);
   vec3 w_sun_dir = SunPos();
   vec3 c_sun_dir = mat3(uCameraMatrix) * w_sun_dir;
   float diffuse_power = CalculateLighting(c_normal, c_sun_dir);
   diffuse_power *= pow(SunPower(), 0.3);
-  vec3 lighting = SunColor() * diffuse_power;
+  lighting += SunColor() * diffuse_power;
 
   vec3 diffuse_color = texture2D(uDiffuseTexture, vTexCoord).rgb;
 
