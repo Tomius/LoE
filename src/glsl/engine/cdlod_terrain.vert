@@ -30,6 +30,8 @@ struct CDLODTerrain_Node {
 out vec4 vData;
 
 float M_PI = 3.14159265359;
+float CDLODTerrain_cam_height =
+    length(CDLODTerrain_uCamPos) - CDLODTerrain_uTexSize.x/2/M_PI;
 
 CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
                                           ivec2 tex_coord) {
@@ -120,8 +122,28 @@ float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
 #else
   height = texelFetch(CDLODTerrain_uHeightMap, offsets[0]).x;
 #endif
-  float scale = 100.0 / 255.0;
+  float scale = 200.0 / 255.0;
   return height * scale;
+}
+
+vec3 CDLODTerrain_worldPos(vec3 model_pos) {
+  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_uTexSize);
+  angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
+  vec2 angles = 1.000001f * angles_degree * M_PI / 180;
+  float r = CDLODTerrain_uTexSize.x/2/M_PI + model_pos.y;
+  vec3 cartesian = vec3(
+    r*sin(angles.y)*cos(angles.x),
+    -r*cos(angles.y),
+    r*sin(angles.y)*sin(angles.x)
+  );
+
+  return cartesian;
+}
+
+float CDLODTerrain_estimateDistance(vec2 pos) {
+  vec3 est_pos = vec3(pos.x, clamp(CDLODTerrain_cam_height, 0, 100), pos.y);
+  vec3 est_diff = CDLODTerrain_uCamPos - CDLODTerrain_worldPos(est_pos);
+  return length(est_diff);
 }
 
 float CDLODTerrain_getHeight(vec2 sample, float morph) {
@@ -136,9 +158,11 @@ float CDLODTerrain_getHeight(vec2 sample, float morph) {
     node.level = CDLODTerrain_max_level;
     node.index = 0;
 
+    float dist = CDLODTerrain_estimateDistance(sample);
+
     // Find the node that contains the given point (sample),
     // and its level is CDLODTerrain_uLevel.
-    while (node.level > max(CDLODTerrain_uLevel, 8)) {
+    while (dist < length(vec2(node.size)) && node.level > 0) {
       node = CDLODTerrain_getChildOf(node, ivec2(sample));
     }
 
@@ -156,28 +180,11 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
   return (vertex - frac_part * morph);
 }
 
-vec3 CDLODTerrain_worldPos(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_uTexSize);
-  angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
-  vec2 angles = 1.000001f * angles_degree * M_PI / 180;
-  float r = CDLODTerrain_uTexSize.x/2/M_PI + model_pos.y;
-  vec3 cartesian = vec3(
-    r*sin(angles.y)*cos(angles.x),
-    -r*cos(angles.y),
-    r*sin(angles.y)*sin(angles.x)
-  );
-
-  return cartesian;
-}
-
 vec4 CDLODTerrain_modelPos() {
   vec2 pos = CDLODTerrain_uOffset + CDLODTerrain_uScale * CDLODTerrain_aPosition;
 
+  float dist = CDLODTerrain_estimateDistance(pos);
   float max_dist = 2.35*pow(2.5, CDLODTerrain_uLevel) * CDLODTerrain_uNodeDimension;
-  float cam_height = length(CDLODTerrain_uCamPos) - CDLODTerrain_uTexSize.x/2/M_PI;
-  vec3 est_pos = vec3(pos.x, clamp(cam_height, 0, 100), pos.y);
-  vec3 est_diff = CDLODTerrain_uCamPos - CDLODTerrain_worldPos(est_pos);
-  float dist = length(est_diff);
 
   float start_dist = max(2.15/2.35*max_dist, max_dist - sqrt(max_dist));
   float dist_from_start = dist - start_dist;
@@ -197,9 +204,9 @@ vec2 CDLODTerrain_texCoord(vec3 pos) {
 
 vec3 CDLODTerrain_normal(vec4 pos) {
   return vec3(0, 1, 0);
-  // vec3 u = vec3(1.0f, CDLODTerrain_getHeight(pos.xz + vec2(1, 0), pos.w) -
-  //                     CDLODTerrain_getHeight(pos.xz - vec2(1, 0), pos.w), 0.0f);
-  // vec3 v = vec3(0.0f, CDLODTerrain_getHeight(pos.xz + vec2(0, 1), pos.w) -
-  //                     CDLODTerrain_getHeight(pos.xz - vec2(0, 1), pos.w), 1.0f);
-  // return normalize(cross(u, -v));
+  vec3 u = vec3(1.0f, CDLODTerrain_getHeight(pos.xz + vec2(8, 0), pos.w) -
+                      CDLODTerrain_getHeight(pos.xz - vec2(8, 0), pos.w), 0.0f);
+  vec3 v = vec3(0.0f, CDLODTerrain_getHeight(pos.xz + vec2(0, 8), pos.w) -
+                      CDLODTerrain_getHeight(pos.xz - vec2(0, 8), pos.w), 1.0f);
+  return normalize(cross(u, -v));
 }

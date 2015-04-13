@@ -34,18 +34,18 @@ void main() {
   vec3 c_normal = mat3(uCameraMatrix) * w_normal;
 
   // Lighting
-  vec3 lighting = HemisphereLighting(w_normal);
+  //vec3 lighting = HemisphereLighting(w_normal);
   vec3 w_sun_dir = SunPos();
   vec3 c_sun_dir = mat3(uCameraMatrix) * w_sun_dir;
   float diffuse_power = CalculateLighting(c_normal, c_sun_dir);
   diffuse_power *= pow(SunPower(), 0.3);
-  lighting += SunColor() * diffuse_power;
+  vec3 lighting = SunColor() * diffuse_power;
 
   vec3 diffuse_color = texture2D(uDiffuseTexture, vTexCoord).rgb;
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
-  //fragColor = vec4(final_color, 1);
+  fragColor = vec4(final_color, 1);
   //fragColor = vec4(vLevel/8, vMorph, 0, 1)*0.99 + 0.01*vec4(final_color, 1);
-  fragColor = 0.5*vData + 0.5*vec4(final_color, 1);
+  //fragColor = 0.5*vData + 0.5*vec4(final_color, 1);
 }
