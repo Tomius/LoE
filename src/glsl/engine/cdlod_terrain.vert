@@ -203,9 +203,9 @@ vec2 CDLODTerrain_texCoord(vec3 pos) {
 }
 
 vec3 CDLODTerrain_normal(vec4 pos) {
-  vec3 u = vec3(1.0f, CDLODTerrain_getHeight(pos.xz + vec2(1, 0), pos.w) -
-                      CDLODTerrain_getHeight(pos.xz - vec2(1, 0), pos.w), 0.0f);
-  vec3 v = vec3(0.0f, CDLODTerrain_getHeight(pos.xz + vec2(0, 1), pos.w) -
-                      CDLODTerrain_getHeight(pos.xz - vec2(0, 1), pos.w), 1.0f);
+  vec3 u = vec3(1.0f, CDLODTerrain_getHeight(pos.xz + vec2(2, 0), pos.w) -
+                      CDLODTerrain_getHeight(pos.xz - vec2(2, 0), pos.w), 0.0f);
+  vec3 v = vec3(0.0f, CDLODTerrain_getHeight(pos.xz + vec2(0, 2), pos.w) -
+                      CDLODTerrain_getHeight(pos.xz - vec2(0, 2), pos.w), 1.0f);
   return normalize(cross(u, -v));
 }
