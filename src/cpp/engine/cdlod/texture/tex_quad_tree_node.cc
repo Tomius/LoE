@@ -12,7 +12,7 @@ int TexQuadTreeNode::time_to_live_ = 256;
 
 TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
     : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
-    , bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 100, z+(sz-sz/2)}} {}
+    , bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 200, z+(sz-sz/2)}} {}
 
 void TexQuadTreeNode::load() {
   char str[100];
@@ -84,16 +84,9 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     return;
   }
 
-  // DEBUG
-  if (level_ == 9 || level_ == 8) {
-    upload(index, texture_data, indices);
-  }
+  upload(index, texture_data, indices);
 
-  // if we can cover the whole area or if we are a leaf
-  if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
-    upload(index, texture_data, indices);
-  } else {
-    bool children_cover_whole_area = true;
+  if (bbox_.collidesWithSphere(cam_pos, lod_range) && level_ != 0)  {
     for (int i = 0; i < 4; ++i) {
       auto& child = children_[i];
 
@@ -104,14 +97,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
       // call selectNodes on the child (recursive)
       if (child->collidesWithSphere(cam_pos, lod_range)) {
         child->selectNodes(cam_pos, frustum, 4*index+i+1, texture_data, indices);
-      } else {
-        children_cover_whole_area = false;
       }
-    }
-
-    // If we have to render something, we have to load the texture too.
-    if (!children_cover_whole_area) {
-      upload(index, texture_data, indices);
     }
   }
 
