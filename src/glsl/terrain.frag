@@ -19,9 +19,8 @@ out vec4 fragColor;
 
 const float kSpecularShininess = 64.0;
 
-float CalculateLighting(vec3 c_normal, vec3 c_light_dir) {
-  vec3 c_view_dir = -normalize((uCameraMatrix * vec4(w_vPos, 1)).xyz);
-  return max(dot(c_normal, c_light_dir), 0.0);
+float CalculateLighting(vec3 w_normal, vec3 w_light_dir) {
+  return max(dot(w_normal, -w_light_dir), 0.0);
 }
 
 void main() {
@@ -31,13 +30,11 @@ void main() {
 
   // Normals
   vec3 w_normal = normalize(w_vNormal);
-  vec3 c_normal = mat3(uCameraMatrix) * w_normal;
 
   // Lighting
   vec3 lighting = HemisphereLighting(w_normal);
   vec3 w_sun_dir = SunPos();
-  vec3 c_sun_dir = mat3(uCameraMatrix) * w_sun_dir;
-  float diffuse_power = CalculateLighting(c_normal, c_sun_dir);
+  float diffuse_power = CalculateLighting(w_normal, w_sun_dir);
   diffuse_power *= pow(SunPower(), 0.3);
   lighting += SunColor() * diffuse_power;
 
