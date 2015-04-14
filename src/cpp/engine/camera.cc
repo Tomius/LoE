@@ -106,10 +106,9 @@ void ThirdPersonalCamera::update() {
 
   // Update the position
   glm::vec3 tpos(target_->pos()), fwd(transform()->forward());
-  glm::vec3 pos(tpos - fwd*curr_dist_mod_*initial_distance_);
-
   fwd = transform()->forward();
-  pos = tpos - fwd*curr_dist_mod_*initial_distance_;
+  float dist = curr_dist_mod_*initial_distance_ + dist_offset_;
+  glm::vec3 pos = tpos - fwd*dist;
   transform()->set_pos(pos);
 
   update_cache();

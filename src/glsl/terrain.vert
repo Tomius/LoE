@@ -19,8 +19,9 @@ void main() {
   vec4 temp = CDLODTerrain_modelPos();
   vec3 m_pos = temp.xyz;
   vOut.morph = temp.w;
-  if (m_pos.x < -1 || CDLODTerrain_uTexSize.x + 1 < m_pos.x ||
-      m_pos.z < -1 || CDLODTerrain_uTexSize.y + 1 < m_pos.z) {
+  int border = 1 << CDLODTerrain_uLevel;
+  if (m_pos.x < -border || CDLODTerrain_uTexSize.x + border < m_pos.x ||
+      m_pos.z < -border || CDLODTerrain_uTexSize.y + border < m_pos.z) {
     vOut.invalid = 1.0;
     return;
   } else {

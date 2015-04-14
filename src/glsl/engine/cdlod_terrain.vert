@@ -3,7 +3,7 @@
 #export vec4 CDLODTerrain_modelPos();
 #export vec3 CDLODTerrain_worldPos(vec3 model_pos);
 #export vec2 CDLODTerrain_texCoord(vec3 pos);
-#export vec3 CDLODTerrain_normal(vec4 pos);
+#export float CDLODTerrain_getHeight(vec2 sample, float morph);
 
 in vec2 CDLODTerrain_aPosition; // I hate the lack of namespaces
 
@@ -196,12 +196,4 @@ vec4 CDLODTerrain_modelPos() {
 
 vec2 CDLODTerrain_texCoord(vec3 pos) {
   return pos.xz / CDLODTerrain_uTexSize;
-}
-
-vec3 CDLODTerrain_normal(vec4 pos) {
-  vec3 u = vec3(1.0f, CDLODTerrain_getHeight(pos.xz + vec2(2, 0), pos.w) -
-                      CDLODTerrain_getHeight(pos.xz - vec2(2, 0), pos.w), 0.0f);
-  vec3 v = vec3(0.0f, CDLODTerrain_getHeight(pos.xz + vec2(0, 2), pos.w) -
-                      CDLODTerrain_getHeight(pos.xz - vec2(0, 2), pos.w), 1.0f);
-  return normalize(cross(u, -v));
 }
