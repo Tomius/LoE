@@ -27,8 +27,6 @@ struct CDLODTerrain_Node {
   int level, index;
 };
 
-out vec4 vData;
-
 float M_PI = 3.14159265359;
 float CDLODTerrain_cam_height =
     length(CDLODTerrain_uCamPos) - CDLODTerrain_uTexSize.x/2/M_PI;
@@ -169,9 +167,7 @@ float CDLODTerrain_getHeight(vec2 sample, float morph) {
     ivec4 offsets;
     vec4 weights;
     CDLODTerrain_calculateOffset(node, sample, offsets, weights);
-    float height = CDLODTerrain_fetchHeight(offsets, weights);
-    vData = vec4(height/50, 0, 0, 1);
-    return height;
+    return CDLODTerrain_fetchHeight(offsets, weights);
   }
 }
 
