@@ -182,7 +182,10 @@ class ThirdPersonalCamera : public Camera {
                       float z_far,
                       const glm::vec3& position,
                       float mouse_sensitivity = 1.0f,
-                      float mouse_scroll_sensitivity = 1.0f)
+                      float mouse_scroll_sensitivity = 1.0f,
+                      float min_dist_mod = 0.25f,
+                      float max_dist_mod = 4.00f,
+                      float dist_offset = 0.0f)
       : Camera(parent, fov, z_near, z_far)
       , target_(parent->transform())
       , first_call_(true)
@@ -191,7 +194,10 @@ class ThirdPersonalCamera : public Camera {
       , initial_distance_(glm::length(target_->pos() - position))
       , cos_max_pitch_angle_(0.98f)
       , mouse_sensitivity_(mouse_sensitivity)
-      , mouse_scroll_sensitivity_(mouse_scroll_sensitivity) {
+      , mouse_scroll_sensitivity_(mouse_scroll_sensitivity)
+      , min_dist_mod_(min_dist_mod)
+      , max_dist_mod_(max_dist_mod)
+      , dist_offset_(dist_offset) {
     transform()->set_pos(position);
     transform()->set_forward(target_->pos() - position);
   }
@@ -199,7 +205,7 @@ class ThirdPersonalCamera : public Camera {
   virtual ~ThirdPersonalCamera() {}
 
  private:
-    // The target object's transform, that the camera is following
+  // The target object's transform, that the camera is following
   Transform *target_;
 
   // We shouldn't interpolate at the first call.
@@ -208,18 +214,19 @@ class ThirdPersonalCamera : public Camera {
   // For mouseScrolled interpolation
   float curr_dist_mod_, dest_dist_mod_;
 
-  // Private constant number
+  // Private constant numbers
   const float initial_distance_, cos_max_pitch_angle_,
-               mouse_sensitivity_, mouse_scroll_sensitivity_;
+               mouse_sensitivity_, mouse_scroll_sensitivity_,
+               min_dist_mod_, max_dist_mod_, dist_offset_;
 
   virtual void update() override;
 
   virtual void mouseScrolled(double, double yoffset) override {
     dest_dist_mod_ -= yoffset / 4.0f * mouse_scroll_sensitivity_;
-    if (dest_dist_mod_ < 0.25f) {
-      dest_dist_mod_ = 0.25f;
-    } else if (dest_dist_mod_ > 4.0f) {
-      dest_dist_mod_ = 4.0f;
+    if (dest_dist_mod_ < min_dist_mod_) {
+      dest_dist_mod_ = min_dist_mod_;
+    } else if (dest_dist_mod_ > max_dist_mod_) {
+      dest_dist_mod_ = max_dist_mod_;
     }
   }
 };  // ThirdPersonalCamera

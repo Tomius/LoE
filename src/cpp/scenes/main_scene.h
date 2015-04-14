@@ -12,7 +12,6 @@
 #include "../skybox.h"
 #include "../terrain.h"
 #include "../fps_display.h"
-#include "../after_effects.h"
 
 class MainScene : public engine::Scene {
  public:
@@ -29,22 +28,21 @@ class MainScene : public engine::Scene {
     addComponent<Terrain>();
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
-        M_PI/3, 2, 5*radius, glm::vec3(-2.5*radius, 0, 0), 0.2, 0.1);
+        M_PI/3, 2, 3*radius, glm::vec3(-radius, 0, 0),
+        0.2, 0.1, 0.01, 1.5, radius);
 
     set_camera(tp_camera_);
-    auto after_effects = addComponent<AfterEffects>(skybox);
-    after_effects->set_group(1);
     addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},
       engine::gui::Font{"src/resources/fonts/Vera.ttf", 30,
       glm::vec4(1, 0, 0, 1)});
     auto fps = addComponent<FpsDisplay>();
-    fps->set_group(2);
+    fps->set_group(1);
   }
   private:
     engine::FreeFlyCamera* free_fly_camera_ = nullptr;
     engine::ThirdPersonalCamera* tp_camera_ = nullptr;
 
-  virtual void keyAction(int key, int scancode, int action, int mods) {
+  virtual void keyAction(int key, int scancode, int action, int mods) override {
     if (action == GLFW_PRESS) {
       if (key == GLFW_KEY_SPACE) {
         if (free_fly_camera_) {
@@ -65,6 +63,16 @@ class MainScene : public engine::Scene {
           set_camera(free_fly_camera_);
         }
       }
+    }
+  }
+
+  virtual void update() override {
+    if (free_fly_camera_) {
+      auto t = free_fly_camera_->transform();
+      auto fwd = t->forward();
+      glm::vec3 new_up = glm::normalize(t->pos());
+      t->set_up(new_up);
+      t->set_forward(fwd);
     }
   }
 
