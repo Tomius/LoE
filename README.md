@@ -10,9 +10,18 @@ libmagick++-dev clang cmake xorg-dev libglu1-mesa-dev libfreetype6-dev
 
 A jelenlegi állapot:
 --------------------
-* 172800x86400 heightmap streamelése működik, nevetségesen sok részlet elérhető, de az algoritmus szándékosan nagyon egyszerű (így is rémálom volt debugolni), ezért nevetségesen lassú is (ebből az állapotból kb 5-10szeres sebességnövekedés még viszonylag könnyen elérhető). 
+* 172800x86400 heightmap streamelése működik, feleslegesen sok részlet elérhető, de az algoritmus szándékosan nagyon egyszerű (így is rémálom volt debugolni), ezért nevetségesen lassú is (ebből az állapotból kb 5-10szeres sebességnövekedés még viszonylag könnyen elérhető). 
 ![screenshot](screenshot.png)
 ![details](details.png)
+
+A kamerák használta (space-el lehet váltani köztük):
+* FPS kamera
+  * WASD: pozíció
+  * egér: irány
+  * egér görgő: mozgási sebesség
+* Gömb nézegető kamera (default):
+  - egér: pozíció
+  - egér görgő: zoom
 
 
 Amin jelenleg dolgozok:
