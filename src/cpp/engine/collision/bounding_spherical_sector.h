@@ -36,7 +36,7 @@ class BoundingSphericalSector : public BoundingBox {
 
   BoundingSphericalSector(const glm::vec3& mins, const glm::vec3& maxes) {
     glm::vec3 diff = maxes - mins;
-    glm::vec3 step = glm::min(diff / 4.001f, 1024.0f);
+    glm::vec3 step = glm::min(diff / 8.001f, 1024.0f);
     for (float x = mins.x; x < maxes.x; x += step.x) {
       for (float y = mins.y; y < maxes.y; y += step.y) {
         for (float z = mins.z; z < maxes.z; z += step.z) {

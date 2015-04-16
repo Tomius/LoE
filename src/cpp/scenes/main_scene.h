@@ -43,18 +43,20 @@ class MainScene : public engine::Scene {
     engine::ThirdPersonalCamera* tp_camera_ = nullptr;
 
   virtual void keyAction(int key, int scancode, int action, int mods) override {
+    int radius = engine::GlobalHeightMap::sphere_radius;
     if (action == GLFW_PRESS) {
       if (key == GLFW_KEY_SPACE) {
         if (free_fly_camera_) {
           tp_camera_ =
             addComponent<engine::ThirdPersonalCamera>(
-              M_PI/3, 2, 150000, free_fly_camera_->transform()->pos(), 0.5, 0.1);
+              M_PI/3, 2, 3*radius, free_fly_camera_->transform()->pos(),
+              0.2, 0.1, 0.01, 1.5, radius);
           removeComponent(free_fly_camera_);
           free_fly_camera_ = nullptr;
           set_camera(tp_camera_);
         } else {
           free_fly_camera_ = addComponent<engine::FreeFlyCamera>(
-            M_PI/3, 2, 150000, tp_camera_->transform()->pos(), glm::vec3(), 50);
+            M_PI/3, 2, 3*radius, tp_camera_->transform()->pos(), glm::vec3(), 50);
           glm::vec3 up{glm::normalize(free_fly_camera_->transform()->pos())};
           free_fly_camera_->transform()->set_forward(glm::cross({1, 0, 0}, up));
           free_fly_camera_->transform()->set_up(up);
