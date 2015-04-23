@@ -14,16 +14,17 @@ namespace cdlod {
 
 class QuadTree {
   QuadGridMesh mesh_;
-  int node_dimension_; // must be initialized before root
-  QuadTreeNode root_;
+  int node_dimension_;
+  size_t w_, h_;
+  QuadTreeNode root_; // must be initialized after w_, h_, and node_dim_
 
-  GLubyte max_node_level(int w, int h) const {
+  GLubyte max_node_level() const {
     int x_depth = 0;
-    while ((node_dimension_ << x_depth) < w) {
+    while ((node_dimension_ << x_depth) < w_) {
       x_depth++;
     }
     int y_depth = 0;
-    while ((node_dimension_ << y_depth) < h) {
+    while ((node_dimension_ << y_depth) < h_) {
       y_depth++;
     }
 
@@ -33,9 +34,9 @@ class QuadTree {
  public:
   QuadTree(int node_dimension = 32)
       : mesh_(node_dimension), node_dimension_(node_dimension)
-      , root_(GlobalHeightMap::w/2, GlobalHeightMap::h/2,
-              max_node_level(GlobalHeightMap::w, GlobalHeightMap::h),
-              node_dimension) {}
+      , w_(GlobalHeightMap::geom_w)
+      , h_(GlobalHeightMap::geom_h)
+      , root_(w_/2, h_/2, max_node_level(), node_dimension) {}
 
   int node_dimension() const {
     return node_dimension_;

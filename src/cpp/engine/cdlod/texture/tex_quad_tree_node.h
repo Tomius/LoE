@@ -39,10 +39,12 @@ class TexQuadTreeNode {
   int level() const { return level_; }
 
  private:
+  using BBox = BoundingSphericalSector<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
+
   int x_, z_, sx_, sz_, tex_w_, tex_h_;
   int last_used_ = 0;
   GLubyte level_;
-  BoundingSphericalSector bbox_;
+  BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
   std::vector<GLubyte> data_;
   static int time_to_live_;

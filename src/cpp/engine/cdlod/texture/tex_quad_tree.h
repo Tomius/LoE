@@ -51,8 +51,8 @@ class TexQuadTree {
   }
 
  public:
-  TexQuadTree(int w = GlobalHeightMap::w,
-              int h = GlobalHeightMap::h,
+  TexQuadTree(int w = GlobalHeightMap::tex_w,
+              int h = GlobalHeightMap::tex_h,
               glm::ivec2 min_node_size = {256, 128})
       : min_node_size_{min_node_size}
       , max_node_level_(max_node_level(w, h))

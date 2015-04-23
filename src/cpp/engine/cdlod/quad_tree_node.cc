@@ -13,8 +13,8 @@ QuadTreeNode::QuadTreeNode(int x, int z, GLubyte level, int dimension)
 
 bool QuadTreeNode::isOutsideUsefulArea(int x, int z, int level, int dimension) {
   int size = dimension << level;
-  return !(x+size < 0 || x < GlobalHeightMap::w ||
-           z+size < 0 || z < GlobalHeightMap::h);
+  return !(x+size < 0 || x < GlobalHeightMap::geom_w ||
+           z+size < 0 || z < GlobalHeightMap::geom_h);
 }
 
 void QuadTreeNode::initChildren() {

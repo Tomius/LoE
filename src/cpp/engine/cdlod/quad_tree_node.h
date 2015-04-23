@@ -30,10 +30,12 @@ class QuadTreeNode {
                    QuadGridMesh& grid_mesh);
 
  private:
+  using BBox = BoundingSphericalSector<GlobalHeightMap::geom_w, GlobalHeightMap::geom_h>;
+
   int x_, z_;
   GLushort dimension_;
   GLubyte level_;
-  BoundingSphericalSector bbox_;
+  BBox bbox_;
   std::unique_ptr<QuadTreeNode> children_[4];
   bool children_inited_ = false;
 };

@@ -120,7 +120,7 @@ float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
 #else
   height = texelFetch(CDLODTerrain_uHeightMap, offsets[0]).x;
 #endif
-  float scale = 200.0 / 255.0;
+  float scale = 100.0 / 255.0;
   return height * scale;
 }
 

@@ -9,31 +9,16 @@
 
 namespace engine {
 
-class GlobalHeightMap {
- public:
-  static const char *base_path;
-  static size_t w, h;
-  static float sphere_radius;
-
-  static glm::vec2 extent() {
-    return glm::vec2(w, h);
-  }
-
-  static glm::vec2 center() {
-    return extent()/2.0f;
-  }
-
-  static bool valid(double x, double y) {
-    return 0 < x && x < w && 0 < y && y < h;
-  }
-
-  static gl::PixelDataFormat format() {
-    return gl::kRed;
-  }
-
-  static gl::PixelDataType type() {
-    return gl::kUnsignedByte;
-  }
+namespace GlobalHeightMap {
+ //public:
+  extern const char *base_path;
+  // geometry division. If this is three, that means that a 8x8 geometry
+  // (9x9 vertices) corresponds to a 1x1 texture area (2x2 texels)
+  static constexpr size_t geom_div = 0;
+  static constexpr size_t tex_w = 172800, tex_h = 86400;
+  static constexpr size_t geom_w = tex_w << geom_div;
+  static constexpr size_t geom_h = tex_h << geom_div;
+  static constexpr float sphere_radius = geom_w / 2 / M_PI;
 };
 
 }  // namespace engine
