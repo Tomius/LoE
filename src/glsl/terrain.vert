@@ -18,7 +18,7 @@ void main() {
   vec4 temp = CDLODTerrain_modelPos();
   vec3 m_pos = temp.xyz;
   vOut.morph = temp.w;
-  if (CDLODTerrain_isVisible(m_pos)) {
+  if (!CDLODTerrain_isVisible(m_pos)) {
     vOut.invalid = 1.0;
     return;
   } else {

@@ -24,6 +24,8 @@ float CalculateLighting(vec3 normal, vec3 light_dir) {
   return max(dot(normal, light_dir), 0.0);
 }
 
+uniform float CDLODTerrain_uNodeDimension;
+
 void main() {
   // Normals
   vec3 w_normal = normalize(vIn.w_normal);
@@ -40,5 +42,5 @@ void main() {
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
   fragColor = vec4(final_color, 1);
-  //fragColor = vec4(vIn.level/8, vIn.morph, 0, 1)*0.99 + 0.01*vec4(final_color, 1);
+  //fragColor = vec4(vIn.level/8, vIn.morph, 0, 1)*0.5 + 0.5*vec4(final_color, 1);
 }
