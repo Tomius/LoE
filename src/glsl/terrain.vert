@@ -5,7 +5,6 @@
 #include "engine/cdlod_terrain.vert"
 
 uniform mat4 uProjectionMatrix, uCameraMatrix, uModelMatrix;
-uniform ivec2 CDLODTerrain_uTexSize;
 float CDLODTerrain_getHeight(vec2 sample, float morph);
 int CDLODTerrain_uLevel;
 
@@ -19,9 +18,7 @@ void main() {
   vec4 temp = CDLODTerrain_modelPos();
   vec3 m_pos = temp.xyz;
   vOut.morph = temp.w;
-  int border = 1 << CDLODTerrain_uLevel;
-  if (m_pos.x < -border || CDLODTerrain_uTexSize.x + border < m_pos.x ||
-      m_pos.z < -border || CDLODTerrain_uTexSize.y + border < m_pos.z) {
+  if (CDLODTerrain_isVisible(m_pos)) {
     vOut.invalid = 1.0;
     return;
   } else {
