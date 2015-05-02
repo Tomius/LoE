@@ -119,21 +119,17 @@ void CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
 
 float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights) {
   float height = 0.0;
-#ifndef NO_BILINEAR_SAMPLING
   for (int i = 0; i < 4; ++i) {
     height += texelFetch(CDLODTerrain_uHeightMap, offsets[i]).x * weights[i];
   }
-#else
-  height = texelFetch(CDLODTerrain_uHeightMap, offsets[0]).x;
-#endif
   float scale = CDLODTerrain_max_height / 255.0;
   return height * scale;
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
-  vec2 angles_degree = model_pos.xz * (vec2(360, 180) / CDLODTerrain_GeomSize);
+  vec2 angles_degree = vec2(360, 180) * (model_pos.xz / CDLODTerrain_GeomSize);
   angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
-  vec2 angles = 1.000001f * angles_degree * M_PI / 180;
+  vec2 angles = angles_degree * M_PI / 180;
   float r = CDLODTerrain_radius + model_pos.y;
   vec3 cartesian = vec3(
     r*sin(angles.y)*cos(angles.x),
@@ -154,7 +150,7 @@ bool CDLODTerrain_isValid(vec3 m_pos) {
 }
 
 bool CDLODTerrain_isVisible(vec3 m_pos) {
-  int border = 1 << CDLODTerrain_uLevel;
+  int border = 1 << (CDLODTerrain_uLevel+1);
   return -border <= m_pos.x && m_pos.x <= CDLODTerrain_GeomSize.x + border &&
          -border <= m_pos.z && m_pos.z <= CDLODTerrain_GeomSize.y + border;
 }
@@ -181,14 +177,14 @@ float CDLODTerrain_getHeight(vec2 geom_sample) {
 
     vec2 tex_sample = geom_sample / (1 << CDLODTerrain_uGeomDiv);
 
-    // Find the node that contains the given point (geom_sample).
+    // Find the node that contains the given point (tex_sample).
     while (dist < length(vec2(node.size)) && node.level > 0) {
-      node = CDLODTerrain_getChildOf(node, ivec2(geom_sample));
+      node = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
     }
 
     ivec4 offsets;
     vec4 weights;
-    CDLODTerrain_calculateOffset(node, geom_sample, offsets, weights);
+    CDLODTerrain_calculateOffset(node, tex_sample, offsets, weights);
     return CDLODTerrain_fetchHeight(offsets, weights);
   }
 }

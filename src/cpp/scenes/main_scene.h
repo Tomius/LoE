@@ -28,8 +28,8 @@ class MainScene : public engine::Scene {
     addComponent<Terrain>();
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
-        M_PI/3, 2, 3*radius, glm::vec3(-radius, 0, 0),
-        0.2, 0.1, 0.005, 1.5, radius);
+        M_PI/3, 2, 3*radius, glm::vec3(-2*radius, 0, 0),
+        0.4, 0.1, 0.005, 1.5, radius);
 
     set_camera(tp_camera_);
     addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},
@@ -50,7 +50,7 @@ class MainScene : public engine::Scene {
           tp_camera_ =
             addComponent<engine::ThirdPersonalCamera>(
               M_PI/3, 2, 3*radius, free_fly_camera_->transform()->pos(),
-              0.2, 0.1, 0.005, 1.5, radius);
+              0.4, 0.1, 0.005, 1.5, radius);
           removeComponent(free_fly_camera_);
           free_fly_camera_ = nullptr;
           set_camera(tp_camera_);
@@ -71,10 +71,8 @@ class MainScene : public engine::Scene {
   virtual void update() override {
     if (free_fly_camera_) {
       auto t = free_fly_camera_->transform();
-      auto fwd = t->forward();
       glm::vec3 new_up = glm::normalize(t->pos());
       t->set_up(new_up);
-      t->set_forward(fwd);
     }
   }
 

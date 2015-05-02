@@ -24,9 +24,9 @@ class CameraTransform : public Transform {
 
   // We have custom up and right vectors
   virtual vec3 up() const override { return up_; }
-  virtual void set_up(const vec3& new_up) override { up_ = new_up; }
+  virtual void set_up(const vec3& new_up) override { up_ = glm::normalize(new_up); }
   virtual vec3 right() const override {
-    return glm::cross(forward(), up());
+    return glm::normalize(glm::cross(forward(), up()));
   }
 
   virtual void set_right(const vec3& new_right) override {
@@ -191,7 +191,7 @@ class ThirdPersonalCamera : public Camera {
       , first_call_(true)
       , curr_dist_mod_(1.0f)
       , dest_dist_mod_(1.0f)
-      , initial_distance_(glm::length(target_->pos() - position))
+      , initial_distance_(glm::length(target_->pos() - position) - dist_offset)
       , cos_max_pitch_angle_(0.98f)
       , mouse_sensitivity_(mouse_sensitivity)
       , mouse_scroll_sensitivity_(mouse_scroll_sensitivity)

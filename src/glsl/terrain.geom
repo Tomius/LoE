@@ -26,6 +26,7 @@ void main() {
   vec3 a = vIn[0].w_pos, b = vIn[1].w_pos, c = vIn[2].w_pos;
   vec3 normal = cross(b-a, c-a);
 
+
   for (int i = 0; i < gl_in.length(); i++) {
     vOut.w_normal = normal;
     vOut.c_pos = vIn[i].c_pos;

@@ -31,7 +31,7 @@ void main() {
   vec3 w_normal = normalize(vIn.w_normal);
 
   // Lighting
-  vec3 lighting = HemisphereLighting(w_normal);
+  vec3 lighting = HemisphereLighting(w_normal)*0.2;
   vec3 w_sun_dir = SunPos();
   float diffuse_power = CalculateLighting(w_normal, w_sun_dir);
   diffuse_power *= pow(SunPower(), 0.3);

@@ -13,15 +13,16 @@ class BoundingSphericalSector : public BoundingBox {
   bool invalid_ = true;
 
   static bool isValid(glm::vec3 model_pos) {
-    return 0 <= model_pos.x && model_pos.x <= max_w &&
-           0 <= model_pos.z && model_pos.z <= max_h;
+    int border = 512;
+    return -border <= model_pos.x && model_pos.x <= max_w + border &&
+           -border <= model_pos.z && model_pos.z <= max_h + border;
   }
 
   static glm::vec3 transform(glm::vec3 model_pos) {
-    glm::vec2 angles_degree{model_pos.x * 360 / max_w,
-                            model_pos.z * 180 / max_h};
+    glm::vec2 angles_degree{360.0 * (model_pos.x / max_w),
+                            180.0 * (model_pos.z / max_h)};
     angles_degree = glm::vec2(360-angles_degree.x, 180-angles_degree.y);
-    glm::vec2 angles = 1.000001f * angles_degree * float(M_PI / 180);
+    glm::vec2 angles = angles_degree * float(M_PI / 180);
     float r = GlobalHeightMap::sphere_radius + model_pos.y;
     glm::vec3 cartesian = glm::vec3(
       r*sin(angles.y)*cos(angles.x),
