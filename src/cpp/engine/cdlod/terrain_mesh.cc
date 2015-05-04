@@ -18,7 +18,7 @@ void TerrainMesh::setup(const gl::Program& program,
   gl::Use(program);
 
   quad_tree_.setupPositions(program | "CDLODTerrain_aPosition");
-  quad_tree_.setupRenderData(program | "CDLODTerrain_uRenderData");
+  quad_tree_.setupRenderData(program | "CDLODTerrain_aRenderData");
 
   uCamPos_ = engine::make_unique<gl::LazyUniform<glm::vec3>>(
       program, "CDLODTerrain_uCamPos");

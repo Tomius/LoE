@@ -10,7 +10,7 @@ in VertexData {
   vec3 w_normal;
   vec3 c_pos, w_pos, m_pos;
   vec2 texCoord;
-  float level, morph;
+  float level, morph, invalid;
 } vIn;
 
 uniform mat4 uCameraMatrix;
@@ -27,14 +27,19 @@ float CalculateLighting(vec3 normal, vec3 light_dir) {
 uniform float CDLODTerrain_uNodeDimension;
 
 void main() {
+  if (vIn.invalid != 0.0) {
+    discard;
+  }
+
   // Normals
   vec3 w_normal = normalize(vIn.w_normal);
 
   // Lighting
-  vec3 lighting = HemisphereLighting(w_normal)*0.2;
+  vec3 lighting = HemisphereLighting(w_normal);
   vec3 w_sun_dir = SunPos();
   float diffuse_power = CalculateLighting(w_normal, w_sun_dir);
   diffuse_power *= pow(SunPower(), 0.3);
+  diffuse_power = 0.4*diffuse_power + 0.3; // to avoid shading artifacts
   lighting += SunColor() * diffuse_power;
 
   vec3 diffuse_color = sqrt(texture2D(uDiffuseTexture, vIn.texCoord).rgb);
