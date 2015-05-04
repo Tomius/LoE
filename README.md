@@ -19,27 +19,5 @@ A kamerák használta (space-el lehet váltani köztük):
   - egér: pozíció
   - egér görgő: zoom
 
-A jelenlegi állapot:
---------------------
-* 172800x86400 heightmap streamelése működik, feleslegesen sok részlet elérhető, de az algoritmus szándékosan nagyon egyszerű (így is rémálom volt debugolni), ezért nevetségesen lassú is (ebből az állapotból kb 5-10szeres sebességnövekedés még viszonylag könnyen elérhető).
-![screenshot](screenshot.png)
-![details](details.png)
-
-
-Amin jelenleg dolgozok:
-----------------------
-* Elfogadhatóbb teljesítményű streamelés
-* Normálisabb kamerák
-* Egy normálisabb méretű diffúz textúra adathalmaz beszerzése.
-
-
-Egyelőre csak elvben működő, de már lekódolt featureök:
--------------------------------------------------------
-* Aszikron streamelés háttértárról memóriába
-* Sparse textúrák használata
-* Pontos és hatékony metszet számítás egy gömb és egy gömbcikkely között (ez a LOD algoritmus alapja...)
-
-Terv a jövőre nézve:
--------------------
-* Árnyékok
-* Növényzet
+![screenshot0](screenshot0.png)
+![screenshot1](screenshot1.png)

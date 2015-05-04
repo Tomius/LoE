@@ -134,13 +134,13 @@ float CDLODTerrain_fetchHeight(CDLODTerrain_Node node, vec2 tex_sample) {
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
   vec2 angles_degree = vec2(360, 180) * (model_pos.xz / CDLODTerrain_GeomSize);
-  angles_degree = vec2(360-angles_degree.x, 180-angles_degree.y);
+  angles_degree = vec2(angles_degree.x, angles_degree.y);
   vec2 angles = angles_degree * M_PI / 180;
   float r = CDLODTerrain_radius + model_pos.y;
   vec3 cartesian = vec3(
     r*sin(angles.y)*cos(angles.x),
-    -r*cos(angles.y),
-    r*sin(angles.y)*sin(angles.x)
+    r*cos(angles.y),
+    -r*sin(angles.y)*sin(angles.x)
   );
 
   return cartesian;
@@ -195,21 +195,21 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
     vec4 nby = tex_sample.y + vec4(0, 0, +1, -1);
 
     ivec2 node_top_left = node.center - node.size/2;
+    vec4 nheights;
     for (int i = 0; i < 4; ++i) {
       // the [0-1]x[0-1] coordinate of the sample in the node
       vec2 coord = (vec2(nbx[i], nby[i]) - vec2(node_top_left)) / vec2(node.size);
       float x = coord.x, y = coord.y;
       if (x < 0 || node.size.x <= x || y < 0 || node.size.y <= y) {
-        m_normal = vec3(0, 1, 0);
-        return height;
+        nheights[i] = height;
+      } else {
+        nheights[i] = CDLODTerrain_fetchHeight(node, vec2(nbx[i], nby[i]));
       }
     }
 
     vec2 diff = vec2(1.0);
-    vec3 u = vec3(1.0f, CDLODTerrain_fetchHeight(node, vec2(nbx[0], nby[0])) -
-                       CDLODTerrain_fetchHeight(node, vec2(nbx[1], nby[1])), 0.0f);
-    vec3 v = vec3(0.0f, CDLODTerrain_fetchHeight(node, vec2(nbx[2], nby[2])) -
-                       CDLODTerrain_fetchHeight(node, vec2(nbx[3], nby[3])), 1.0f);
+    vec3 u = vec3(1.0f, nheights[0] - nheights[1], 0.0f);
+    vec3 v = vec3(0.0f, nheights[2] - nheights[3], 1.0f);
     m_normal = normalize(cross(u, -v));
 
     return height;
