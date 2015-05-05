@@ -4,7 +4,6 @@
 #export vec3 CDLODTerrain_worldPos(vec3 model_pos);
 #export vec2 CDLODTerrain_texCoord(vec3 pos);
 #export bool CDLODTerrain_isValid(vec3 m_pos);
-#export bool CDLODTerrain_isVisible(vec3 m_pos);
 #export float CDLODTerrain_getHeight(vec2 sample, out vec3 m_normal);
 //#export vec3 CDLODTerrain_normal(vec3 m_pos, float morph);
 
@@ -155,12 +154,6 @@ bool CDLODTerrain_isValid(vec3 m_pos) {
          0 <= m_pos.z && m_pos.z <= CDLODTerrain_GeomSize.y;
 }
 
-bool CDLODTerrain_isVisible(vec3 m_pos) {
-  int border = 1 << (CDLODTerrain_uLevel+1);
-  return -border <= m_pos.x && m_pos.x <= CDLODTerrain_GeomSize.x + border &&
-         -border <= m_pos.z && m_pos.z <= CDLODTerrain_GeomSize.y + border;
-}
-
 float CDLODTerrain_estimateDistance(vec2 geom_pos) {
   float est_height = clamp(CDLODTerrain_cam_height, 0, CDLODTerrain_max_height);
   vec3 est_pos = vec3(geom_pos.x, est_height, geom_pos.y);
@@ -191,8 +184,10 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
     float height = CDLODTerrain_fetchHeight(node, tex_sample);
 
     // neighbours
-    vec4 nbx = tex_sample.x + vec4(+1, -1, 0, 0);
-    vec4 nby = tex_sample.y + vec4(0, 0, +1, -1);
+    float diff = 1.0 / (1 << CDLODTerrain_uGeomDiv);
+    //float diff = 1.0;
+    vec4 nbx = tex_sample.x + vec4(+diff, -diff, 0, 0);
+    vec4 nby = tex_sample.y + vec4(0, 0, +diff, -diff);
 
     ivec2 node_top_left = node.center - node.size/2;
     vec4 nheights;
@@ -207,7 +202,6 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
       }
     }
 
-    vec2 diff = vec2(1.0);
     vec3 u = vec3(1.0f, nheights[0] - nheights[1], 0.0f);
     vec3 v = vec3(0.0f, nheights[2] - nheights[3], 1.0f);
     m_normal = normalize(cross(u, -v));
@@ -221,12 +215,17 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
   return (vertex - frac_part * morph);
 }
 
+vec2 CDLODTerrain_nodeLocal2Global(vec2 node_coord, float scale) {
+  vec2 pos = CDLODTerrain_uOffset + scale * node_coord;
+  return clamp(pos, vec2(0, 0), CDLODTerrain_GeomSize);
+}
+
 vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   float scale = CDLODTerrain_uScale;
-  vec2 pos = CDLODTerrain_uOffset + scale * CDLODTerrain_aPosition;
-
+  vec2 pos = CDLODTerrain_nodeLocal2Global(CDLODTerrain_aPosition, scale);
   float dist = CDLODTerrain_estimateDistance(pos);
-  float next_border = (1 << (CDLODTerrain_uLevel+1)) * CDLODTerrain_uNodeDimension;
+
+  float next_border = (1 << (CDLODTerrain_uLevel+3)) * CDLODTerrain_uNodeDimension;
 
   float max_dist = 0.9*next_border;
   float start_dist = max(0.95*max_dist, max_dist - sqrt(max_dist));
@@ -237,7 +236,7 @@ vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   int morph_base = 0;
 
   vec2 morphed_pos = CDLODTerrain_morphVertex(CDLODTerrain_aPosition, morph);
-  pos = CDLODTerrain_uOffset + scale * morphed_pos;
+  pos = CDLODTerrain_nodeLocal2Global(morphed_pos, scale);
   dist = CDLODTerrain_estimateDistance(pos);
 
   while (dist > 1.5*next_border) {
@@ -252,8 +251,7 @@ vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
     morph = clamp(morph, 0.0, 1.0);
 
     morphed_pos = CDLODTerrain_morphVertex(morphed_pos/2.0, morph);
-
-    pos = CDLODTerrain_uOffset + scale * morphed_pos;
+    pos = CDLODTerrain_nodeLocal2Global(morphed_pos, scale);
     dist = CDLODTerrain_estimateDistance(pos);
   }
 

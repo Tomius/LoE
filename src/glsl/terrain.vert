@@ -11,7 +11,7 @@ out VertexData {
   vec3  w_normal;
   vec3  c_pos, w_pos, m_pos;
   vec2  texCoord;
-  float level, morph, invalid;
+  float level, morph;
 } vOut;
 
 void main() {
@@ -19,12 +19,6 @@ void main() {
   vec4 temp = CDLODTerrain_modelPos(m_normal);
   vec3 m_pos = temp.xyz;
   vOut.morph = temp.w;
-  if (!CDLODTerrain_isValid(m_pos)) {
-    vOut.invalid = 1e10;
-    return;
-  } else {
-    vOut.invalid = 0.0;
-  }
   vOut.m_pos = m_pos;
 
   vec3 w_pos = CDLODTerrain_worldPos(m_pos);

@@ -13,9 +13,8 @@ class BoundingSphericalSector : public BoundingBox {
   bool invalid_ = true;
 
   static bool isValid(glm::vec3 model_pos) {
-    int border = 512;
-    return -border <= model_pos.x && model_pos.x <= max_w + border &&
-           -border <= model_pos.z && model_pos.z <= max_h + border;
+    return 0 <= model_pos.x && model_pos.x <= max_w &&
+           0 <= model_pos.z && model_pos.z <= max_h;
   }
 
   static glm::vec3 transform(glm::vec3 model_pos) {

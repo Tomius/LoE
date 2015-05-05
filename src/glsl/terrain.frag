@@ -10,7 +10,7 @@ in VertexData {
   vec3 w_normal;
   vec3 c_pos, w_pos, m_pos;
   vec2 texCoord;
-  float level, morph, invalid;
+  float level, morph;
 } vIn;
 
 uniform mat4 uCameraMatrix;
@@ -27,10 +27,6 @@ float CalculateLighting(vec3 normal, vec3 light_dir) {
 uniform float CDLODTerrain_uNodeDimension;
 
 void main() {
-  if (vIn.invalid != 0.0) {
-    discard;
-  }
-
   // Normals
   vec3 w_normal = normalize(vIn.w_normal);
 
