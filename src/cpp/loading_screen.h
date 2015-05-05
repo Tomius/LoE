@@ -10,7 +10,7 @@ inline void LoadingScreen() {
   glm::vec2 window_size = engine::GameEngine::window_size();
 
   engine::gui::Label label{
-    nullptr, L"Land of Önlab", glm::vec2{0, 0.05},
+    nullptr, L"Land of Earth", glm::vec2{0, 0.05},
     engine::gui::Font{"src/resources/fonts/Vera.ttf", 40}
   };
   label.set_vertical_alignment(engine::gui::Font::VerticalAlignment::kCenter);

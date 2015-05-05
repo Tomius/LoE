@@ -43,10 +43,10 @@ void GameEngine::InitContext() {
     const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
 #if ENGINE_NO_FULLSCREEN
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,
-                               "Land of Önlab", nullptr, nullptr);
+                               "Land of Earth", nullptr, nullptr);
 #else
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,
-                               "Land of Önlab", monitor, nullptr);
+                               "Land of Earth", monitor, nullptr);
 #endif
 
     if (!window_) {
