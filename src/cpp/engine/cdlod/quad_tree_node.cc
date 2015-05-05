@@ -66,8 +66,8 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     }
 
     // Render, what the childs didn't do
-    grid_mesh.addToRenderList(
-        x_, z_, scale, level_, !cc[0], !cc[1], !cc[2], !cc[3]);
+    grid_mesh.addToRenderList(x_, z_, scale, level_,
+                              !cc[0], !cc[1], !cc[2], !cc[3]);
   }
 }
 
