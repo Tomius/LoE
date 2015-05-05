@@ -30,7 +30,7 @@ Camera usage (press space to switch between them):
   * mouse scroll: movement speed
 * Sphere viewer camera (default):
   * mouse move: position
-  * egér görgő: zoom
+  * mouse scroll: zoom
 
 ----------------------
 If you have any problem, please post in the issues tab or mail me at icyplusplus@gmail.com. Any feedback would be appreciated.
