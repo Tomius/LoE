@@ -1,23 +1,27 @@
-Land of Önlab
+Land of Earth
 =============
 
-A kód a korábban megírt Land of Dreams nevű félkész játékmotoromat használja, ami nem biztos, hogy jó ötlet volt, de most már így marad :)
+Land of Earth is global spherical terrain renderer that is based on a 172800 * 86400 heightmap, and it works realtime. It is an "extension" of [Filip Strugar's CDLOD concept](http://www.vertexasylum.com/downloads/cdlod/cdlod_latest.pdf), with texture streaming of course. 
 
-Függőségek:
------------
+![screenshot0](screenshot0.png)
+![screenshot1](screenshot1.png)
+
+Dependencies (linux only):
+-------------------------
 ```
 libmagick++-dev clang cmake xorg-dev libglu1-mesa-dev libfreetype6-dev
 ```
 
-A kamerák használta (space-el lehet váltani köztük):
+Camera usage (press space to switch between them):
 ----------------------------------------------------
-* FPS kamera
-  * WASD: pozíció
-  * egér: irány
-  * egér görgő: mozgási sebesség
-* Gömb nézegető kamera (default):
-  - egér: pozíció
-  - egér görgő: zoom
+* FPS camera
+  * WASD keys: position
+  * mouse move: camera direction
+  * mouse scroll: movement speed
+* Sphere viewer camera (default):
+  * mouse move: position
+  * egér görgő: zoom
 
-![screenshot0](screenshot0.png)
-![screenshot1](screenshot1.png)
+----------------------
+If you have any problem, please post in the issues tab or mail me at icyplusplus@gmail.com. Any feedback would be appreciated.
+
