@@ -107,7 +107,7 @@ void ThirdPersonalCamera::update() {
   // Update the position
   glm::dvec3 tpos(target_->pos()), fwd(transform()->forward());
   fwd = transform()->forward();
-  double dist = curr_dist_mod_*initial_distance_ + dist_offset_;
+  double dist = curr_dist_mod_*base_distance_ + dist_offset_;
   glm::dvec3 pos = tpos - fwd*dist;
   transform()->set_pos(pos);
 

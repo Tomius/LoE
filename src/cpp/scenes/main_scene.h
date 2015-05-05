@@ -29,7 +29,7 @@ class MainScene : public engine::Scene {
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
         M_PI/3, 2, 3*radius, glm::vec3(-2*radius, 0, 0),
-        0.4, 0.1, 0.005, 1.5, radius);
+        0.4, 0.1, 0.005, 1.5, radius, radius);
 
     set_camera(tp_camera_);
     addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},
@@ -47,10 +47,16 @@ class MainScene : public engine::Scene {
     if (action == GLFW_PRESS) {
       if (key == GLFW_KEY_SPACE) {
         if (free_fly_camera_) {
-          tp_camera_ =
-            addComponent<engine::ThirdPersonalCamera>(
-              M_PI/3, 2, 3*radius, free_fly_camera_->transform()->pos(),
-              0.4, 0.1, 0.005, 1.5, radius);
+          glm::dvec3 pos = free_fly_camera_->transform()->pos();
+          double current_dist = glm::length(pos) - radius;
+          if (current_dist < 100) {
+            current_dist = radius + 100;
+            pos = current_dist * glm::normalize(pos);
+          }
+
+          tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
+              M_PI/3, 2, 3*radius, pos,
+              0.4, 0.1, 0.005, 1.5, radius, radius);
           removeComponent(free_fly_camera_);
           free_fly_camera_ = nullptr;
           set_camera(tp_camera_);

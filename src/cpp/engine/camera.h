@@ -181,23 +181,25 @@ class ThirdPersonalCamera : public Camera {
                       double z_near,
                       double z_far,
                       const glm::dvec3& position,
-                      double mouse_sensitivity = 1.0f,
-                      double mouse_scroll_sensitivity = 1.0f,
-                      double min_dist_mod = 0.25f,
-                      double max_dist_mod = 4.00f,
-                      double dist_offset = 0.0f)
+                      double mouse_sensitivity = 1.0,
+                      double mouse_scroll_sensitivity = 1.0,
+                      double min_dist_mod = 0.25,
+                      double max_dist_mod = 4.00,
+                      double base_distance = 0.0,
+                      double dist_offset = 0.0)
       : Camera(parent, fov, z_near, z_far)
       , target_(parent->transform())
       , first_call_(true)
-      , curr_dist_mod_(1.0f)
-      , dest_dist_mod_(1.0f)
       , initial_distance_(glm::length(target_->pos() - position) - dist_offset)
-      , cos_max_pitch_angle_(0.98f)
+      , base_distance_(base_distance == 0.0 ? initial_distance_ : base_distance)
+      , cos_max_pitch_angle_(0.999)
       , mouse_sensitivity_(mouse_sensitivity)
       , mouse_scroll_sensitivity_(mouse_scroll_sensitivity)
       , min_dist_mod_(min_dist_mod)
       , max_dist_mod_(max_dist_mod)
-      , dist_offset_(dist_offset) {
+      , dist_offset_(dist_offset)
+      , curr_dist_mod_(initial_distance_ / base_distance_)
+      , dest_dist_mod_(curr_dist_mod_){
     transform()->set_pos(position);
     transform()->set_forward(target_->pos() - position);
   }
@@ -211,18 +213,18 @@ class ThirdPersonalCamera : public Camera {
   // We shouldn't interpolate at the first call.
   bool first_call_;
 
-  // For mouseScrolled interpolation
-  double curr_dist_mod_, dest_dist_mod_;
-
   // Private constant numbers
-  const double initial_distance_, cos_max_pitch_angle_,
+  const double initial_distance_, base_distance_, cos_max_pitch_angle_,
                mouse_sensitivity_, mouse_scroll_sensitivity_,
                min_dist_mod_, max_dist_mod_, dist_offset_;
+
+  // For mouseScrolled interpolation
+  double curr_dist_mod_, dest_dist_mod_;
 
   virtual void update() override;
 
   virtual void mouseScrolled(double, double yoffset) override {
-    dest_dist_mod_ -= yoffset / 4.0f * mouse_scroll_sensitivity_;
+    dest_dist_mod_ -= yoffset / 4.0 * mouse_scroll_sensitivity_;
     if (dest_dist_mod_ < min_dist_mod_) {
       dest_dist_mod_ = min_dist_mod_;
     } else if (dest_dist_mod_ > max_dist_mod_) {
