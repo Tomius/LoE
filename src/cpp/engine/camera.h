@@ -40,7 +40,7 @@ class CameraTransform : public Transform {
 /// The base class for all cameras
 class Camera : public Behaviour {
  public:
-  Camera(GameObject* parent, float fovy, float z_near, float z_far)
+  Camera(GameObject* parent, double fovy, double z_near, double z_far)
       : Behaviour(parent, CameraTransform{}), fovy_(fovy), z_near_(z_near)
       , z_far_(z_far), width_(0), height_(0) { }
   virtual ~Camera() {}
@@ -50,22 +50,22 @@ class Camera : public Behaviour {
     height_ = height;
   }
 
-  const glm::mat4& cameraMatrix() const { return cam_mat_; }
-  const glm::mat4& projectionMatrix() const { return proj_mat_; }
+  const glm::dmat4& cameraMatrix() const { return cam_mat_; }
+  const glm::dmat4& projectionMatrix() const { return proj_mat_; }
   const Frustum& frustum() const { return frustum_; }
 
-  float fovx() const { return fovy_*width_/height_;}
-  void set_fovx(float fovx) { fovy_ = fovx*height_/width_; }
-  float fovy() const { return fovy_;}
-  void set_fovy(float fovy) { fovy_ = fovy; }
-  float z_near() const { return z_near_;}
-  void set_z_near(float z_near) { z_near_ = z_near; }
-  float z_far() const { return z_far_;}
-  void set_z_far(float z_far) { z_far_ = z_far; }
+  double fovx() const { return fovy_*width_/height_;}
+  void set_fovx(double fovx) { fovy_ = fovx*height_/width_; }
+  double fovy() const { return fovy_;}
+  void set_fovy(double fovy) { fovy_ = fovy; }
+  double z_near() const { return z_near_;}
+  void set_z_near(double z_near) { z_near_ = z_near; }
+  double z_far() const { return z_far_;}
+  void set_z_far(double z_far) { z_far_ = z_far; }
 
-  bool isPointInsideFrustum(const glm::vec3& p) const {
-    glm::mat4 mat = projectionMatrix() * cameraMatrix();
-    glm::vec4 proj = mat * glm::vec4(p, 1);
+  bool isPointInsideFrustum(const glm::dvec3& p) const {
+    glm::dmat4 mat = projectionMatrix() * cameraMatrix();
+    glm::dvec4 proj = mat * glm::dvec4(p, 1);
     proj /= proj.w;
 
     return -1 < proj.x && proj.x < 1 && -1 < proj.y && proj.y < 1 &&
@@ -81,9 +81,9 @@ class Camera : public Behaviour {
   }
 
  private:
-  float fovy_, z_near_, z_far_, width_, height_;
+  double fovy_, z_near_, z_far_, width_, height_;
 
-  glm::mat4 cam_mat_, proj_mat_;
+  glm::dmat4 cam_mat_, proj_mat_;
   Frustum frustum_;
 
   void updateCameraMatrix() {
@@ -92,11 +92,11 @@ class Camera : public Behaviour {
   }
 
   void updateProjectionMatrix() {
-    proj_mat_ = glm::perspectiveFov<float>(fovy_, width_, height_, z_near_, z_far_);
+    proj_mat_ = glm::perspectiveFov<double>(fovy_, width_, height_, z_near_, z_far_);
   }
 
   void updateFrustum() {
-    glm::mat4 m = proj_mat_ * cam_mat_;
+    glm::dmat4 m = proj_mat_ * cam_mat_;
 
     // REMEMBER: m[i][j] is j-th row, i-th column!!!
 
@@ -144,11 +144,11 @@ class Camera : public Behaviour {
 
 class FreeFlyCamera : public Camera {
  public:
-  FreeFlyCamera(GameObject* parent, float fov, float z_near,
-                float z_far, const glm::vec3& pos,
-                const glm::vec3& target = glm::vec3(),
-                float speed_per_sec = 5.0f,
-                float mouse_sensitivity = 1.0f)
+  FreeFlyCamera(GameObject* parent, double fov, double z_near,
+                double z_far, const glm::dvec3& pos,
+                const glm::dvec3& target = glm::dvec3(),
+                double speed_per_sec = 5.0f,
+                double mouse_sensitivity = 1.0f)
       : Camera(parent, fov, z_near, z_far)
       , first_call_(true)
       , speed_per_sec_(speed_per_sec)
@@ -158,17 +158,17 @@ class FreeFlyCamera : public Camera {
     transform()->set_forward(target - pos);
   }
 
-  float speed_per_sec() const { return speed_per_sec_; }
-  float mouse_sensitivity() const { return mouse_sensitivity_; }
-  float cos_max_pitch_angle() const { return cos_max_pitch_angle_; }
+  double speed_per_sec() const { return speed_per_sec_; }
+  double mouse_sensitivity() const { return mouse_sensitivity_; }
+  double cos_max_pitch_angle() const { return cos_max_pitch_angle_; }
 
-  void set_speed_per_sec(float value) { speed_per_sec_ = value; }
-  void set_mouse_sensitivity(float value) { mouse_sensitivity_ = value; }
-  void set_cos_max_pitch_angle(float value) { cos_max_pitch_angle_ = value; }
+  void set_speed_per_sec(double value) { speed_per_sec_ = value; }
+  void set_mouse_sensitivity(double value) { mouse_sensitivity_ = value; }
+  void set_cos_max_pitch_angle(double value) { cos_max_pitch_angle_ = value; }
 
  protected:
   bool first_call_;
-  float speed_per_sec_, mouse_sensitivity_, cos_max_pitch_angle_;
+  double speed_per_sec_, mouse_sensitivity_, cos_max_pitch_angle_;
 
  private:
   virtual void update() override;
@@ -177,15 +177,15 @@ class FreeFlyCamera : public Camera {
 class ThirdPersonalCamera : public Camera {
  public:
   ThirdPersonalCamera(GameObject* parent,
-                      float fov,
-                      float z_near,
-                      float z_far,
-                      const glm::vec3& position,
-                      float mouse_sensitivity = 1.0f,
-                      float mouse_scroll_sensitivity = 1.0f,
-                      float min_dist_mod = 0.25f,
-                      float max_dist_mod = 4.00f,
-                      float dist_offset = 0.0f)
+                      double fov,
+                      double z_near,
+                      double z_far,
+                      const glm::dvec3& position,
+                      double mouse_sensitivity = 1.0f,
+                      double mouse_scroll_sensitivity = 1.0f,
+                      double min_dist_mod = 0.25f,
+                      double max_dist_mod = 4.00f,
+                      double dist_offset = 0.0f)
       : Camera(parent, fov, z_near, z_far)
       , target_(parent->transform())
       , first_call_(true)
@@ -212,10 +212,10 @@ class ThirdPersonalCamera : public Camera {
   bool first_call_;
 
   // For mouseScrolled interpolation
-  float curr_dist_mod_, dest_dist_mod_;
+  double curr_dist_mod_, dest_dist_mod_;
 
   // Private constant numbers
-  const float initial_distance_, cos_max_pitch_angle_,
+  const double initial_distance_, cos_max_pitch_angle_,
                mouse_sensitivity_, mouse_scroll_sensitivity_,
                min_dist_mod_, max_dist_mod_, dist_offset_;
 

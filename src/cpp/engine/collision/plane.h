@@ -7,16 +7,16 @@
 #include <glm/glm.hpp>
 
 struct Plane {
-  glm::vec3 normal;
-  float dist;
+  glm::dvec3 normal;
+  double dist;
   Plane() = default;
-  Plane(float nx, float ny, float nz, float dist)
+  Plane(double nx, double ny, double nz, double dist)
       : normal(nx, ny, nz), dist(dist) { }
-  Plane(const glm::vec3& normal, float dist)
+  Plane(const glm::dvec3& normal, double dist)
       : normal(normal), dist(dist) { }
 
   void normalize() {
-    float l = glm::length(normal);
+    double l = glm::length(normal);
     normal /= l;
     dist /= l;
   }

@@ -219,7 +219,7 @@ class Transformation {
   }
 };
 
-using Transform = Transformation<float, glm::precision::highp>;
+using Transform = Transformation<double, glm::precision::highp>;
 
 }  // namespace engine
 

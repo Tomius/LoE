@@ -19,16 +19,16 @@ void FreeFlyCamera::update() {
     first_call_ = false;
   }
 
-  const float dt = scene_->camera_time().dt;
+  const double dt = scene_->camera_time().dt;
 
   // Mouse movement - update the coordinate system
   if (diff.x || diff.y) {
-    float dx(diff.x * mouse_sensitivity_ * dt / 16);
-    float dy(-diff.y * mouse_sensitivity_ * dt / 16);
+    double dx(diff.x * mouse_sensitivity_ * dt / 16);
+    double dy(-diff.y * mouse_sensitivity_ * dt / 16);
 
     // If we are looking up / down, we don't want to be able
     // to rotate to the other side
-    float dot_up_fwd = glm::dot(transform()->up(), transform()->forward());
+    double dot_up_fwd = glm::dot(transform()->up(), transform()->forward());
     if (dot_up_fwd > cos_max_pitch_angle_ && dy > 0) {
       dy = 0;
     }
@@ -42,8 +42,8 @@ void FreeFlyCamera::update() {
   }
 
   // Update the position
-  float ds = dt * speed_per_sec_;
-  glm::vec3 local_pos = transform()->local_pos();
+  double ds = dt * speed_per_sec_;
+  glm::dvec3 local_pos = transform()->local_pos();
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     local_pos += transform()->forward() * ds;
   }
@@ -75,17 +75,17 @@ void ThirdPersonalCamera::update() {
     first_call_ = false;
   }
 
-  const float dt = scene_->camera_time().dt;
+  const double dt = scene_->camera_time().dt;
 
   // Mouse movement - update the coordinate system
   if (diff.x || diff.y) {
-    float mouse_sensitivity = mouse_sensitivity_ * curr_dist_mod_ * dt / 64;
-    float dx(diff.x * mouse_sensitivity);
-    float dy(-diff.y * mouse_sensitivity);
+    double mouse_sensitivity = mouse_sensitivity_ * curr_dist_mod_ * dt / 64;
+    double dx(diff.x * mouse_sensitivity);
+    double dy(-diff.y * mouse_sensitivity);
 
     // If we are looking up / down, we don't want to be able
     // to rotate to the other side
-    float dot_up_fwd = glm::dot(transform()->up(), transform()->forward());
+    double dot_up_fwd = glm::dot(transform()->up(), transform()->forward());
     if (dot_up_fwd > cos_max_pitch_angle_ && dy > 0) {
       dy = 0;
     }
@@ -98,17 +98,17 @@ void ThirdPersonalCamera::update() {
                              transform()->up()*dy);
   }
 
-  float dist_diff_mod = dest_dist_mod_ - curr_dist_mod_;
+  double dist_diff_mod = dest_dist_mod_ - curr_dist_mod_;
   if (fabs(dist_diff_mod) > dt * 2 * mouse_scroll_sensitivity_) {
     int sign = dist_diff_mod / fabs(dist_diff_mod);
     curr_dist_mod_ += sign * dt * 2 * mouse_scroll_sensitivity_;
   }
 
   // Update the position
-  glm::vec3 tpos(target_->pos()), fwd(transform()->forward());
+  glm::dvec3 tpos(target_->pos()), fwd(transform()->forward());
   fwd = transform()->forward();
-  float dist = curr_dist_mod_*initial_distance_ + dist_offset_;
-  glm::vec3 pos = tpos - fwd*dist;
+  double dist = curr_dist_mod_*initial_distance_ + dist_offset_;
+  glm::dvec3 pos = tpos - fwd*dist;
   transform()->set_pos(pos);
 
   update_cache();

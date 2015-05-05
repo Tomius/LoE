@@ -12,18 +12,18 @@ template<size_t max_w, size_t max_h>
 class BoundingSphericalSector : public BoundingBox {
   bool invalid_ = true;
 
-  static bool isValid(glm::vec3 model_pos) {
+  static bool isValid(glm::dvec3 model_pos) {
     return 0 <= model_pos.x && model_pos.x <= max_w &&
            0 <= model_pos.z && model_pos.z <= max_h;
   }
 
-  static glm::vec3 transform(glm::vec3 model_pos) {
-    glm::vec2 angles_degree{360.0 * (model_pos.x / max_w),
-                            180.0 * (model_pos.z / max_h)};
-    angles_degree = glm::vec2(angles_degree.x, angles_degree.y);
-    glm::vec2 angles = angles_degree * float(M_PI / 180);
-    float r = GlobalHeightMap::sphere_radius + model_pos.y;
-    glm::vec3 cartesian = glm::vec3(
+  static glm::dvec3 transform(glm::dvec3 model_pos) {
+    glm::dvec2 angles_degree{360.0 * (model_pos.x / max_w),
+                             180.0 * (model_pos.z / max_h)};
+    angles_degree = glm::dvec2(angles_degree.x, angles_degree.y);
+    glm::dvec2 angles = angles_degree * double(M_PI / 180);
+    double r = GlobalHeightMap::sphere_radius + model_pos.y;
+    glm::dvec3 cartesian = glm::dvec3(
       r*sin(angles.y)*cos(angles.x),
       r*cos(angles.y),
       -r*sin(angles.y)*sin(angles.x)
@@ -35,15 +35,15 @@ class BoundingSphericalSector : public BoundingBox {
  public:
   BoundingSphericalSector() = default;
 
-  BoundingSphericalSector(const glm::vec3& mins, const glm::vec3& maxes) {
-    glm::vec3 diff = maxes - mins;
-    glm::vec3 step = glm::min(diff / 8.001f, 1024.0f);
-    for (float x = mins.x; x < maxes.x; x += step.x) {
-      for (float y = mins.y; y < maxes.y; y += step.y) {
-        for (float z = mins.z; z < maxes.z; z += step.z) {
-          glm::vec3 vec{x, y, z};
+  BoundingSphericalSector(const glm::dvec3& mins, const glm::dvec3& maxes) {
+    glm::dvec3 diff = maxes - mins;
+    glm::dvec3 step = glm::min(diff / 8.001, 1024.0);
+    for (double x = mins.x; x < maxes.x; x += step.x) {
+      for (double y = mins.y; y < maxes.y; y += step.y) {
+        for (double z = mins.z; z < maxes.z; z += step.z) {
+          glm::dvec3 vec{x, y, z};
           if (isValid(vec)) {
-            glm::vec3 tvec{transform(vec)};
+            glm::dvec3 tvec{transform(vec)};
             if (invalid_) {
               mins_ = tvec;
               maxes_ = tvec;
@@ -58,7 +58,7 @@ class BoundingSphericalSector : public BoundingBox {
     }
   }
 
-  virtual bool collidesWithSphere(const glm::vec3& center, float radius) const {
+  virtual bool collidesWithSphere(const glm::dvec3& center, double radius) const {
     if (invalid_) {
       return false;
     } else {
