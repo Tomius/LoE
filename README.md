@@ -13,7 +13,6 @@ Land of Earth is global spherical terrain renderer that is based on a 172800 * 8
 ![screenshot7](screenshots/screenshot7.png)
 ![screenshot8](screenshots/screenshot8.png)
 ![screenshot9](screenshots/screenshot9.png)
-![screenshot9](screenshots/screenshot9.png)
 ![screenshot10](screenshots/screenshot10.png)
 
 Dependencies (linux only):
