@@ -35,7 +35,6 @@ void main() {
   vec3 w_sun_dir = SunPos();
   float diffuse_power = CalculateLighting(w_normal, w_sun_dir);
   diffuse_power *= pow(SunPower(), 0.3);
-  diffuse_power = 0.5*diffuse_power + 0.5; // to avoid shading artifacts
   lighting += SunColor() * diffuse_power;
 
   vec3 diffuse_color = sqrt(texture2D(uDiffuseTexture, vIn.texCoord).rgb);

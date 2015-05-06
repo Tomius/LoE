@@ -9,32 +9,36 @@ namespace cdlod {
 
 QuadTreeNode::QuadTreeNode(int x, int z, GLubyte level, int dimension)
     : x_(x), z_(z), dimension_(dimension), level_(level)
-    , bbox_{{x-size()/2, 0, z-size()/2}, {x+size()/2, 100, z+size()/2}} {}
+    , bbox_{{x-size()/2, 0, z-size()/2},
+            {x+size()/2, GlobalHeightMap::max_height, z+size()/2}} {}
 
-bool QuadTreeNode::isOutsideUsefulArea(int x, int z, int level, int dimension) {
-  int size = dimension << level;
-  return !(x+size < 0 || x < GlobalHeightMap::geom_w ||
-           z+size < 0 || z < GlobalHeightMap::geom_h);
+// Returns false if the node doesn't have a single vertex inside the visible area
+bool QuadTreeNode::isVisible(int x, int z, int level, int dimension) {
+  int s2 = (dimension << level) >> 1;
+  return (-s2 <= x && x <= GlobalHeightMap::geom_w + s2 &&
+          -s2 <= z && z <= GlobalHeightMap::geom_h + s2);
 }
 
 void QuadTreeNode::initChildren() {
   assert(level_ > 0);
   children_inited_ = true;
-  if (!isOutsideUsefulArea(x_-size()/4, z_+size()/4, level_-1, dimension_)) {
+  int s4 = size()/4;
+
+  if (isVisible(x_-s4, z_+s4, level_-1, dimension_)) {
     children_[0] = make_unique<QuadTreeNode>(
-        x_-size()/4, z_+size()/4, level_-1, dimension_);
+        x_-s4, z_+s4, level_-1, dimension_);
   }
-  if (!isOutsideUsefulArea(x_+size()/4, z_+size()/4, level_-1, dimension_)) {
+  if (isVisible(x_+s4, z_+s4, level_-1, dimension_)) {
     children_[1] = make_unique<QuadTreeNode>(
-        x_+size()/4, z_+size()/4, level_-1, dimension_);
+        x_+s4, z_+s4, level_-1, dimension_);
   }
-  if (!isOutsideUsefulArea(x_-size()/4, z_-size()/4, level_-1, dimension_)) {
+  if (isVisible(x_-s4, z_-s4, level_-1, dimension_)) {
     children_[2] = make_unique<QuadTreeNode>(
-        x_-size()/4, z_-size()/4, level_-1, dimension_);
+        x_-s4, z_-s4, level_-1, dimension_);
   }
-  if (!isOutsideUsefulArea(x_+size()/4, z_-size()/4, level_-1, dimension_)) {
+  if (isVisible(x_+s4, z_-s4, level_-1, dimension_)) {
     children_[3] = make_unique<QuadTreeNode>(
-        x_+size()/4, z_-size()/4, level_-1, dimension_);
+        x_+s4, z_-s4, level_-1, dimension_);
   }
 }
 
@@ -46,7 +50,7 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
   if (!bbox_.collidesWithFrustum(frustum)) { return; }
 
-  // if we can cover the whole area or if we are a leaf
+  // If we can cover the whole area or if we are a leaf
   if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
     grid_mesh.addToRenderList(x_, z_, scale, level_);
   } else {
@@ -65,7 +69,7 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
       }
     }
 
-    // Render, what the childs didn't do
+    // Render what the children didn't do
     grid_mesh.addToRenderList(x_, z_, scale, level_,
                               !cc[0], !cc[1], !cc[2], !cc[3]);
   }

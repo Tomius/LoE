@@ -21,7 +21,7 @@ class QuadTreeNode {
     return bbox_.collidesWithSphere(center, radius);
   }
 
-  static bool isOutsideUsefulArea(int x, int z, int level, int dimension);
+  static bool isVisible(int x, int z, int level, int dimension);
 
   void initChildren();
 

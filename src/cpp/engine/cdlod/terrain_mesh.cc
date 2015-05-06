@@ -31,6 +31,9 @@ void TerrainMesh::setup(const gl::Program& program,
   gl::Uniform<int>(program, "CDLODTerrain_max_level") =
       tex_quad_tree_.max_node_level();
 
+  gl::Uniform<int>(program, "CDLODTerrain_max_height") =
+      GlobalHeightMap::max_height;
+
   gl::Uniform<glm::ivec2>(program, "CDLODTerrain_uTexSize") =
       glm::ivec2(GlobalHeightMap::tex_w, GlobalHeightMap::tex_h);
 
