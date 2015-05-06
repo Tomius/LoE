@@ -133,7 +133,6 @@ float CDLODTerrain_fetchHeight(CDLODTerrain_Node node, vec2 tex_sample) {
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
   vec2 angles_degree = vec2(360, 180) * (model_pos.xz / CDLODTerrain_GeomSize);
-  angles_degree = vec2(angles_degree.x, angles_degree.y);
   vec2 angles = angles_degree * M_PI / 180;
   float r = CDLODTerrain_radius + model_pos.y;
   vec3 cartesian = vec3(
@@ -184,6 +183,7 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
     float height = CDLODTerrain_fetchHeight(node, tex_sample);
 
     // neighbours
+    //float diff = 1.0;
     float diff = 1.0 / (1 << CDLODTerrain_uGeomDiv);
     vec4 nbx = tex_sample.x + vec4(+diff, -diff, 0, 0);
     vec4 nby = tex_sample.y + vec4(0, 0, +diff, -diff);
@@ -230,6 +230,7 @@ vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   float start_dist = max(0.95*max_dist, max_dist - sqrt(max_dist));
   float dist_from_start = dist - start_dist;
   float start_to_end_dist = max_dist - start_dist;
+  int iteration_count = 0;
   float morph = dist_from_start / start_to_end_dist;
   morph = clamp(morph, 0.0, 1.0);
 
@@ -240,6 +241,7 @@ vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   while (dist > 1.5*next_border) {
     scale *= 2;
     next_border *= 2;
+    iteration_count += 1;
     max_dist = 0.9*next_border;
     start_dist = max(0.95*max_dist, max_dist - sqrt(max_dist));
     dist_from_start = dist - start_dist;
@@ -253,5 +255,5 @@ vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   }
 
   float height = CDLODTerrain_getHeight(pos, m_normal);
-  return vec4(pos.x, height, pos.y, morph);
+  return vec4(pos.x, height, pos.y, iteration_count + morph);
 }

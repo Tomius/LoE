@@ -17,8 +17,8 @@ class QuadTreeNode {
 
   int size() { return dimension_ << level_; }
 
-  bool collidesWithSphere(const glm::vec3& center, float radius) {
-    return bbox_.collidesWithSphere(center, radius);
+  bool collidesWithSphere(const Sphere& sphere) {
+    return bbox_.collidesWithSphere(sphere);
   }
 
   static bool isVisible(int x, int z, int level, int dimension);

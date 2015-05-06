@@ -51,7 +51,8 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   if (!bbox_.collidesWithFrustum(frustum)) { return; }
 
   // If we can cover the whole area or if we are a leaf
-  if (!bbox_.collidesWithSphere(cam_pos, lod_range) || level_ == 0) {
+  Sphere sphere{cam_pos, lod_range};
+  if (!bbox_.collidesWithSphere(sphere) || level_ == 0) {
     grid_mesh.addToRenderList(x_, z_, scale, level_);
   } else {
     if (!children_inited_) {
@@ -61,7 +62,7 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
     for (int i = 0; i < 4; ++i) {
       if (children_[i]) {
-        cc[i] = children_[i]->collidesWithSphere(cam_pos, lod_range);
+        cc[i] = children_[i]->collidesWithSphere(sphere);
         if (cc[i]) {
           // Ask child to render what we can't
           children_[i]->selectNodes(cam_pos, frustum, grid_mesh);

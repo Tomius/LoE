@@ -42,5 +42,5 @@ void main() {
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 
   fragColor = vec4(final_color, 1);
-  //fragColor = vec4(vIn.level/8, vIn.morph, 0, 1)*0.5 + 0.5*vec4(final_color, 1);
+  //fragColor = vec4(vIn.level/8, vIn.morph/3, 0, 1)*0.5 + 0.5*vec4(final_color, 1);
 }

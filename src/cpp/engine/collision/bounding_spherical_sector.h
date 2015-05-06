@@ -12,57 +12,73 @@ template<size_t max_w, size_t max_h>
 class BoundingSphericalSector : public BoundingBox {
   bool invalid_ = true;
 
-  static bool isValid(glm::dvec3 model_pos) {
-    return 0 <= model_pos.x && model_pos.x <= max_w &&
-           0 <= model_pos.z && model_pos.z <= max_h;
-  }
-
-  static glm::dvec3 transform(glm::dvec3 model_pos) {
-    glm::dvec2 angles_degree{360.0 * (model_pos.x / max_w),
-                             180.0 * (model_pos.z / max_h)};
-    angles_degree = glm::dvec2(angles_degree.x, angles_degree.y);
-    glm::dvec2 angles = angles_degree * double(M_PI / 180);
-    double r = GlobalHeightMap::sphere_radius + model_pos.y;
-    glm::dvec3 cartesian = glm::dvec3(
-      r*sin(angles.y)*cos(angles.x),
-      r*cos(angles.y),
-      -r*sin(angles.y)*sin(angles.x)
-    );
-
-    return cartesian;
-  }
-
  public:
   BoundingSphericalSector() = default;
 
   BoundingSphericalSector(const glm::dvec3& mins, const glm::dvec3& maxes) {
-    glm::dvec3 diff = maxes - mins;
-    glm::dvec3 step = glm::min(diff / 4.001, 2048.0);
-    for (double x = mins.x; x < maxes.x; x += step.x) {
-      for (double y = mins.y; y < maxes.y; y += step.y) {
-        for (double z = mins.z; z < maxes.z; z += step.z) {
-          glm::dvec3 vec{x, y, z};
-          if (isValid(vec)) {
-            glm::dvec3 tvec{transform(vec)};
-            if (invalid_) {
-              mins_ = tvec;
-              maxes_ = tvec;
-              invalid_ = false;
-            } else {
-              mins_ = glm::min(tvec, mins_);
-              maxes_ = glm::max(tvec, maxes_);
-            }
-          }
+    using namespace glm;
+
+    if (max_w < mins.x || max_h < mins.z || maxes.x < 0 || maxes.z < 0) {
+      invalid_ = true;
+      return;
+    } else {
+      invalid_ = false;
+    }
+
+    dvec2 angle_mins_degree{360.0 * (mins.x / max_w), 180.0 * (mins.z / max_h)};
+    dvec2 angle_mins = angle_mins_degree * double(M_PI / 180);
+
+    dvec2 angle_maxes_degree{360.0 * (maxes.x / max_w), 180.0 * (maxes.z / max_h)};
+    dvec2 angle_maxes = angle_maxes_degree * double(M_PI / 180);
+
+    dvec2 s1 = sin(angle_mins), s2 = sin(angle_maxes);
+    dvec2 max_s = max(s1, s2), min_s = min(s1, s2);
+
+    dvec2 c1 = cos(angle_mins), c2 = cos(angle_maxes);
+    dvec2 max_c = max(c1, c2), min_c = min(c1, c2);
+
+    for (int i = 0; i < 2; ++i) {
+      if (angle_mins_degree[i] < 0 && 0 < angle_maxes_degree[i])
+        max_c[i] = 1;
+      if (angle_mins_degree[i] < 90 && 90 < angle_maxes_degree[i])
+        max_s[i] = 1;
+      if (angle_mins_degree[i] < 180 && 180 < angle_maxes_degree[i])
+        min_c[i] = -1;
+      if (angle_mins_degree[i] < 270 && 270 < angle_maxes_degree[i])
+        min_s[i] = -1;
+    }
+
+    dvec2 sx_bounds{min_s.x, max_s.x}, sy_bounds{min_s.y, max_s.y},
+          cx_bounds{min_c.x, max_c.x}, cy_bounds{min_c.y, max_c.y},
+          r_bounds{GlobalHeightMap::sphere_radius + mins.y,
+                   GlobalHeightMap::sphere_radius + maxes.y};
+
+    for (int r = 0; r < 2; ++r) {
+      for (int sy = 0; sy < 2; ++sy) {
+        for (int cx = 0; cx < 2; ++cx) {
+          double x = r_bounds[r] * sy_bounds[sy] * cx_bounds[cx];
+          if ((!r && !sy && !cx) || x < mins_.x) mins_.x = x;
+          if ((!r && !sy && !cx) || maxes_.x < x) maxes_.x = x;
         }
+        for (int sx = 0; sx < 2; ++sx) {
+          double z = -r_bounds[r] * sy_bounds[sy] * sx_bounds[sx];
+          if ((!r && !sy && !sx) || z < mins_.z) mins_.z = z;
+          if ((!r && !sy && !sx) || maxes_.z < z) maxes_.z = z;
+        }
+      }
+      for (int cy = 0; cy < 2; ++cy) {
+        double y = r_bounds[r] * cy_bounds[cy];
+        if ((!r && !cy) || y < mins_.y) mins_.y = y;
+        if ((!r && !cy) || maxes_.y < y) maxes_.y = y;
       }
     }
   }
 
-  virtual bool collidesWithSphere(const glm::dvec3& center, double radius) const {
+  virtual bool collidesWithSphere(const Sphere& sphere) const {
     if (invalid_) {
       return false;
     } else {
-      return BoundingBox::collidesWithSphere(center, radius);
+      return BoundingBox::collidesWithSphere(sphere);
     }
   }
 

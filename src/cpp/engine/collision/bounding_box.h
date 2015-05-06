@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include "../misc.h"
 #include "./frustum.h"
+#include "./sphere.h"
 
 namespace engine {
 
@@ -25,16 +26,16 @@ class BoundingBox {
   glm::dvec3 center() const { return (maxes_+mins_) / 2.0; }
   glm::dvec3 extent() const { return maxes_-mins_; }
 
-  virtual bool collidesWithSphere(const glm::dvec3& center, double radius) const {
+  virtual bool collidesWithSphere(const Sphere& sphere) const {
     double dmin = 0;
     for (int i = 0; i < 3; ++i) {
-      if (center[i] < mins_[i]) {
-        dmin += sqr(center[i] - mins_[i]);
-      } else if (center[i] > maxes_[i]) {
-        dmin += sqr(center[i] - maxes_[i]);
+      if (sphere.center()[i] < mins_[i]) {
+        dmin += sqr(sphere.center()[i] - mins_[i]);
+      } else if (sphere.center()[i] > maxes_[i]) {
+        dmin += sqr(sphere.center()[i] - maxes_[i]);
       }
     }
-    return dmin <= sqr(radius);
+    return dmin <= sqr(sphere.radius());
   }
 
   virtual bool collidesWithFrustum(const Frustum& frustum) const {

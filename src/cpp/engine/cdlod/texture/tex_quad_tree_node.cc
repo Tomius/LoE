@@ -86,7 +86,8 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
   upload(index, texture_data, indices);
 
-  if (bbox_.collidesWithSphere(cam_pos, lod_range) && level_ != 0)  {
+  Sphere sphere{cam_pos, lod_range};
+  if (bbox_.collidesWithSphere(sphere) && level_ != 0)  {
     for (int i = 0; i < 4; ++i) {
       auto& child = children_[i];
 
@@ -95,7 +96,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
       }
 
       // call selectNodes on the child (recursive)
-      if (child->collidesWithSphere(cam_pos, lod_range)) {
+      if (child->collidesWithSphere(sphere)) {
         child->selectNodes(cam_pos, frustum, 4*index+i+1, texture_data, indices);
       }
     }

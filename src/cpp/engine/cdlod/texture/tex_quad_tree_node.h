@@ -19,8 +19,8 @@ class TexQuadTreeNode {
   TexQuadTreeNode(int center_x, int center_z,
                   int size_x, int size_z, GLubyte mip_level);
 
-  bool collidesWithSphere(const glm::vec3& center, float radius) {
-    return bbox_.collidesWithSphere(center, radius);
+  bool collidesWithSphere(const Sphere& sphere) {
+    return bbox_.collidesWithSphere(sphere);
   }
 
   void load();
