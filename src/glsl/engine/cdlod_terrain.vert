@@ -212,8 +212,6 @@ vec2 CDLODTerrain_morphVertex(vec2 vertex, float morph) {
 vec2 CDLODTerrain_nodeLocal2Global(vec2 node_coord, float scale) {
   vec2 pos = CDLODTerrain_uOffset + scale * node_coord;
   return clamp(pos, vec2(0, 0), CDLODTerrain_GeomSize);
-  //float w = CDLODTerrain_GeomSize.x, h = CDLODTerrain_GeomSize.y;
-  //return clamp(pos, vec2(0, 0.05*h), vec2(w, 0.95*h));
 }
 
 vec4 CDLODTerrain_modelPos(out vec3 m_normal) {

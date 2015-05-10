@@ -9,7 +9,6 @@ Terrain::Terrain(engine::GameObject* parent)
     : engine::GameObject(parent)
     , mesh_(scene_->shader_manager())
     , prog_(scene_->shader_manager()->get("terrain.vert"),
-            //scene_->shader_manager()->get("terrain.geom"),
             scene_->shader_manager()->get("terrain.frag"))
     , uProjectionMatrix_(prog_, "uProjectionMatrix")
     , uCameraMatrix_(prog_, "uCameraMatrix")
@@ -31,9 +30,8 @@ Terrain::Terrain(engine::GameObject* parent)
   // diffuseTexture_.generateMipmap();
   diffuseTexture_.maxAnisotropy();
   // diffuseTexture_.minFilter(gl::kLinearMipmapLinear);
-  // diffuseTexture_.magFilter(gl::kLinear);
-  diffuseTexture_.minFilter(gl::kNearest);
-  diffuseTexture_.magFilter(gl::kNearest);
+  diffuseTexture_.minFilter(gl::kLinear);
+  diffuseTexture_.magFilter(gl::kLinear);
   diffuseTexture_.wrapS(gl::kClampToEdge);
   diffuseTexture_.wrapT(gl::kClampToEdge);
 
