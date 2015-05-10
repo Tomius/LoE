@@ -77,10 +77,13 @@ void GridMesh::render() {
   gl::Bind(aRenderData_);
   aRenderData_.data(render_data_);
 
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   gl::DrawElementsInstanced(PrimType::kTriangleStrip,
                             index_count_,
                             IndexType::kUnsignedShort,
                             render_data_.size());   // instance count
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
   gl::Unbind(vao_);
 }
 

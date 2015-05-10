@@ -46,7 +46,7 @@ void QuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                const Frustum& frustum,
                                QuadGridMesh& grid_mesh) {
   float scale = 1 << level_;
-  float lod_range = scale * dimension_;
+  float lod_range = 4 * scale * dimension_;
 
   if (!bbox_.collidesWithFrustum(frustum)) { return; }
 

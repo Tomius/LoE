@@ -14,7 +14,8 @@ in VertexData {
 } vIn;
 
 uniform mat4 uCameraMatrix;
-uniform sampler2D uDiffuseTexture;
+uniform sampler2DArray uDiffuseTexture;
+uniform ivec2 uDiffuseTextureAtlasSize = ivec2(4, 4);
 
 out vec4 fragColor;
 
@@ -25,6 +26,14 @@ float CalculateLighting(vec3 normal, vec3 light_dir) {
 }
 
 uniform float CDLODTerrain_uNodeDimension;
+
+vec3 transformTexcoord(vec2 tex_coord) {
+  ivec2 atlas_size = uDiffuseTextureAtlasSize;
+  vec2 scaled_tex_coord = tex_coord * atlas_size;
+  ivec2 atlas_coord = ivec2(scaled_tex_coord);
+  return vec3(scaled_tex_coord - atlas_coord,
+              atlas_size.x * atlas_coord.y + atlas_coord.x);
+}
 
 void main() {
   // Normals
@@ -37,7 +46,7 @@ void main() {
   diffuse_power *= pow(SunPower(), 0.3);
   lighting += SunColor() * diffuse_power;
 
-  vec3 diffuse_color = sqrt(texture2D(uDiffuseTexture, vIn.texCoord).rgb);
+  vec3 diffuse_color = sqrt(texture(uDiffuseTexture, transformTexcoord(vIn.texCoord)).rgb);
 
   vec3 final_color = diffuse_color * (AmbientPower() + lighting);
 

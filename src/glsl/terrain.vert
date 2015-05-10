@@ -28,8 +28,7 @@ void main() {
   vec3 m_normal_offseted_pos = m_pos + m_normal;
   vOut.w_normal = CDLODTerrain_worldPos(m_normal_offseted_pos) - w_pos;
 
-  vec2 tex_coord = CDLODTerrain_texCoord(m_pos);
-  vOut.texCoord = tex_coord;
+  vOut.texCoord = CDLODTerrain_texCoord(m_pos);
 
   vec4 c_pos = uCameraMatrix * vec4(offseted_w_pos, 1);
   vOut.c_pos = vec3(c_pos);

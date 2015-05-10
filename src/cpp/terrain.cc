@@ -18,14 +18,22 @@ Terrain::Terrain(engine::GameObject* parent)
   mesh_.setup(prog_, 0, 1);
   gl::UniformSampler(prog_, "uDiffuseTexture").set(2);
   gl::Bind(diffuseTexture_);
-  // no alpha channel here
-  diffuseTexture_.loadTexture("src/resources/textures/diffuse1.jpg", "CSRGB");
-  diffuseTexture_.generateMipmap();
+
+
+  std::string textures[16];
+  for (int y = 0; y < 4; ++y) {
+    for (int x = 0; x < 4; ++x) {
+      textures[4*y+x] = "src/resources/textures/earth" + std::to_string(x)
+                        + std::to_string(y) + ".jpg";
+    }
+  }
+  diffuseTexture_.loadTextures(textures, textures+16, "SRGB"); // no alpha
+  //diffuseTexture_.generateMipmap();
   diffuseTexture_.maxAnisotropy();
-  diffuseTexture_.minFilter(gl::kLinearMipmapLinear);
-  diffuseTexture_.magFilter(gl::kLinear);
-  diffuseTexture_.wrapS(gl::kRepeat);
-  diffuseTexture_.wrapT(gl::kRepeat);
+  diffuseTexture_.minFilter(gl::kLinear);
+  diffuseTexture_.magFilter(gl::kNearest);
+  diffuseTexture_.wrapS(gl::kClampToEdge);
+  diffuseTexture_.wrapT(gl::kClampToEdge);
 
   prog_.validate();
 }
