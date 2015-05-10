@@ -27,10 +27,12 @@ Terrain::Terrain(engine::GameObject* parent)
                         + std::to_string(y) + ".jpg";
     }
   }
-  diffuseTexture_.loadTextures(textures, textures+16, "SRGB"); // no alpha
-  //diffuseTexture_.generateMipmap();
+  diffuseTexture_.loadTextures(textures, textures+16, "CSRGB"); // no alpha
+  // diffuseTexture_.generateMipmap();
   diffuseTexture_.maxAnisotropy();
-  diffuseTexture_.minFilter(gl::kLinear);
+  // diffuseTexture_.minFilter(gl::kLinearMipmapLinear);
+  // diffuseTexture_.magFilter(gl::kLinear);
+  diffuseTexture_.minFilter(gl::kNearest);
   diffuseTexture_.magFilter(gl::kNearest);
   diffuseTexture_.wrapS(gl::kClampToEdge);
   diffuseTexture_.wrapT(gl::kClampToEdge);
