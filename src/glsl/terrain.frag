@@ -175,16 +175,18 @@ void main() {
   vec3 w_normal = normalize(vIn.w_normal);
 
   // Lighting
-  vec3 lighting = HemisphereLighting(w_normal);
-  vec3 w_sun_dir = SunPos();
-  float diffuse_power = CalculateLighting(w_normal, w_sun_dir);
-  diffuse_power *= pow(SunPower(), 0.3);
-  lighting += SunColor() * diffuse_power;
+  vec3 w_sun_pos = SunPos();
+  float diffuse_power = 0.0;
+  if (dot(vIn.w_pos, w_sun_pos) > 0) {
+    vec3 w_sun_dir = normalize(w_sun_pos);
+    diffuse_power = CalculateLighting(w_normal, w_sun_dir);
+  }
 
-  //vec3 diffuse_color = texture(uDiffuseTexture, transformTexcoord(vIn.texCoord)).rgb;
-  float gamma = 2.5;
+  vec3 lighting = vec3(diffuse_power);
+
+  float gamma = 2.2;
   vec3 diffuse_color = pow(getColor(), vec3(1/gamma));
-  vec3 final_color = diffuse_color * (AmbientPower() + lighting);
+  vec3 final_color = diffuse_color * (0.2 + lighting);
 
   fragColor = vec4(final_color, 1);
   //fragColor = vec4(vIn.level/8, vIn.morph/3, 0, 1)*0.5 + 0.5*vec4(final_color, 1);

@@ -75,6 +75,10 @@ class MainScene : public engine::Scene {
   }
 
   virtual void update() override {
+    double height = glm::length(scene_->camera()->transform()->pos());
+    double z_far = height, z_near = z_far/100000;
+    scene_->camera()->set_z_far(z_far);
+    scene_->camera()->set_z_near(z_near);
     if (free_fly_camera_) {
       auto t = free_fly_camera_->transform();
       glm::vec3 new_up = glm::normalize(t->pos());

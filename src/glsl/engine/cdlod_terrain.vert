@@ -217,13 +217,14 @@ vec2 CDLODTerrain_nodeLocal2Global(vec2 node_coord, float scale) {
 vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   float scale = CDLODTerrain_uScale;
   vec2 pos = CDLODTerrain_nodeLocal2Global(CDLODTerrain_aPosition, scale);
+  //int iteration_count = 0, morph = 0;
 
   float dist = CDLODTerrain_estimateDistance(pos);
 
   float next_border = (1 << (CDLODTerrain_uLevel+1+2)) * CDLODTerrain_uNodeDimension;
 
   float max_dist = 0.9*next_border;
-  float start_dist = max(0.95*max_dist, max_dist - sqrt(max_dist));
+  float start_dist = 0.8*next_border; //max(0.95*max_dist, max_dist - sqrt(max_dist));
   float dist_from_start = dist - start_dist;
   float start_to_end_dist = max_dist - start_dist;
   int iteration_count = 0;

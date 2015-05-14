@@ -24,47 +24,13 @@ float sky_sqr(float x) {
   return x*x;
 }
 
-// Returns the distance the light shot at look_dir travels
-// in the atmosphere relative to the atmosphere's thickness
-// (the more it travels there, the more reddish color it gets)
-float AtmIntersection(vec3 look_dir) {
-  const vec3 sun_light = vec3(0.0, -kWorldRadius, 0.0);
-  const float r = kWorldRadius + kAtmThickness;
-  const float sun_len_sq = dot(sun_light, sun_light);
-  float look_vert = dot(look_dir, -sun_light);
-  return (-look_vert + sqrt(look_vert * look_vert - sun_len_sq + r*r))
-         / kAtmThickness;
-}
-
 vec3 SkyColor(vec3 look_dir) {
-  float atm_size = AtmIntersection(look_dir);
-  vec3 atm_color = max(kLightColor - kAirColor * pow(atm_size, 0.33), vec3(0.0));
+  float look_dir_sun_dist = max(dot(look_dir, sun_pos), 0.0);
 
-  float sun_power = clamp(sun_pos.y + 0.12, 0.1, 1.0);
-  float look_dir_sun_dist =
-        max(dot(look_dir, sun_pos), 0.0) + 0.003 * sqrt(atm_size);
+  float airLightScale = 1 + (look_dir_sun_dist+1)/4;
+  vec3 sun = 0.6 * pow(vec3(0.9, 0.7, 0.5), vec3(pow(look_dir_sun_dist, -256)));
 
-  // The Sun itself
-  vec3 sun = vec3(1.0, 0.7, 0.5) * atm_color *
-  (look_dir_sun_dist > 0.995 + 0.004 * sun_power ? 0.9 : 0.1);
-
-  vec3 air =
-      // The sky's base color.
-      min( // when this one dominates nearly the entire sky is blue, but the horizon is whitish
-        kAirColor * sqrt(pow(sun_power, 0.25) * pow(atm_size, 0.75) + 0.15),
-        // This one dominates at sunset / sunrise and in the night.
-        // When it wins, it is a non-dominant dark grey color,
-        // that lets the other effect paint the sky, but makes
-        // them a bit brighter.
-        (3+look_dir.y)/3 *  vec3(sun_power)) +
-      // The scattering effect near the Sun
-      vec3(1.0, 0.9, 0.7) * atm_color *
-      pow(min(look_dir_sun_dist + 0.001 * atm_size, 1.0),
-          1024.0 / sky_sqr(atm_size)) +
-      // The yellow and red tone of the sky at sunset / sunrise
-      atm_color * (look_dir_sun_dist / (0.7 + pow(2.9 * sun_power, 4.0))) * pow(atm_size, 0.6) * 0.5;
-
-  return clamp(air + sun, 0.0, 1.0);
+  return clamp(sun + airLightScale*kAirColor, 0.0, 1.0);
 }
 
 // Functions for other objects' lighting computations

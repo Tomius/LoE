@@ -23,10 +23,11 @@ Skybox::Skybox(engine::GameObject* parent)
 }
 
 glm::vec3 Skybox::getSunPos() const {
-  return glm::vec3(0.f, 1.f, 0.f) *
+  return normalize(glm::vec3(-0.7f, 0.3f, +1.0f));
+  /*return glm::vec3(0.f, 1.f, 0.f) *
           static_cast<float>(sin(time_ * 2 * M_PI / day_duration)) +
          glm::vec3(0.f, 0.f, -1.f) *
-          static_cast<float>(cos(time_ * 2 * M_PI / day_duration));
+          static_cast<float>(cos(time_ * 2 * M_PI / day_duration));*/
 }
 
 glm::vec3 Skybox::getLightSourcePos() const {
@@ -45,6 +46,9 @@ void Skybox::render() {
   prog_.update();
   uCameraMatrix_ = glm::mat3(cam->cameraMatrix());
   uProjectionMatrix_ = cam->projectionMatrix();
+  auto camera = scene_->camera();
+  float scale = (camera->z_near() + camera->z_far()) / 2;
+  gl::Uniform<float>(prog_, "uScale") = scale;
 
   gl::TemporaryDisable depth_test{gl::kDepthTest};
 
