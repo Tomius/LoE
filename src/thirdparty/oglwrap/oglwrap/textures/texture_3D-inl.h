@@ -128,7 +128,8 @@ void Texture3DBase<texture_t>::getCompressedImage(GLint level,
 template<Texture3DType texture_t>
 template<typename IterT>
 void Texture3DBase<texture_t>::loadTextures(IterT files_begin, IterT files_end,
-                                            std::string format_string) {
+                                            std::string format_string,
+                                            GLint level) {
   try {
     bool srgb{false}, compressed{false}, alpha{false};
     size_t s_pos = format_string.find('S');
@@ -184,9 +185,9 @@ void Texture3DBase<texture_t>::loadTextures(IterT files_begin, IterT files_end,
     }
 
     // upload the first image
-    upload(internal_format, w, h, layers_num,
-           alpha ? PixelDataFormat::kRgba : PixelDataFormat::kRgb,
-           PixelDataType::kUnsignedByte, blob.get());
+    uploadMipmap(level, internal_format, w, h, layers_num,
+                 alpha ? PixelDataFormat::kRgba : PixelDataFormat::kRgb,
+                 PixelDataType::kUnsignedByte, blob.get());
 
     if (bad_alignment) {
       gl(PixelStorei(GL_UNPACK_ALIGNMENT, unpack_aligment));
@@ -196,90 +197,6 @@ void Texture3DBase<texture_t>::loadTextures(IterT files_begin, IterT files_end,
   }
 }
 #endif
-
-
-// #if OGLWRAP_USE_IMAGEMAGICK && (OGLWRAP_DEFINE_EVERYTHING || defined(glTexStorage3D))
-// template<Texture3DType texture_t>
-// template<typename IterT>
-// void Texture3DBase<texture_t>::loadTextures(IterT files_begin, IterT files_end,
-//                                             GLsizei mipmap_levels,
-//                                             std::string format_string) {
-//   try {
-//     bool srgb{false}, compressed{false}, alpha{false};
-//     size_t s_pos = format_string.find('S');
-//     if (s_pos != std::string::npos) {
-//       srgb = true;
-//       format_string.erase(s_pos, 1);
-//     }
-//     size_t c_pos = format_string.find('C');
-//     if (c_pos != std::string::npos) {
-//       compressed = true;
-//       format_string.erase(c_pos, 1);
-//     }
-//     alpha = format_string.find('A') != std::string::npos;
-
-//     using InternalFormat = PixelDataInternalFormat;
-//     InternalFormat internal_format =
-//       srgb ? (compressed ? (alpha ? InternalFormat::kCompressedSrgbAlpha
-//                                   : InternalFormat::kCompressedSrgb)
-//                          : (alpha ? InternalFormat::kSrgb8Alpha8
-//                                   : InternalFormat::kSrgb8))
-//            : (compressed ? (alpha ? InternalFormat::kCompressedRgba
-//                                   : InternalFormat::kCompressedRgb)
-//                          : (alpha ? InternalFormat::kRgba8
-//                                   : InternalFormat::kRgb8));
-
-//     int layers_num = files_end - files_begin;
-//     if (layers_num <= 0) {
-//       std::cerr << "Texture3D::loadTextures called with 0 file names." << std::endl;
-//       return;
-//     }
-
-//     Magick::Image first_image = Magick::Image(*files_begin);
-//     GLsizei w = first_image.columns(), h = first_image.rows();
-
-//     if (mipmap_levels == 0) {
-//       mipmap_levels = 1 + floor(log2(std::max(w, h)));
-//     }
-
-//     // set up storage
-//     storage(mipmap_levels, internal_format, w, h, layers_num);
-
-//     // check if image is badly aligned to GL_UNPACK_ALIGNMENT
-//     bool bad_alignment = (w * format_string.length()) % 4 != 0;
-//     GLint unpack_aligment;
-
-//     if (bad_alignment) {
-//       gl(GetIntegerv(GL_UNPACK_ALIGNMENT, &unpack_aligment));
-//       gl(PixelStorei(GL_UNPACK_ALIGNMENT, 1));
-//     }
-
-//     // upload the first image
-//     Magick::Blob blob;
-//     first_image.write(&blob, format_string);
-//     subUpload(0, 0, 0, w, h, 1,
-//               alpha ? PixelDataFormat::kRgba : PixelDataFormat::kRgb,
-//               PixelDataType::kUnsignedByte, blob.data());
-
-//     // upload the rest
-//     for (int layer = 1; layer < layers_num; ++layer) {
-//       Magick::Image image = Magick::Image(*(++files_begin));
-//       image.write(&blob, format_string);
-
-//       subUpload(0, 0, layer, w, h, 1,
-//                 alpha ? PixelDataFormat::kRgba : PixelDataFormat::kRgb,
-//                 PixelDataType::kUnsignedByte, blob.data());
-//     }
-
-
-//     if (bad_alignment) {
-//       gl(PixelStorei(GL_UNPACK_ALIGNMENT, unpack_aligment));
-//     }
-//   } catch (const Magick::Error& error) {
-//     std::cerr << "Error loading texture: " << error.what() << std::endl;
-//   }
-// }
-// #endif
 
 #endif  // GL_TEXTURE_3D
 

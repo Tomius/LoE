@@ -135,7 +135,8 @@ class Texture3DBase : public TextureBase<TextureType(texture_t)> {
 #if OGLWRAP_USE_IMAGEMAGICK && (OGLWRAP_DEFINE_EVERYTHING || defined(glTexStorage3D))
   template<typename IterT>
   void loadTextures(IterT files_begin, IterT files_end,
-                    std::string format_string = "CSRGBA");
+                    std::string format_string = "CSRGBA",
+                    GLint level = 0);
 #endif
 };
 

@@ -14,7 +14,7 @@ static void PrintDebugText(const std::string& str) {
 
 static void PrintDebugTime() {
   double curr_time = glfwGetTime();
-  std::cout << curr_time - last_debug_time << " ms" << std::endl;
+  std::cout << curr_time - last_debug_time << " s" << std::endl;
   last_debug_time = curr_time;
 }
 

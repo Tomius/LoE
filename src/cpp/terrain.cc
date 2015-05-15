@@ -5,6 +5,10 @@
 
 #include "engine/scene.h"
 
+static bool file_exists(const char *fileName) {
+    return std::ifstream{fileName}.good();
+}
+
 Terrain::Terrain(engine::GameObject* parent)
     : engine::GameObject(parent)
     , mesh_(scene_->shader_manager())
@@ -18,19 +22,24 @@ Terrain::Terrain(engine::GameObject* parent)
   gl::UniformSampler(prog_, "uDiffuseTexture").set(2);
   gl::Bind(diffuseTexture_);
 
-
+  size_t level = 0;
+  std::string dir = "src/resources/textures/" + std::to_string(level);
   std::string textures[16];
-  for (int y = 0; y < 4; ++y) {
-    for (int x = 0; x < 4; ++x) {
-      textures[4*y+x] = "src/resources/textures/earth" + std::to_string(x)
-                        + std::to_string(y) + ".jpg";
+  while (file_exists(dir.c_str())) {
+    for (int y = 0; y < 4; ++y) {
+      for (int x = 0; x < 4; ++x) {
+        textures[4*y+x] = dir + "/earth" + std::to_string(x)
+                          + std::to_string(y) + ".jpg";
+      }
     }
+    diffuseTexture_.loadTextures(std::begin(textures), std::end(textures),
+                                 "CSRGB", level); // no alpha
+
+    dir = "src/resources/textures/" + std::to_string(++level);
   }
-  diffuseTexture_.loadTextures(textures, textures+16, "CSRGB"); // no alpha
-  // diffuseTexture_.generateMipmap();
+
   diffuseTexture_.maxAnisotropy();
-  // diffuseTexture_.minFilter(gl::kLinearMipmapLinear);
-  diffuseTexture_.minFilter(gl::kLinear);
+  diffuseTexture_.minFilter(gl::kLinearMipmapLinear);
   diffuseTexture_.magFilter(gl::kLinear);
   diffuseTexture_.wrapS(gl::kClampToEdge);
   diffuseTexture_.wrapT(gl::kClampToEdge);
