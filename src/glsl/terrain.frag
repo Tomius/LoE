@@ -149,11 +149,16 @@ vec3 getSampleCoord(ivec2 tex_size) {
   return vec3(relative_coord, kAtlasSize.x * atlas_coord.y + atlas_coord.x);
 }
 
-vec3 getColor() {
-  float mipmapLevel = textureQueryLOD(uDiffuseTexture, vIn.texCoord * kAtlasSize).x;
-  int level = int(round(mipmapLevel));
+vec3 getColor(int level) {
   ivec2 tex_size = textureSize(uDiffuseTexture, level).xy;
   vec3 sample_coord = getSampleCoord(tex_size);
+
+  if (level != 0) {
+    vec3 tex_coord = sample_coord / ivec3(tex_size, 1);
+    return textureLod(uDiffuseTexture, tex_coord, level).xyz;
+  }
+
+  // manual sampling is only needed in case of magnification.
   ivec3[4] texel_coords; vec4 weights; bool is_on_layer_border;
   bilinearSample(sample_coord, tex_size, texel_coords, weights, is_on_layer_border);
 
@@ -168,6 +173,13 @@ vec3 getColor() {
     vec3 tex_coord = sample_coord / ivec3(tex_size, 1);
     return textureLod(uDiffuseTexture, tex_coord, level).xyz;
   }
+}
+
+vec3 getColor() {
+  float mipmapLevel = textureQueryLOD(uDiffuseTexture, vIn.texCoord * kAtlasSize).x;
+  int level0 = int(floor(mipmapLevel)), level1 = int(ceil(mipmapLevel));
+  vec3 color0 = getColor(level0), color1 = getColor(level1);
+  return (level0+1-mipmapLevel)*color0 + (mipmapLevel-level0)*color1;
 }
 
 void main() {
