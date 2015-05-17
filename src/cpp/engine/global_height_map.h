@@ -18,7 +18,7 @@ namespace GlobalHeightMap {
   static constexpr long tex_w = 172800, tex_h = 86400;
   static constexpr long geom_w = tex_w << geom_div;
   static constexpr long geom_h = tex_h << geom_div;
-  static constexpr int max_height = 40 << geom_div;
+  static constexpr int max_height = 100 << geom_div;
   static constexpr float sphere_radius = geom_w / 2 / M_PI;
 };
 

@@ -29,7 +29,7 @@ Terrain::Terrain(engine::GameObject* parent)
     for (int y = 0; y < 4; ++y) {
       for (int x = 0; x < 4; ++x) {
         textures[4*y+x] = dir + "/earth" + std::to_string(x)
-                          + std::to_string(y) + ".jpg";
+                          + std::to_string(y) + ".png";
       }
     }
     diffuseTexture_.loadTextures(std::begin(textures), std::end(textures),

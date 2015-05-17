@@ -23,8 +23,9 @@ Skybox::Skybox(engine::GameObject* parent)
 }
 
 glm::vec3 Skybox::getSunPos() const {
-  return glm::vec3{-cos(time_ * 2 * M_PI / day_duration), 0.0f,
-                   -sin(time_ * 2 * M_PI / day_duration)};
+  return glm::normalize(
+           glm::vec3{-cos(time_ * 2 * M_PI / day_duration), 0.3f,
+                     -sin(time_ * 2 * M_PI / day_duration)});
 }
 
 glm::vec3 Skybox::getLightSourcePos() const {
@@ -39,9 +40,9 @@ void Skybox::update() {
 void Skybox::keyAction(int key, int scancode, int action, int mods) {
   if (action == GLFW_PRESS) {
     if (key == GLFW_KEY_KP_ADD) {
-      mult_ = 32.0;
+      mult_ = 64.0;
     } else if (key == GLFW_KEY_KP_SUBTRACT) {
-      mult_ = -32.0;
+      mult_ = -64.0;
     }
   } else if (action == GLFW_RELEASE) {
     if (key == GLFW_KEY_KP_ADD || key == GLFW_KEY_KP_SUBTRACT) {
