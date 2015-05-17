@@ -2,7 +2,7 @@
 
 #include "./skybox.h"
 
-const float day_duration = 256.0f, day_start = day_duration/8;
+const float day_duration = 512.0f, day_start = 0;
 
 Skybox::Skybox(engine::GameObject* parent)
     : engine::Behaviour(parent)
@@ -23,11 +23,8 @@ Skybox::Skybox(engine::GameObject* parent)
 }
 
 glm::vec3 Skybox::getSunPos() const {
-  return normalize(glm::vec3(-0.7f, 0.3f, +1.0f));
-  /*return glm::vec3(0.f, 1.f, 0.f) *
-          static_cast<float>(sin(time_ * 2 * M_PI / day_duration)) +
-         glm::vec3(0.f, 0.f, -1.f) *
-          static_cast<float>(cos(time_ * 2 * M_PI / day_duration));*/
+  return glm::vec3{-cos(time_ * 2 * M_PI / day_duration), 0.0f,
+                   -sin(time_ * 2 * M_PI / day_duration)};
 }
 
 glm::vec3 Skybox::getLightSourcePos() const {
@@ -36,7 +33,21 @@ glm::vec3 Skybox::getLightSourcePos() const {
 }
 
 void Skybox::update() {
-  //time_ = scene_->environment_time().current + day_start;
+  time_ += scene_->environment_time().dt * mult_;
+}
+
+void Skybox::keyAction(int key, int scancode, int action, int mods) {
+  if (action == GLFW_PRESS) {
+    if (key == GLFW_KEY_KP_ADD) {
+      mult_ = 32.0;
+    } else if (key == GLFW_KEY_KP_SUBTRACT) {
+      mult_ = -32.0;
+    }
+  } else if (action == GLFW_RELEASE) {
+    if (key == GLFW_KEY_KP_ADD || key == GLFW_KEY_KP_SUBTRACT) {
+      mult_ = 1.0;
+    }
+  }
 }
 
 void Skybox::render() {

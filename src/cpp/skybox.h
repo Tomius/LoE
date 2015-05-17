@@ -17,9 +17,11 @@ class Skybox : public engine::Behaviour {
 
   virtual void render() override;
   virtual void update() override;
+  virtual void keyAction(int key, int scancode, int action, int mods) override;
 
  private:
   float time_;
+  float mult_ = 1.0;
   gl::CubeShape cube_;
 
   engine::ShaderProgram prog_;

@@ -28,7 +28,7 @@ vec3 SkyColor(vec3 look_dir) {
   float look_dir_sun_dist = max(dot(look_dir, sun_pos), 0.0);
 
   float airLightScale = 1 + (look_dir_sun_dist+1)/4;
-  vec3 sun = 0.6 * pow(vec3(0.9, 0.7, 0.5), vec3(pow(look_dir_sun_dist, -256)));
+  vec3 sun = 0.6 * pow(vec3(0.93, 0.91, 0.4), vec3(pow(look_dir_sun_dist, -256)));
 
   return clamp(sun + airLightScale*kAirColor, 0.0, 1.0);
 }

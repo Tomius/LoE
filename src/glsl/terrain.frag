@@ -32,7 +32,43 @@ uniform ivec2 CDLODTerrain_uTexSize;
 uniform int CDLODTerrain_uGeomDiv;
 ivec2 CDLODTerrain_GeomSize = CDLODTerrain_uTexSize << CDLODTerrain_uGeomDiv;
 
-// bilinear sampling
+void handleBorders(ivec2 tex_size, inout ivec3[4] tc,
+                   out bool is_on_layer_border) {
+  // some texels might be in a different texture
+  // at first, assume that the sampling is not special (is not on layer border)
+  is_on_layer_border = false;
+
+  for(int i = 0; i < 4; ++i) {
+    if (tc[i].x < 0) {
+      // if the texel hangs out to the left
+      if (tc[i].z % kAtlasSize.x == 0) {
+        tc[i] = ivec3(tex_size.x-1, tc[i].y, tc[i].z+kAtlasSize.x-1);
+      } else {
+        tc[i] = ivec3(tex_size.x-1, tc[i].y, tc[i].z-1);
+      }
+      is_on_layer_border = true;
+    } else if (tex_size.x <= tc[i].x) {
+      // if the texel hangs out to the right
+      if (tc[i].z % kAtlasSize.x == kAtlasSize.x - 1) {
+        tc[i] = ivec3(0, tc[i].y, tc[i].z-kAtlasSize.x+1);
+      } else {
+        tc[i] = ivec3(0, tc[i].y, tc[i].z+1);
+      }
+      is_on_layer_border = true;
+    }
+
+    if (tc[i].y < 0) {
+      // if the texel hangs out to the top
+      tc[i] = ivec3(tc[i].x, tex_size.y-1, tc[i].z-kAtlasSize.x);
+      is_on_layer_border = true;
+    } else if (tex_size.y <= tc[i].y) {
+      // if the texel hangs out to the bottom
+      tc[i] = ivec3(tc[i].x, 0, tc[i].z+kAtlasSize.x);
+      is_on_layer_border = true;
+    }
+  }
+}
+
 void bilinearSample(vec3 sample_coord, ivec2 tex_size,
                     out ivec3[4] texel_coords, out vec4 weights,
                     out bool is_on_layer_border) {
@@ -56,87 +92,19 @@ void bilinearSample(vec3 sample_coord, ivec2 tex_size,
   weights.z = (tr.x - sp.x)*(sp.y - tr.y); //bl
   weights.w = (sp.x - tl.x)*(sp.y - tl.y); //br
 
-  // some texels might be in a different texture
-  // at first, assume that the sampling is not special (is not on layer border)
-  is_on_layer_border = false;
+  texel_coords[0] = ivec3(tl, layer);
+  texel_coords[1] = ivec3(tr, layer);
+  texel_coords[2] = ivec3(bl, layer);
+  texel_coords[3] = ivec3(br, layer);
 
-  // the top left can hang out on the top and left edges
-  if (0 <= tl.x && 0.0 <= tl.y) {
-    // if it is not on the edge on either directions
-    texel_coords[0] = ivec3(tl, layer);
-  } else if (0 <= tl.x) {
-    // if the texel hangs out to the top
-    texel_coords[0] = ivec3(tl.x, tex_size.y-1, layer-kAtlasSize.x);
-    is_on_layer_border = true;
-  } else if (0.0 <= tl.y) {
-    // if the texel hangs out to the left
-    texel_coords[0] = ivec3(tex_size.x-1, tl.y, layer-1);
-    is_on_layer_border = true;
-  } else {
-    // if the texel hangs out on both directions
-    texel_coords[0] = ivec3(tex_size.x-1, tex_size.y-1, layer-kAtlasSize.x-1);
-    is_on_layer_border = true;
-  }
-
-  // the top right can hang out on the top and right edges
-  if (tr.x < tex_size.x && 0.0 <= tr.y) {
-    // if it is not on the edge on either directions
-    texel_coords[1] = ivec3(tr, layer);
-  } else if (tr.x < tex_size.x) {
-    // if the texel hangs out to the top
-    texel_coords[1] = ivec3(tr.x, tex_size.y-1, layer-kAtlasSize.x);
-    is_on_layer_border = true;
-  } else if (0.0 <= tr.y) {
-    // if the texel hangs out to the right
-    texel_coords[1] = ivec3(0, tr.y, layer+1);
-    is_on_layer_border = true;
-  } else {
-    // if the texel hangs out on both directions
-    texel_coords[1] = ivec3(0, tex_size.y-1, layer-kAtlasSize.x+1);
-    is_on_layer_border = true;
-  }
-
-  // the bottom left can hang out on the bottom and left edges
-  if (0 <= bl.x && bl.y < tex_size.y) {
-    // if it is not on the edge on either directions
-    texel_coords[2] = ivec3(bl, layer);
-  } else if (0 <= bl.x) {
-    // if the texel hangs out to the bottom
-    texel_coords[2] = ivec3(bl.x, 0, layer+kAtlasSize.x);
-    is_on_layer_border = true;
-  } else if (bl.y < tex_size.y) {
-    // if the texel hangs out to the left
-    texel_coords[2] = ivec3(tex_size.x-1, bl.y, layer-1);
-    is_on_layer_border = true;
-  } else {
-    // if the texel hangs out on both directions
-    texel_coords[2] = ivec3(tex_size.x-1, 0, layer+kAtlasSize.x-1);
-    is_on_layer_border = true;
-  }
-
-  // br can be past the bottom and the right edge of the altas elem
-  if (br.x < tex_size.x && br.y < tex_size.y) {
-    // if it is not on the edge on either directions
-    texel_coords[3] = ivec3(br, layer);
-  } else if (br.x < tex_size.x) {
-    // if the texel hangs out to the bottom
-    texel_coords[3] = ivec3(br.x, 0, layer+kAtlasSize.x);
-    is_on_layer_border = true;
-  } else if (br.y < tex_size.y) {
-    // if the texel hangs out to the right
-    texel_coords[3] = ivec3(0, br.y, layer+1);
-    is_on_layer_border = true;
-  } else {
-    // if the texel hangs out on both directions
-    texel_coords[3] = ivec3(0, 0, layer+kAtlasSize.x+1);
-    is_on_layer_border = true;
-  }
+  handleBorders(tex_size, texel_coords, is_on_layer_border);
 }
 
 vec3 getSampleCoord(ivec2 tex_size) {
   vec2 pos = vIn.m_pos.xz;
   vec2 max_tex_coord = tex_size * kAtlasSize;
   vec2 global_texel_coord = pos * (max_tex_coord / CDLODTerrain_GeomSize);
+  //global_texel_coord = mod(global_texel_coord, max_tex_coord);
 
   // Sampling at the absoulte borders is a bit buggy
   int global_edge_bias = 2;
@@ -153,12 +121,12 @@ vec3 getColor(int level) {
   ivec2 tex_size = textureSize(uDiffuseTexture, level).xy;
   vec3 sample_coord = getSampleCoord(tex_size);
 
+  // manual sampling is only needed in case of magnification.
   if (level != 0) {
     vec3 tex_coord = sample_coord / ivec3(tex_size, 1);
     return textureLod(uDiffuseTexture, tex_coord, level).xyz;
   }
 
-  // manual sampling is only needed in case of magnification.
   ivec3[4] texel_coords; vec4 weights; bool is_on_layer_border;
   bilinearSample(sample_coord, tex_size, texel_coords, weights, is_on_layer_border);
 
