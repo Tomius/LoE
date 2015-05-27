@@ -41,6 +41,9 @@ void GameEngine::InitContext() {
     // Window creation
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
 #if ENGINE_NO_FULLSCREEN
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,
                                "Land of Earth", nullptr, nullptr);
@@ -64,8 +67,8 @@ void GameEngine::InitContext() {
   glfwGetFramebufferSize(window_, &width, &height);
   std::cout << " - Resolution: "  << width << " x " << height << std::endl;
 
-  if (ogl_major_version < 2 || (ogl_major_version == 2 && ogl_minor_version < 1)) {
-    std::cerr << "At least OpenGL version 2.1 is required to run this program\n";
+  if (ogl_major_version < 3 || (ogl_major_version == 3 && ogl_minor_version < 3)) {
+    std::cerr << "At least OpenGL version 3.3 is required to run this program\n";
     std::terminate();
   }
 
