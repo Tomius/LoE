@@ -108,7 +108,7 @@ vec3 getSampleCoord(ivec2 tex_size) {
 
   // Sampling at the absoulte borders is a bit buggy
   int global_edge_bias = 2;
-  float scale = ((max_tex_coord-2*global_edge_bias)/max_tex_coord);
+  vec2 scale = ((max_tex_coord-2*global_edge_bias)/max_tex_coord);
   global_texel_coord = global_texel_coord * scale + global_edge_bias;
 
   ivec2 atlas_coord = ivec2(global_texel_coord/tex_size);
