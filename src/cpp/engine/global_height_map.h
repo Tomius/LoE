@@ -10,8 +10,9 @@
 namespace engine {
 
 namespace GlobalHeightMap {
- //public:
   extern const char *base_path;
+  static constexpr uint node_dimension_exp = 6;
+
   // geometry division. If this is three, that means that a 8x8 geometry
   // (9x9 vertices) corresponds to a 1x1 texture area (2x2 texels)
   static constexpr long geom_div = 0;

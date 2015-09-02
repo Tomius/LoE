@@ -94,13 +94,6 @@ class TexQuadTree {
   }
 
   void update(Camera const& cam) {
-    // static bool first_call = true;
-    // if (!first_call) {
-    //   return;
-    // } else {
-    //   first_call = false;
-    // }
-
     gl::Bind(index_tex_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
@@ -109,21 +102,6 @@ class TexQuadTree {
       glm::vec3 cam_pos = cam.transform()->pos();
       root_.selectNodes(cam_pos, cam.frustum(), 0, texture_data_, indices);
       root_.age();
-
-      // for (int j = 1; j <= 4; ++j) {
-      //   std::cout << j << ":" << (indices[j].data_offset_hi << 16) + indices[j].data_offset_lo << std::endl;
-      //   // std::cout << "w:" << indices[j].tex_size_x << ",h:" << indices[j].tex_size_y << std::endl;
-      //   // for (int i = 0; i < indices[j].tex_size_x*indices[j].tex_size_y; ++i) {
-      //   //   int index = (indices[j].data_offset_hi << 16) + indices[j].data_offset_lo + i;
-      //   //   if (texture_data_[index] != 0) {
-      //   //     std::cout << std::dec << j << "," << i << ":"
-      //   //               << std::hex << (int)texture_data_[index] << " ";
-      //   //   }
-      //   // }
-      //   // std::cout << std::endl;
-      // }
-
-      //std::terminate();
     } // unmap indices
 
 

@@ -7,9 +7,6 @@
 namespace engine {
 namespace cdlod {
 
-// If a node is not used for this much time (frames), it will be unloaded.
-int TexQuadTreeNode::time_to_live_ = 256;
-
 TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
     : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
     , bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 200, z+(sz-sz/2)}} {}

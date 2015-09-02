@@ -12,16 +12,11 @@
   [
     {
       "follow_symlinks": true,
-      "path": ".",
+      "path": "src",
       "folder_exclude_patterns": [
-        ".obj",
-        "src/resources",
-        ".deps",
-        "thirdparty/freetype-gl",
-        "thirdparty/glew",
-        "thirdparty/glfw",
-        "thirdparty/glm"
-      ], "file_exclude_patterns": ["a.out", "*.h.pch"]
+        "resources",
+      ],
+      "file_exclude_patterns": ["a.out", "*.h.pch"]
     }
   ],
 

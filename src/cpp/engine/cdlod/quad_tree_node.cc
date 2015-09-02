@@ -14,7 +14,7 @@ QuadTreeNode::QuadTreeNode(int x, int z, GLubyte level, int dimension)
 
 // Returns false if the node doesn't have a single vertex inside the visible area
 bool QuadTreeNode::isVisible(int x, int z, int level, int dimension) {
-  int s2 = (dimension << level) >> 1;
+  int s2 = dimension << (level - 1);
   return (-s2 <= x && x <= GlobalHeightMap::geom_w + s2 &&
           -s2 <= z && z <= GlobalHeightMap::geom_h + s2);
 }

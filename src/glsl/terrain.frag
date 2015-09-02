@@ -4,8 +4,6 @@
 #extension GL_ARB_texture_query_lod : enable
 
 #include "sky.frag"
-#include "fog.frag"
-#include "hemisphere_lighting.frag"
 
 in VertexData {
   vec3 w_normal;

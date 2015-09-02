@@ -47,7 +47,9 @@ class TexQuadTreeNode {
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
   std::vector<GLubyte> data_;
-  static int time_to_live_;
+
+  // If a node is not used for this much time (frames), it will be unloaded.
+  static const int time_to_live_ = 256;
 };
 
 }

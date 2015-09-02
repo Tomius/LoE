@@ -5,7 +5,6 @@
 #include "../engine/scene.h"
 #include "../engine/camera.h"
 #include "../engine/behaviour.h"
-#include "../engine/debug/debug_shape.h"
 #include "../engine/gui/label.h"
 #include "../engine/cdlod/texture/tex_quad_tree.h"
 #include "../loading_screen.h"
@@ -29,7 +28,7 @@ class MainScene : public engine::Scene {
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
         M_PI/3, 2, 3*radius, glm::vec3(-2*radius, 0, 0),
-        0.4, 0.1, 0.005, 1.5, radius, radius);
+        2, 0.25, 0.005, 1.5, radius, radius);
 
     set_camera(tp_camera_);
     addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},
@@ -56,7 +55,7 @@ class MainScene : public engine::Scene {
 
           tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
               M_PI/3, 2, 3*radius, pos,
-              0.4, 0.1, 0.005, 1.5, radius, radius);
+              2, 0.25, 0.005, 1.5, radius, radius);
           removeComponent(free_fly_camera_);
           free_fly_camera_ = nullptr;
           set_camera(tp_camera_);
