@@ -217,35 +217,31 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
     } else {
       // neighbours
       float diff = 1.0 / (1 << CDLODTerrain_uGeomDiv);
-      mat2x4 nbx = mat2x4(tex_sample.x + vec4(+diff, -diff, 0, 0),
-                          tex_sample.x + vec4(+diff, -diff, +diff, -diff));
-      mat2x4 nby = mat2x4(tex_sample.y + vec4(0, 0, +diff, -diff),
-                          tex_sample.y + vec4(+diff, -diff, -diff, +diff));
-
       ivec2 node_top_left = node.center - node.size/2;
-      mat2x4 nheights;
-      for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 4; ++j) {
+      mat3x3 neighbour_heights;
+      for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+          vec2 neighbour = tex_sample + diff*vec2(x, y);
           // the [0-1]x[0-1] coordinate of the sample in the node
-          vec2 coord = (vec2(nbx[i][j], nby[i][j]) - vec2(node_top_left)) / vec2(node.size);
-          float x = coord.x, y = coord.y;
-          if (x < 0 || node.size.x <= x || y < 0 || node.size.y <= y) {
-            nheights[i][j] = height;
+          vec2 coord = (neighbour - vec2(node_top_left)) / vec2(node.size);
+          if (coord.x < 0 || node.size.x <= coord.x || coord.y < 0 ||
+              node.size.y <= coord.y || (x == 0 && y == 0)) {
+            neighbour_heights[x+1][y+1] = height;
           } else {
-            nheights[i][j] = CDLODTerrain_fetchHeight(node, vec2(nbx[i][j], nby[i][j]));
+            neighbour_heights[x+1][y+1] = CDLODTerrain_fetchHeight(node, neighbour);
           }
         }
       }
 
-      vec3 u = vec3(2*diff, nheights[0][0] - nheights[0][1], 0);
-      vec3 v = vec3(0, nheights[0][2] - nheights[0][3], 2*diff);
-      vec3 normal = normalize(cross(v, u));
+      float gx = (neighbour_heights[2][0] + 2*neighbour_heights[2][1] + neighbour_heights[2][2]) -
+                 (neighbour_heights[0][0] + 2*neighbour_heights[0][1] + neighbour_heights[0][2]);
 
-      vec3 u2 = vec3(2*diff, nheights[1][0] - nheights[1][1], 2*diff);
-      vec3 v2 = vec3(2*diff, nheights[1][2] - nheights[1][3], -2*diff);
-      vec3 normal2 = normalize(-cross(v2, u2));
+      float gy = (neighbour_heights[0][2] + 2*neighbour_heights[1][2] + neighbour_heights[2][2]) -
+                 (neighbour_heights[0][0] + 2*neighbour_heights[1][0] + neighbour_heights[2][0]);
 
-      m_normal = normalize(normal + normal2);
+      vec3 u = vec3(2*diff, gx, 0);
+      vec3 v = vec3(0, gy, 2*diff);
+      m_normal = normalize(cross(v, u));
     }
 
     return height;

@@ -9,7 +9,8 @@ namespace cdlod {
 
 TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
     : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
-    , bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 200, z+(sz-sz/2)}} {}
+    , bbox_{{x-sx/2, 0, z-sz/2},
+            {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
 
 void TexQuadTreeNode::load() {
   char str[100];
@@ -74,8 +75,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   int index,
                                   std::vector<GLubyte>& texture_data,
                                   TexQuadTreeNodeIndex* indices) {
-  float lod_range = 1.1 * GlobalHeightMap::lod_level_distance_multiplier
-                    * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
+  float lod_range = sqrt(double(sx_)*sx_ + double(sz_)*sz_);
 
   // check if the node is visible
   if (!bbox_.collidesWithFrustum(frustum)) {

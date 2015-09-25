@@ -17,11 +17,11 @@ uniform sampler2DArray uDiffuseTexture;
 
 out vec4 fragColor;
 
-const float kSpecularShininess = 64.0;
 const ivec2 kAtlasSize = ivec2(4, 4);
 
+// Quite a weird way to simulate amibent occlusion, but works suprisingly good
 float CalculateLighting(vec3 normal, vec3 light_dir) {
-  return max(dot(normal, light_dir), 0.0);
+  return sqrt(dot(normal, light_dir)+1.0) / sqrt(2.0);
 }
 
 uniform float CDLODTerrain_uNodeDimension;
@@ -156,7 +156,7 @@ void main() {
 
   float gamma = 2.2;
   vec3 diffuse_color = pow(getColor(), vec3(1/gamma));
-  vec3 final_color = diffuse_color * (0.25 + 0.75*lighting);
+  vec3 final_color = diffuse_color * (0.35 + 0.65*lighting);
 
   fragColor = vec4(final_color, 1);
   //fragColor = vec4(vIn.level/8, vIn.morph/3, 0, 1)*0.5 + 0.5*vec4(final_color, 1);

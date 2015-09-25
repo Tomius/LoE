@@ -20,7 +20,7 @@ namespace GlobalHeightMap {
   // The size of sphere for a CDLOD level is node size * this
   // It should be at least 2, but making it bigger makes distant
   // parts of the terrain appear with more detail.
-  static constexpr float lod_level_distance_multiplier = 2.0;
+  static constexpr double lod_level_distance_multiplier = 2;
   static_assert(2 <= lod_level_distance_multiplier, "");
 
   // Geometry subdivision. This practially contols zooming into the heightmap.
