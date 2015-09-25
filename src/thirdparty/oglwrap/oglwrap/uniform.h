@@ -362,7 +362,7 @@ class LazyUniform : public UniformObject<GLtype> {
     * If it is called with not an OpenGL type, it throws std::invalid_argument.
     * @return The current value of the uniform.
     * @see glUniform* */
-  GLtype get() const {
+  GLtype get() const override {
     OGLWRAP_CHECK_BINDING_EXPLICIT(this->program_);
 
     // Get the uniform's location only at the first set call.

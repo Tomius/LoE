@@ -41,7 +41,7 @@ class TexQuadTree {
   void initTexIndexBuffer() {
     size_t node_count = 0;
     for (int level = 0; level <= max_node_level_; ++level) {
-      node_count += 1 << (2*level); // pow(4, level)
+      node_count += 1 << (2*level); // == pow(4, level)
     }
     size_t size = node_count*sizeof(TexQuadTreeNodeIndex);
     gl::Bind(index_tex_buffer_);
@@ -97,6 +97,7 @@ class TexQuadTree {
     gl::Bind(index_tex_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
+      std::memset(indices, 0, map.size());
 
       texture_data_.clear();
       glm::vec3 cam_pos = cam.transform()->pos();

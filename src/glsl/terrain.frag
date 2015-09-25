@@ -102,14 +102,8 @@ vec3 getSampleCoord(ivec2 tex_size) {
   vec2 pos = vIn.m_pos.xz;
   vec2 max_tex_coord = tex_size * kAtlasSize;
   vec2 global_texel_coord = pos * (max_tex_coord / CDLODTerrain_GeomSize);
-  //global_texel_coord = mod(global_texel_coord, max_tex_coord);
 
-  // Sampling at the absoulte borders is a bit buggy
-  int global_edge_bias = 2;
-  vec2 scale = ((max_tex_coord-2*global_edge_bias)/max_tex_coord);
-  global_texel_coord = global_texel_coord * scale + global_edge_bias;
-
-  ivec2 atlas_coord = ivec2(global_texel_coord/tex_size);
+  ivec2 atlas_coord = ivec2(global_texel_coord / tex_size);
   ivec2 global_atlas_elem_texel_top = atlas_coord * tex_size;
   vec2 relative_coord = global_texel_coord - global_atlas_elem_texel_top;
   return vec3(relative_coord, kAtlasSize.x * atlas_coord.y + atlas_coord.x);

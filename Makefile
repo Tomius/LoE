@@ -51,8 +51,8 @@ CPP_FILES := $(shell find -L $(SRC_DIR)/cpp -name '*.cc')
 OBJECTS := $(subst $(SRC_DIR),$(OBJ_DIR),$(CPP_FILES:.cc=.o))
 DEPS := $(OBJECTS:.o=.d)
 
-C = clang
-CXX = clang++
+#CC = clang
+#CXX = clang++
 CXX_PRECOMPILED_HEADER_EXTENSION = pch
 
 PRECOMPILED_HEADER = $(PRECOMPILED_HEADER_SRC).$(CXX_PRECOMPILED_HEADER_EXTENSION)
@@ -182,7 +182,7 @@ $(GLFW_ARCHIVE):
 	@ cd $(GLFW_DIR) && cmake . > /dev/null && $(MAKE) all > /dev/null
 
 $(GLEW_ARCHIVE): $(GLEW_DEPS)
-	@ $(C) -c -isystem $(GLEW_INCL) $(GLEW_ARCHIVE_SRC) -o $@
+	@ $(CC) -c -isystem $(GLEW_INCL) $(GLEW_ARCHIVE_SRC) -o $@
 
 $(OGLWRAP_ARCHIVE): $(PRECOMPILED_HEADER)
 	@ $(CXX) -c $(CXXFLAGS) $(CXXFLAG_PRECOMPILED_HEADER) $(OGLWRAP_ARCHIVE_SRC) -o $@

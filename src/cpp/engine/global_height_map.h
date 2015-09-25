@@ -10,16 +10,33 @@
 namespace engine {
 
 namespace GlobalHeightMap {
+  // the path of the directory where the heightmap lies
   extern const char *base_path;
-  static constexpr uint node_dimension_exp = 6;
 
-  // geometry division. If this is three, that means that a 8x8 geometry
-  // (9x9 vertices) corresponds to a 1x1 texture area (2x2 texels)
-  static constexpr long geom_div = 0;
+  // CDLOD nodes' extent is (1 << node_dimension_exp)
+  static constexpr uint node_dimension_exp = 5;
+
+  // The size of sphere for a CDLOD level is node size * this
+  // It should be at least 2, but making it bigger makes distant
+  // parts of the terrain appear with more detail.
+  static constexpr uint lod_level_distance_multiplier = 2;
+
+  // Geometry subdivision. This practially contols zooming into the heightmap.
+  // If for ex. this is three, that means that a 8x8 geometry (9x9 vertices)
+  // corresponds to a 1x1 texture area (2x2 texels)
+  static constexpr long geom_div = 2;
+
+  // The resolution of the heightmap
   static constexpr long tex_w = 172800, tex_h = 86400;
+
+  // The resolution of the geometry subdivided heightmap.
   static constexpr long geom_w = tex_w << geom_div;
   static constexpr long geom_h = tex_h << geom_div;
+
+  // The maximum height value of a "hill"
   static constexpr int max_height = 100 << geom_div;
+
+  // The radius of the sphere made of the heightmap
   static constexpr float sphere_radius = geom_w / 2 / M_PI;
 };
 

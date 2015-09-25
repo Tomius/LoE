@@ -20,11 +20,11 @@ class QuadTree {
 
   GLubyte max_node_level() const {
     int x_depth = 0;
-    while ((node_dimension_ << x_depth) < w_) {
+    while (size_t(node_dimension_ << x_depth) < w_) {
       x_depth++;
     }
     int y_depth = 0;
-    while ((node_dimension_ << y_depth) < h_) {
+    while (size_t(node_dimension_ << y_depth) < h_) {
       y_depth++;
     }
 

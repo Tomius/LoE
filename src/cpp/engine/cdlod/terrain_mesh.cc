@@ -41,6 +41,9 @@ void TerrainMesh::setup(const gl::Program& program,
 
   gl::Uniform<float>(program, "CDLODTerrain_uNodeDimension") =
       quad_tree_.node_dimension();
+
+  gl::Uniform<float>(program, "CDLODTerrain_uLodLevelDistanceMultiplier") =
+      GlobalHeightMap::lod_level_distance_multiplier;
 }
 
 void TerrainMesh::render(Camera const& cam) {

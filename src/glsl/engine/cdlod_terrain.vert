@@ -18,9 +18,12 @@ uniform int CDLODTerrain_uGeomDiv;
 ivec2 CDLODTerrain_GeomSize = CDLODTerrain_uTexSize << CDLODTerrain_uGeomDiv;
 uniform vec3 CDLODTerrain_uCamPos;
 uniform float CDLODTerrain_uNodeDimension;
+uniform float CDLODTerrain_uLodLevelDistanceMultiplier;
+int CDLODTerrain_uNodeDimensionExp = int(round(log2(CDLODTerrain_uNodeDimension)));
 
 uniform int CDLODTerrain_max_level;
 uniform int CDLODTerrain_max_height = 100;
+float CDLODTerrain_height_scale = CDLODTerrain_max_height / 255.0;
 uniform usamplerBuffer CDLODTerrain_uHeightMap;
 uniform usamplerBuffer CDLODTerrain_uHeightMapIndex;
 
@@ -71,63 +74,95 @@ CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
   return child;
 }
 
-// bilinear sampling
-void CDLODTerrain_bilinearSample(int base_offset, vec2 coord, ivec2 tex_size,
-                                 out ivec4 offsets, out vec4 weights) {
-  vec2 sp = coord * tex_size; // sample position in the texture
-
-  // get the four nearest points
-  ivec2 tl = ivec2(floor(sp.x), floor(sp.y));
-  ivec2 tr = tl + ivec2(1, 0);
-  ivec2 bl = tl + ivec2(0, 1);
-  ivec2 br = tl + ivec2(1, 1);
-
-  // calculate weights (works even in case of clamping)
-  // Note: the weight scales with 1-distance, so basically
-  // the weight of top left, is the distance of bottom right
-  weights.x = (br.x - sp.x)*(br.y - sp.y); //tl
-  weights.y = (sp.x - bl.x)*(bl.y - sp.y); //tr
-  weights.z = (tr.x - sp.x)*(sp.y - tr.y); //bl
-  weights.w = (sp.x - tl.x)*(sp.y - tl.y); //br
-
-  // clamp to edge
-  tl = min(tl, tex_size-1);
-  tr = min(tr, tex_size-1);
-  bl = min(bl, tex_size-1);
-  br = min(br, tex_size-1);
-
-  // calculate offsets
-  offsets.x = base_offset + tl.y * tex_size.x + tl.x;
-  offsets.y = base_offset + tr.y * tex_size.x + tr.x;
-  offsets.z = base_offset + bl.y * tex_size.x + bl.x;
-  offsets.w = base_offset + br.y * tex_size.x + br.x;
+float BellFunc(float x) {
+  float f = x * 0.75; // Converting -2 to +2 to -1.5 to +1.5
+  if (f > -1.5 && f < -0.5) {
+    return 0.5 * pow(f + 1.5, 2.0);
+  } else if (f > -0.5 && f < 0.5) {
+    return 3.0 / 4.0 - (f*f);
+  } else if (f > 0.5 && f < 1.5) {
+    return 0.5 * pow(f - 1.5, 2.0);
+  } else {
+    return 0.0;
+  }
 }
 
-void CDLODTerrain_calculateOffset(CDLODTerrain_Node node, vec2 sample,
-                                  out ivec4 offsets, out vec4 weights) {
-  uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
-  int base_offset = int((data.x << uint(16)) + data.y);
-  ivec2 top_left = node.center - node.size/2;
-  // the [0-1]x[0-1] coordinate of the sample in the node
-  vec2 coord = (sample - vec2(top_left)) / vec2(node.size);
-  ivec2 tex_size = ivec2(data.z, data.w);
-  CDLODTerrain_bilinearSample(base_offset, coord, tex_size, offsets, weights);
+void CDLODTerrain_bicubicSample(int base_offset, vec2 sample_pos, ivec2 tex_size,
+                                out int[16] offsets, out float[16] weights) {
+
+  ivec2 top_left = ivec2(floor(sample_pos));
+  vec2 fraction = fract(sample_pos);
+
+  int i = 0;
+  float sum_weight = 0.0;
+  for (int x = -1; x <= 2; x++) {
+    for (int y = -1; y <= 2; y++) {
+      ivec2 pos = clamp(top_left + ivec2(x, y), ivec2(0), tex_size - ivec2(1));
+      offsets[i] = base_offset + pos.y * tex_size.x + pos.x;
+
+      float weight = BellFunc(x - fraction.x) * BellFunc(-y + fraction.y);
+      weights[i] = weight;
+      sum_weight += weight;
+      i++;
+    }
+  }
+
+  for (i = 0; i < 16; ++i) {
+    weights[i] /= sum_weight;
+  }
 }
 
-float CDLODTerrain_fetchHeight(ivec4 offsets, vec4 weights/*, out vec3 m_normal*/) {
+int CDLODTerrain_nearestSample(int base_offset, vec2 sample_pos, ivec2 tex_size) {
+  ivec2 pos = clamp(ivec2(round(sample_pos)), ivec2(0), tex_size - ivec2(1));
+  return base_offset + pos.y * tex_size.x + pos.x;
+}
+
+float CDLODTerrain_fetchHeight(int[16] offsets, float[16] weights) {
   float height = 0.0;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 16; ++i) {
     height += texelFetch(CDLODTerrain_uHeightMap, offsets[i]).x * weights[i];
   }
-  float scale = CDLODTerrain_max_height / 255.0;
-  return height * scale;
+  return height * CDLODTerrain_height_scale;
+}
+
+float CDLODTerrain_fetchHeight(int offset) {
+  return texelFetch(CDLODTerrain_uHeightMap, offset).x * CDLODTerrain_height_scale;
 }
 
 float CDLODTerrain_fetchHeight(CDLODTerrain_Node node, vec2 tex_sample) {
-  ivec4 offsets;
-  vec4 weights;
-  CDLODTerrain_calculateOffset(node, tex_sample, offsets, weights);
-  return CDLODTerrain_fetchHeight(offsets, weights);
+  uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
+  int base_offset = int((data.x << uint(16)) + data.y);
+  ivec2 top_left = node.center - node.size/2;
+  ivec2 tex_size = ivec2(data.z, data.w);
+
+  vec2 sample_pos = (tex_sample - vec2(top_left)) * (tex_size / vec2(node.size));
+
+  if (node.level > CDLODTerrain_uGeomDiv+1) {
+    int offset = CDLODTerrain_nearestSample(base_offset, sample_pos, tex_size);
+    return CDLODTerrain_fetchHeight(offset);
+  } else {
+    int[16] offsets;
+    float[16] weights;
+    CDLODTerrain_bicubicSample(base_offset, sample_pos, tex_size, offsets, weights);
+    return CDLODTerrain_fetchHeight(offsets, weights);
+  }
+}
+
+float CDLODTerrain_fetchNearestHeight(CDLODTerrain_Node node, vec2 tex_sample) {
+  uvec4 data = texelFetch(CDLODTerrain_uHeightMapIndex, node.index);
+  int base_offset = int((data.x << uint(16)) + data.y);
+  ivec2 top_left = node.center - node.size/2;
+  ivec2 tex_size = ivec2(data.z, data.w);
+
+  // invalid data
+  if (tex_size.x == 0 || tex_size.y == 0) {
+    return 0.0;
+  }
+
+  vec2 sample_pos = (tex_sample - vec2(top_left)) * (tex_size / vec2(node.size));
+
+  int offset = CDLODTerrain_nearestSample(base_offset, sample_pos, tex_size);
+  return CDLODTerrain_fetchHeight(offset);
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
@@ -177,38 +212,41 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
 
     float height = CDLODTerrain_fetchHeight(node, tex_sample);
 
-    // neighbours
-    //float diff = 1.0;
-    float diff = 1.0 / (1 << CDLODTerrain_uGeomDiv);
-    mat2x4 nbx = mat2x4(tex_sample.x + vec4(+diff, -diff, 0, 0),
-                        tex_sample.x + vec4(+diff, -diff, +diff, -diff));
-    mat2x4 nby = mat2x4(tex_sample.y + vec4(0, 0, +diff, -diff),
-                        tex_sample.y + vec4(+diff, -diff, -diff, +diff));
+    if (node.level > CDLODTerrain_uGeomDiv+1) {
+      m_normal = vec3(0, 1, 0);
+    } else {
+      // neighbours
+      float diff = 1.0 / (1 << CDLODTerrain_uGeomDiv);
+      mat2x4 nbx = mat2x4(tex_sample.x + vec4(+diff, -diff, 0, 0),
+                          tex_sample.x + vec4(+diff, -diff, +diff, -diff));
+      mat2x4 nby = mat2x4(tex_sample.y + vec4(0, 0, +diff, -diff),
+                          tex_sample.y + vec4(+diff, -diff, -diff, +diff));
 
-    ivec2 node_top_left = node.center - node.size/2;
-    mat2x4 nheights;
-    for (int i = 0; i < 2; ++i) {
-      for (int j = 0; j < 4; ++j) {
-        // the [0-1]x[0-1] coordinate of the sample in the node
-        vec2 coord = (vec2(nbx[i][j], nby[i][j]) - vec2(node_top_left)) / vec2(node.size);
-        float x = coord.x, y = coord.y;
-        if (x < 0 || node.size.x <= x || y < 0 || node.size.y <= y) {
-          nheights[i][j] = height;
-        } else {
-          nheights[i][j] = CDLODTerrain_fetchHeight(node, vec2(nbx[i][j], nby[i][j]));
+      ivec2 node_top_left = node.center - node.size/2;
+      mat2x4 nheights;
+      for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 4; ++j) {
+          // the [0-1]x[0-1] coordinate of the sample in the node
+          vec2 coord = (vec2(nbx[i][j], nby[i][j]) - vec2(node_top_left)) / vec2(node.size);
+          float x = coord.x, y = coord.y;
+          if (x < 0 || node.size.x <= x || y < 0 || node.size.y <= y) {
+            nheights[i][j] = height;
+          } else {
+            nheights[i][j] = CDLODTerrain_fetchHeight(node, vec2(nbx[i][j], nby[i][j]));
+          }
         }
       }
+
+      vec3 u = vec3(2*diff, nheights[0][0] - nheights[0][1], 0);
+      vec3 v = vec3(0, nheights[0][2] - nheights[0][3], 2*diff);
+      vec3 normal = normalize(cross(v, u));
+
+      vec3 u2 = vec3(2*diff, nheights[1][0] - nheights[1][1], 2*diff);
+      vec3 v2 = vec3(2*diff, nheights[1][2] - nheights[1][3], -2*diff);
+      vec3 normal2 = normalize(-cross(v2, u2));
+
+      m_normal = normalize(normal + normal2);
     }
-
-    vec3 u = vec3(2*diff, nheights[0][0] - nheights[0][1], 0);
-    vec3 v = vec3(0, nheights[0][2] - nheights[0][3], 2*diff);
-    vec3 normal = normalize(cross(v, u));
-
-    vec3 u2 = vec3(2*diff, nheights[1][0] - nheights[1][1], 2*diff);
-    vec3 v2 = vec3(2*diff, nheights[1][2] - nheights[1][3], -2*diff);
-    vec3 normal2 = normalize(-cross(v2, u2));
-
-    m_normal = normalize(normal + normal2);
 
     return height;
   }
@@ -227,34 +265,27 @@ vec2 CDLODTerrain_nodeLocal2Global(vec2 node_coord, float scale) {
 vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
   float scale = CDLODTerrain_uScale;
   vec2 pos = CDLODTerrain_nodeLocal2Global(CDLODTerrain_aPosition, scale);
-  //int iteration_count = 0, morph = 0;
+  int iteration_count = 0;
 
   float dist = CDLODTerrain_estimateDistance(pos);
-
-  float next_border = (1 << (CDLODTerrain_uLevel+1+2)) * CDLODTerrain_uNodeDimension;
-
-  float max_dist = 0.9*next_border;
-  float start_dist = 0.8*next_border; //max(0.95*max_dist, max_dist - sqrt(max_dist));
-  float dist_from_start = dist - start_dist;
-  float start_to_end_dist = max_dist - start_dist;
-  int iteration_count = 0;
-  float morph = dist_from_start / start_to_end_dist;
-  morph = clamp(morph, 0.0, 1.0);
+  float next_level_size = (1 << (CDLODTerrain_uLevel+1))
+                          * CDLODTerrain_uLodLevelDistanceMultiplier
+                          * CDLODTerrain_uNodeDimension;
+  float max_dist = 0.85*next_level_size;
+  float start_dist = 0.75*next_level_size;
+  float morph = smoothstep(start_dist, max_dist, dist);
 
   vec2 morphed_pos = CDLODTerrain_morphVertex(CDLODTerrain_aPosition, morph);
   pos = CDLODTerrain_nodeLocal2Global(morphed_pos, scale);
   dist = CDLODTerrain_estimateDistance(pos);
 
-  while (dist > 1.5*next_border) {
+  while (dist > 1.5*next_level_size && (iteration_count+1 < CDLODTerrain_uNodeDimensionExp)) {
     scale *= 2;
-    next_border *= 2;
+    next_level_size *= 2;
     iteration_count += 1;
-    max_dist = 0.9*next_border;
-    start_dist = max(0.95*max_dist, max_dist - sqrt(max_dist));
-    dist_from_start = dist - start_dist;
-    start_to_end_dist = max_dist - start_dist;
-    morph = dist_from_start / start_to_end_dist;
-    morph = clamp(morph, 0.0, 1.0);
+    max_dist = 0.85*next_level_size;
+    start_dist = 0.75*next_level_size;
+    morph = smoothstep(start_dist, max_dist, dist);
     if (morph == 0.0) {
       break;
     }

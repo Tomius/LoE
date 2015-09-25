@@ -80,7 +80,7 @@ class Label : public GameObject {
     text_ = text;
     std::vector<glm::vec4> attribs_vec;
 
-    float pen_x = 0, x0, x1, y0, y1, s0, t0, s1, t1;
+    float pen_x{}, x0{}, x1{}, y0{}, y1{}, s0{}, t0{}, s1{}, t1{};
     // We have to run to loop for one more than the text size
     // so we can draw the cursor at end of the text too
     for (size_t i = 0; i <= text_.size(); ++i) {

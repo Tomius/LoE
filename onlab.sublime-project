@@ -14,17 +14,32 @@
       "follow_symlinks": true,
       "path": "src",
       "folder_exclude_patterns": [
-        "resources",
+        "resources", "thirdparty"
       ],
-      "file_exclude_patterns": ["a.out", "*.h.pch"]
-    }
+      "file_exclude_patterns": ["*.h.pch"]
+    },
+    {
+      "follow_symlinks": true,
+      "path": "src/thirdparty/oglwrap/oglwrap",
+      "file_exclude_patterns": [".gitignore", "*.png"]
+    },
+    {
+      "follow_symlinks": true,
+      "path": ".",
+      "folder_exclude_patterns": [
+        "*"
+      ],
+      "file_exclude_patterns": [".gitignore", "a.out"]
+    },
   ],
 
   "build_systems":
     [
       {
         "name": "Make",
-        "cmd": ["make -j4 nocolor"],
+        //"cmd": ["CC=clang-3.6 CXX=clang++-3.6 make -j4 nocolor"],
+        "cmd": ["CC=clang-3.6 CXX=clang++-3.6 make -j4 release"],
+        // "cmd": ["make -j4 nocolor"],
         "working_dir": "${project_path}",
         "shell": true,
 
@@ -32,6 +47,18 @@
           {
             "name": "Run",
             "cmd": ["./a.out"]
+          },
+          {
+            "name": "Clean",
+            "cmd": ["make clean"],
+            "working_dir": "${project_path}",
+            "shell": true
+          },
+          {
+            "name": "Release",
+            "cmd": ["CC=clang-3.6 CXX=clang++-3.6 make -j4 release"],
+            "working_dir": "${project_path}",
+            "shell": true
           }
         ]
       }
