@@ -39,15 +39,7 @@ void GameEngine::InitContext() {
     }
 
     // Window creation
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
-#if ENGINE_NO_FULLSCREEN
-    window_ = glfwCreateWindow(vidmode->width, vidmode->height,
-                               "Land of Önlab", nullptr, nullptr);
-#else
-    window_ = glfwCreateWindow(vidmode->width, vidmode->height,
-                               "Land of Önlab", monitor, nullptr);
-#endif
+    window_ = glfwCreateWindow(1, 1, "Land of Önlab", nullptr, nullptr);
 
     if (!window_) {
       std::cerr << "FATAL: Couldn't create a glfw window. Aborting now." << std::endl;

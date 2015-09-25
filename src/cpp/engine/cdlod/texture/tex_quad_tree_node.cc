@@ -24,6 +24,45 @@ static Magick::Image load(std::string const& dir, int x, int y) {
   return Magick::Image{dir + str};
 }
 
+static int GetImageNumToLevel(int level) {
+  int q = 4;
+  return (pow(q, level+1) - 1) / (q - 1);
+}
+
+static int root_level = 9;
+static int all_image_num = GetImageNumToLevel (root_level);
+static int curr_image_count = 0;
+static bool verbose = false;
+
+static double sobel_x[] = {
+  4, 3, 2, 1, 0, -1, -2, -3, -4,
+  5, 4, 3, 2, 0, -2, -3, -4, -5,
+  6, 5, 4, 3, 0, -3, -4, -5, -6,
+  7, 6, 5, 4, 0, -4, -5, -6, -7,
+  8, 7, 6, 5, 0, -5, -6, -7, -8,
+  7, 6, 5, 4, 0, -4, -5, -6, -7,
+  6, 5, 4, 3, 0, -3, -4, -5, -6,
+  5, 4, 3, 2, 0, -2, -3, -4, -5,
+  4, 3, 2, 1, 0, -1, -2, -3, -4,
+};
+
+static double sobel_y[] = {
+   4,  5,  6,  7,  8,  7,  6,  5,  4,
+   3,  4,  5,  6,  7,  6,  5,  4,  3,
+   2,  3,  4,  5,  6,  5,  4,  3,  2,
+   1,  2,  3,  4,  5,  4,  3,  2,  1,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,
+  -1, -2, -3, -4, -5, -4, -3, -2, -1,
+  -2, -3, -4, -5, -6, -5, -4, -3, -2,
+  -3, -4, -5, -6, -7, -6, -5, -4, -3,
+  -4, -5, -6, -7, -8, -7, -6, -5, -4,
+};
+
+static std::ostream& PrintPercentString(std::ostream& os) {
+  os.precision(6);
+  return os << '[' << std::setw(8) << curr_image_count * 100.0 / all_image_num << " %]";
+}
+
 static void createImage0(int x, int y, size_t sx, size_t sy) {
   using namespace Magick;
 
@@ -34,13 +73,15 @@ static void createImage0(int x, int y, size_t sx, size_t sy) {
   char str[30];
   sprintf(str, "%d.jpg", y);
 
-  const std::string dir = "src/resources/jpg_very_small/";
+  const std::string dir = "/media/icecool/Data/onlab/src/resources/gmted75/jpg_very_small/";
   std::string out_dir =
     "src/resources/gmted2010_75/0/" + std::to_string(x) + "/";
   const int w = 450, h = 300;
   assert(w > sx && h > sy);
 
-  std::cout << "Creating: (0, " << x << ", " << y << ")" << std::endl;
+  if (verbose) {
+    PrintPercentString(std::cout) << " Creating: (0, " << x << ", " << y << ")" << std::endl;
+  }
   system(("mkdir -p " + out_dir).c_str());
 
   // top x, y
@@ -119,7 +160,9 @@ void TexQuadTreeNode::createImage() {
   sprintf(filename, "%d.jpg", ty);
   std::string full_path = std::string{dir} + filename;
 
-  std::cout << "Creating: (" << (int)level_ << ", " << tx << ", " << ty << ")" << std::endl;
+  if (verbose) {
+    PrintPercentString(std::cout) << " Creating: (" << (int)level_ << ", " << tx << ", " << ty << ")" << std::endl;
+  }
   system(("mkdir -p " + std::string{dir}).c_str());
 
   Image child_im[4];
@@ -150,13 +193,14 @@ void TexQuadTreeNode::createImage() {
                     masky*c_im.size().height(), CopyCompositeOp);
   }
 
-  image.resize(Geometry(im_w/2, im_h/2));
+  Geometry new_geom(im_w/2, im_h/2);
+  new_geom.aspect(true);
+  image.resize(new_geom);
   image.write(full_path);
 }
 
 TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
-    : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
-    /*, bbox_{{x-sx/2, 0, z-sz/2}, {x+(sx-sx/2), 100, z+(sz-sz/2)}}*/ {
+    : x_(x), z_(z), sx_(sx), sz_(sz), level_(level) {
   if (!isImageReady()) {
     if (level_ != 0) {
       for (int i = 0; i < 4; ++i) {
@@ -166,21 +210,24 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
     } else {
       createImage0(x, z, sx, sz);
     }
+
+    curr_image_count++;
+
+    if (!verbose && curr_image_count % 100 == 0) {
+      PrintPercentString(std::cout) << std::endl;
+    }
+  } else {
+    curr_image_count += GetImageNumToLevel(level_);
+    if (verbose) {
+      PrintPercentString(std::cout) << " Image ready." << std::endl;
+    }
   }
 }
 
-
-
-// TODO
-// it just decodes a jpg files to examine performance
 void TexQuadTreeNode::load() {
   if (data_) {
     return;
   }
-
-  // if (level_ == 0) {
-  //   std::cout << sx_ << ", " << sz_ << std::endl;
-  // }
 
   std::string path = "src/resources/gmted2010/4/000_000.jpg";
   Magick::Image image(path);
