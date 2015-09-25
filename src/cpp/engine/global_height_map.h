@@ -15,16 +15,20 @@ namespace GlobalHeightMap {
 
   // CDLOD nodes' extent is (1 << node_dimension_exp)
   static constexpr uint node_dimension_exp = 5;
+  static_assert(4 <= node_dimension_exp && node_dimension_exp <= 8, "");
 
   // The size of sphere for a CDLOD level is node size * this
   // It should be at least 2, but making it bigger makes distant
   // parts of the terrain appear with more detail.
-  static constexpr uint lod_level_distance_multiplier = 2;
+  static constexpr float lod_level_distance_multiplier = 2.0;
+  static_assert(2 <= lod_level_distance_multiplier, "");
 
   // Geometry subdivision. This practially contols zooming into the heightmap.
   // If for ex. this is three, that means that a 8x8 geometry (9x9 vertices)
   // corresponds to a 1x1 texture area (2x2 texels)
-  static constexpr long geom_div = 2;
+  static constexpr long geom_div = 4;
+
+  static_assert(geom_div < node_dimension_exp, "");
 
   // The resolution of the heightmap
   static constexpr long tex_w = 172800, tex_h = 86400;
