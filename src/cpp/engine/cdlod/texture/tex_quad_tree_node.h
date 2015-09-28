@@ -4,7 +4,7 @@
 #define ENGINE_CDLOD_TEXTURE_TEX_QUAD_TREE_NODE_H_
 
 #include <memory>
-#include "../../collision/bounding_spherical_sector.h"
+#include "../../collision/spherized_aabb.h"
 
 namespace engine {
 namespace cdlod {
@@ -39,7 +39,7 @@ class TexQuadTreeNode {
   int level() const { return level_; }
 
  private:
-  using BBox = BoundingSphericalSector<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
+  using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
 
   int x_, z_, sx_, sz_, tex_w_, tex_h_;
   int last_used_ = 0;

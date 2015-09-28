@@ -6,7 +6,7 @@
 #include <memory>
 #include "./quad_grid_mesh.h"
 #include "../global_height_map.h"
-#include "../collision/bounding_spherical_sector.h"
+#include "../collision/spherized_aabb.h"
 
 namespace engine {
 namespace cdlod {
@@ -30,7 +30,7 @@ class QuadTreeNode {
                    QuadGridMesh& grid_mesh);
 
  private:
-  using BBox = BoundingSphericalSector<GlobalHeightMap::geom_w, GlobalHeightMap::geom_h>;
+  using BBox = SpherizedAABBSat<GlobalHeightMap::geom_w, GlobalHeightMap::geom_h>;
 
   int x_, z_;
   GLushort dimension_;

@@ -137,15 +137,10 @@ float CDLODTerrain_fetchHeight(CDLODTerrain_Node node, vec2 tex_sample) {
 
   vec2 sample_pos = (tex_sample - vec2(top_left)) * (tex_size / vec2(node.size));
 
-  if (node.level > CDLODTerrain_uGeomDiv+1) {
-    int offset = CDLODTerrain_nearestSample(base_offset, sample_pos, tex_size);
-    return CDLODTerrain_fetchHeight(offset);
-  } else {
-    int[16] offsets;
-    float[16] weights;
-    CDLODTerrain_bicubicSample(base_offset, sample_pos, tex_size, offsets, weights);
-    return CDLODTerrain_fetchHeight(offsets, weights);
-  }
+  int[16] offsets;
+  float[16] weights;
+  CDLODTerrain_bicubicSample(base_offset, sample_pos, tex_size, offsets, weights);
+  return CDLODTerrain_fetchHeight(offsets, weights);
 }
 
 float CDLODTerrain_fetchNearestHeight(CDLODTerrain_Node node, vec2 tex_sample) {
@@ -166,8 +161,7 @@ float CDLODTerrain_fetchNearestHeight(CDLODTerrain_Node node, vec2 tex_sample) {
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
-  vec2 angles_degree = vec2(360, 180) * (model_pos.xz / CDLODTerrain_GeomSize);
-  vec2 angles = angles_degree * M_PI / 180;
+  vec2 angles = vec2(2*M_PI, M_PI) * (model_pos.xz / CDLODTerrain_GeomSize);
   float r = CDLODTerrain_radius + model_pos.y;
   vec3 cartesian = vec3(
     r*sin(angles.y)*cos(angles.x),
@@ -212,37 +206,33 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
 
     float height = CDLODTerrain_fetchHeight(node, tex_sample);
 
-    if (node.level > CDLODTerrain_uGeomDiv+1) {
-      m_normal = vec3(0, 1, 0);
-    } else {
-      // neighbours
-      float diff = 1.0 / (1 << CDLODTerrain_uGeomDiv);
-      ivec2 node_top_left = node.center - node.size/2;
-      mat3x3 neighbour_heights;
-      for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
-          vec2 neighbour = tex_sample + diff*vec2(x, y);
-          // the [0-1]x[0-1] coordinate of the sample in the node
-          vec2 coord = (neighbour - vec2(node_top_left)) / vec2(node.size);
-          if (coord.x < 0 || node.size.x <= coord.x || coord.y < 0 ||
-              node.size.y <= coord.y || (x == 0 && y == 0)) {
-            neighbour_heights[x+1][y+1] = height;
-          } else {
-            neighbour_heights[x+1][y+1] = CDLODTerrain_fetchHeight(node, neighbour);
-          }
+    // neighbours
+    float diff = 1.0 / (1 << max(CDLODTerrain_uGeomDiv - node.level, 0));
+    ivec2 node_top_left = node.center - node.size/2;
+    mat3x3 neighbour_heights;
+    for (int x = -1; x <= 1; ++x) {
+      for (int y = -1; y <= 1; ++y) {
+        vec2 neighbour = tex_sample + diff*vec2(x, y);
+        // the [0-1]x[0-1] coordinate of the sample in the node
+        vec2 coord = (neighbour - vec2(node_top_left)) / vec2(node.size);
+        if (coord.x < 0 || node.size.x <= coord.x || coord.y < 0 ||
+            node.size.y <= coord.y || (x == 0 && y == 0)) {
+          neighbour_heights[x+1][y+1] = height;
+        } else {
+          neighbour_heights[x+1][y+1] = CDLODTerrain_fetchHeight(node, neighbour);
         }
       }
-
-      float gx = (neighbour_heights[2][0] + 2*neighbour_heights[2][1] + neighbour_heights[2][2]) -
-                 (neighbour_heights[0][0] + 2*neighbour_heights[0][1] + neighbour_heights[0][2]);
-
-      float gy = (neighbour_heights[0][2] + 2*neighbour_heights[1][2] + neighbour_heights[2][2]) -
-                 (neighbour_heights[0][0] + 2*neighbour_heights[1][0] + neighbour_heights[2][0]);
-
-      vec3 u = vec3(2*diff, gx, 0);
-      vec3 v = vec3(0, gy, 2*diff);
-      m_normal = normalize(cross(v, u));
     }
+
+    float gx = (neighbour_heights[2][0] + 2*neighbour_heights[2][1] + neighbour_heights[2][2]) -
+               (neighbour_heights[0][0] + 2*neighbour_heights[0][1] + neighbour_heights[0][2]);
+
+    float gy = (neighbour_heights[0][2] + 2*neighbour_heights[1][2] + neighbour_heights[2][2]) -
+               (neighbour_heights[0][0] + 2*neighbour_heights[1][0] + neighbour_heights[2][0]);
+
+    vec3 u = vec3(2*diff, gx, 0);
+    vec3 v = vec3(0, gy, 2*diff);
+    m_normal = normalize(cross(v, u));
 
     return height;
   }

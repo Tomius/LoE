@@ -63,14 +63,14 @@ BASE_CXXFLAGS = -std=c++11 -Wall $(TP_CXXFLAGS) $(PKG_CONFIG_CXXFLAGS)
 ifeq ($(MAKECMDGOALS),release)
 	CXXFLAGS = -O3 -DOGLWRAP_DEBUG=0 $(BASE_CXXFLAGS)
 else
-	CXXFLAGS = -g $(BASE_CXXFLAGS)
+	CXXFLAGS = -g -pg $(BASE_CXXFLAGS)
 endif
 
 CXXFLAG_PRECOMPILED_HEADER = -include $(PRECOMPILED_HEADER_SRC)
 
 GLFW_X11_LDFALGS = -lXxf86vm -lX11 -lXrandr -lXi -lXcursor -lXinerama -lpthread
 
-BASE_LDFLAGS = -lm $(TP_LDFLAGS) $(PKG_CONFIG_LDFLAGS) $(GLFW_X11_LDFALGS)
+BASE_LDFLAGS = -lm -pg $(TP_LDFLAGS) $(PKG_CONFIG_LDFLAGS) $(GLFW_X11_LDFALGS)
 
 ifeq ($(MAKECMDGOALS),release)
 	LDFLAGS = $(BASE_LDFLAGS)
@@ -168,13 +168,13 @@ $(PRECOMPILED_HEADER_DEP):
 	@ $(CXX) $(CXXFLAGS) $(CXXFLAG_PRECOMPILED_HEADER) -c $(subst $(OBJ_DIR),$(SRC_DIR),$(@:.o=.cc)) -o $@
 
 $(PRECOMPILED_HEADER):
-	@ $(call printf,$(shell scripts/get_build_progress.sh) ,Building precompiled header $@,$(CYAN))
+	@ $(call printf,$(shell scripts/get_build_progress.sh),Building precompiled header $@,$(CYAN))
 	@ rm -f $(PRECOMPILED_HEADER)-*
 	@ if [ -f $(subst $(SRC_DIR),$(OBJ_DIR),$@).d2 ]; then rm $(subst $(SRC_DIR),$(OBJ_DIR),$@).d2;	else $(CXX) $(CXXFLAGS) -x c++-header -MM $(@:.$(CXX_PRECOMPILED_HEADER_EXTENSION)=) -MT $@ -MF $(subst $(SRC_DIR),$(OBJ_DIR),$@).d; fi;
 	@ $(CXX) $(CXXFLAGS) -x c++-header $(@:.$(CXX_PRECOMPILED_HEADER_EXTENSION)=) -o $@
 
 $(FREETYPE_GL_ARCHIVE):
-	@ $(call printf,$(shell scripts/get_build_progress.sh) ,Building archive for freetype-gl,$(GREEN))
+	@ $(call printf,$(shell scripts/get_build_progress.sh),Building archive for freetype-gl,$(GREEN))
 	@ cd $(FREETYPE_GL_DIR) && cmake . > /dev/null && $(MAKE) all > /dev/null
 
 $(GLFW_ARCHIVE):
@@ -187,7 +187,7 @@ $(GLEW_ARCHIVE): $(GLEW_DEPS)
 $(OGLWRAP_ARCHIVE): $(PRECOMPILED_HEADER)
 	@ $(CXX) -c $(CXXFLAGS) $(CXXFLAG_PRECOMPILED_HEADER) $(OGLWRAP_ARCHIVE_SRC) -o $@
 
-$(BINARY): $(THIRD_PARTY_LIBS_FOUND) $(OBJECTS) $(FREETYPE_GL_ARCHIVE) $(GLFW_ARCHIVE) $(GLEW_ARCHIVE) $(OGLWRAP_ARCHIVE)
+$(BINARY): $(THIRD_PARTY_LIBS_FOUND) $(OBJECTS) $(FREETYPE_GL_ARCHIVE) $(GLEW_ARCHIVE) $(OGLWRAP_ARCHIVE)
 	@ $(call printf,[100%] ,Linking executable $@,$(BOLD)$(RED))
 	@ $(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
