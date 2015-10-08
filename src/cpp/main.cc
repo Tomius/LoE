@@ -7,18 +7,13 @@
  *  |_____\__,_|_| |_|\__,_|  \___/|_|   |____/|_|  \___|\__,_|_| |_| |_|___/
  */
 
-#include "scenes/main_scene.h"
-
-using engine::GameEngine;
+#include "engine/cdlod/texture/tex_quad_tree.h"
 
 int main(int argc, char* argv[]) {
   try {
-    GameEngine::InitContext();
-    GameEngine::LoadScene<MainScene>();
-    GameEngine::Run();
+    engine::cdlod::TexQuadTree quadtree;
   } catch(const std::exception& err) {
     std::cerr << err.what();
-    GameEngine::Destroy();
     std::terminate();
   }
 }
