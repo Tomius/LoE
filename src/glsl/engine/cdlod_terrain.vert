@@ -102,7 +102,7 @@ void CDLODTerrain_bicubicSample(int base_offset, vec2 sample_pos, ivec2 tex_size
   float sum_weight = 0.0;
   for (int x = -1; x <= 2; x++) {
     for (int y = -1; y <= 2; y++) {
-      ivec2 pos = top_left + ivec2(x, y);
+      ivec2 pos = clamp(top_left + ivec2(x, y), ivec2(-2), tex_size + ivec2(1));
       offsets[i] = CDLODTerrain_CalculateOffset(base_offset, tex_size, pos);
 
       float weight = CDLODTerrain_BellFunc(x - fraction.x) * CDLODTerrain_BellFunc(-y + fraction.y);
@@ -117,25 +117,12 @@ void CDLODTerrain_bicubicSample(int base_offset, vec2 sample_pos, ivec2 tex_size
   }
 }
 
-int CDLODTerrain_nearestSample(int base_offset, vec2 sample_pos, ivec2 tex_size) {
-  ivec2 pos = ivec2(round(sample_pos));
-  return CDLODTerrain_CalculateOffset(base_offset, tex_size, pos);
-}
-
 float CDLODTerrain_fetchHeight(int[16] offsets, float[16] weights) {
   float height = 0.0;
   for (int i = 0; i < 16; ++i) {
     height += texelFetch(CDLODTerrain_uHeightMap, offsets[i]).x * weights[i];
   }
   return height * CDLODTerrain_height_scale;
-}
-
-float CDLODTerrain_fetchHeight(int offset) {
-  return texelFetch(CDLODTerrain_uHeightMap, offset).x * CDLODTerrain_height_scale;
-}
-
-bool CDLODTerrain_hasFraction(vec2 v) {
-  return v.x - int(v.x) != 0.0 || v.y - int(v.y) != 0.0;
 }
 
 float CDLODTerrain_fetchHeight(CDLODTerrain_Node node, vec2 tex_sample) {
@@ -151,15 +138,10 @@ float CDLODTerrain_fetchHeight(CDLODTerrain_Node node, vec2 tex_sample) {
 
   vec2 sample_pos = (tex_sample - vec2(top_left)) * ((tex_size-2*kBorderSize) / vec2(node.size));
 
-  // if (CDLODTerrain_hasFraction(sample_pos)) {
-    int[16] offsets;
-    float[16] weights;
-    CDLODTerrain_bicubicSample(base_offset, sample_pos, tex_size, offsets, weights);
-    return CDLODTerrain_fetchHeight(offsets, weights);
-  // } else {
-  //   int offset = CDLODTerrain_nearestSample(base_offset, sample_pos, tex_size);
-  //   return CDLODTerrain_fetchHeight(offset);
-  // }
+  int[16] offsets;
+  float[16] weights;
+  CDLODTerrain_bicubicSample(base_offset, sample_pos, tex_size, offsets, weights);
+  return CDLODTerrain_fetchHeight(offsets, weights);
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
@@ -214,13 +196,10 @@ float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
     mat3x3 neighbour_heights;
     for (int x = -1; x <= 1; ++x) {
       for (int y = -1; y <= 1; ++y) {
-        vec2 neighbour = tex_sample + diff*vec2(x, y);
-        // the [0-1]x[0-1] coordinate of the sample in the node
-        vec2 coord = (neighbour - vec2(node_top_left)) / vec2(node.size);
-        if (coord.x < 0 || node.size.x <= coord.x || coord.y < 0 ||
-            node.size.y <= coord.y || (x == 0 && y == 0)) {
+        if (x == 0 && y == 0) {
           neighbour_heights[x+1][y+1] = height;
         } else {
+          vec2 neighbour = tex_sample + diff*vec2(x, y);
           neighbour_heights[x+1][y+1] = CDLODTerrain_fetchHeight(node, neighbour);
         }
       }

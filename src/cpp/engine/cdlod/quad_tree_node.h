@@ -13,15 +13,15 @@ namespace cdlod {
 
 class QuadTreeNode {
  public:
-  QuadTreeNode(int x, int z, GLubyte level, int dimension);
+  QuadTreeNode(int x, int z, GLubyte level);
 
-  int size() { return dimension_ << level_; }
+  int size() { return GlobalHeightMap::node_dimension << level_; }
 
   bool collidesWithSphere(const Sphere& sphere) {
     return bbox_.collidesWithSphere(sphere);
   }
 
-  static bool isVisible(int x, int z, int level, int dimension);
+  static bool isVisible(int x, int z, int level);
 
   void initChildren();
 
@@ -33,7 +33,6 @@ class QuadTreeNode {
   using BBox = SpherizedAABBSat<GlobalHeightMap::geom_w, GlobalHeightMap::geom_h>;
 
   int x_, z_;
-  GLushort dimension_;
   GLubyte level_;
   BBox bbox_;
   std::unique_ptr<QuadTreeNode> children_[4];

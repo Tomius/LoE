@@ -17,6 +17,8 @@ namespace GlobalHeightMap {
   static constexpr int node_dimension_exp = 5;
   static_assert(4 <= node_dimension_exp && node_dimension_exp <= 8, "");
 
+  static constexpr int node_dimension = 1 << node_dimension_exp;
+
   // The size of sphere for a CDLOD level is node size * this
   // It should be at least 2, but making it bigger makes distant
   // parts of the terrain appear with more detail.
