@@ -22,7 +22,7 @@ static int curr_image_count = 0;
 static const bool kVerbose = false;
 static const int kBorderSize = 2;
 static const std::string kBasePath = std::string{"src/resources/gmted2010_75"};
-static const int kImageQuality = 100;
+static const int kImageQuality = 75;
 
 double kSobelX[] = {
   4, 3, 2, 1, 0, -1, -2, -3, -4,
@@ -48,12 +48,21 @@ double kSobelY[] = {
   -4, -5, -6, -7, -8, -7, -6, -5, -4,
 };
 
-#define EIGHT_BIT_IMAGES 0
+static std::string GetPathToImage(std::string const& dir, int x, int y) {
+  return dir + std::to_string(x) + '/' + std::to_string(y) + ".png";
+}
 
-static Magick::Image GetPathToImage(std::string const& dir, int x, int y) {
-  char str[30];
-  sprintf(str, "%d/%d.png", x, y);
-  return Magick::Image(dir + str);
+static void SetupImage(Magick::Image& image) {
+  image.matte(false);
+  image.quality(kImageQuality);
+  image.defineValue("png", "color-type", "0");
+  image.defineValue("png", "bit-depth", "16");
+}
+
+static Magick::Image EmptyImage(size_t sx, size_t sy) {
+  Magick::Image image{Magick::Geometry{sx, sy}, Magick::ColorGray{}};
+  SetupImage(image);
+  return image;
 }
 
 static int GetImageNumToLevel(int level) {
@@ -79,18 +88,10 @@ static std::string GetImageDir(int level, int x) {
 static std::string GetImageFilename(int y) {
   return std::to_string(y) + ".png";
 }
+
 static std::string GetImagePath(int level, int x, int y) {
   return GetImageDir(level, x) + "/" + GetImageFilename(y);
 }
-
-#define TRY(expr) \
-  try { \
-    (expr); \
-  } catch (...) { \
-    std::cout << "Exception in: " #expr ";" << std::endl; \
-    std::cout << "At Line: " << __LINE__ << std::endl; \
-    throw; \
-  }
 
 static void PageAndCrop(Magick::Image& im, const Magick::Geometry& geom) {
   im.page(geom);
@@ -129,6 +130,8 @@ static void createImage0(int x, int y, size_t sx, size_t sy) {
   // space left x, y
   int slx = w - mod(x, w), sly = h - mod(y, h);
 
+  Image image;
+
   // near the edges we need to load more than one image
   if (slx < sx && sly < sy) {
     Image im0{GetPathToImage(dir, tx, ty)};
@@ -136,53 +139,32 @@ static void createImage0(int x, int y, size_t sx, size_t sy) {
     Image im2{GetPathToImage(dir, tx, mod(ty+h, kTerrainHeight))};
     Image im3{GetPathToImage(dir, mod(tx+w, kTerrainWidth), mod(ty+h, kTerrainHeight))};
 
-    Image image{Geometry{2*w, 2*h}, ColorRGB{}};
+    image = EmptyImage(2*w, 2*h);
     image.composite(im0, 0, 0, CopyCompositeOp);
     image.composite(im1, w, 0, CopyCompositeOp);
     image.composite(im2, 0, h, CopyCompositeOp);
     image.composite(im3, w, h, CopyCompositeOp);
-
-    PageAndCrop(image, Geometry{sx, sy, mod(x, w), mod(y, h)});
-
-    image.quality(kImageQuality);
-    image.defineValue("png", "color-type", "0");
-    image.defineValue("png", "bit-depth", "16");
-    image.write(out_dir + "/" + filename);
   } else if(slx < sx) {
     Image im0{GetPathToImage(dir, tx, ty)};
     Image im1{GetPathToImage(dir, mod(tx+w, kTerrainWidth), ty)};
 
-    Image image{Geometry{2*w, h}, ColorRGB{}};
+    image = EmptyImage(2*w, h);
     image.composite(im0, 0, 0, CopyCompositeOp);
     image.composite(im1, w, 0, CopyCompositeOp);
-    PageAndCrop(image, Geometry{sx, sy, mod(x, w), mod(y, h)});
-
-    image.quality(kImageQuality);
-    image.defineValue("png", "color-type", "0");
-    image.defineValue("png", "bit-depth", "16");
-    image.write(out_dir + "/" + filename);
   } else if(sly < sy) {
     Image im0{GetPathToImage(dir, tx, ty)};
     Image im1{GetPathToImage(dir, tx, mod(ty+h, kTerrainHeight))};
 
-    Image image{Geometry{w, 2*h}, ColorRGB{}};
+    image = EmptyImage(w, 2*h);
     image.composite(im0, 0, 0, CopyCompositeOp);
     image.composite(im1, 0, h, CopyCompositeOp);
-    PageAndCrop(image, Geometry{sx, sy, mod(x, w), mod(y, h)});
-
-    image.quality(kImageQuality);
-    image.defineValue("png", "color-type", "0");
-    image.defineValue("png", "bit-depth", "16");
-    image.write(out_dir + "/" + filename);
   } else {
-    Image image{GetPathToImage(dir, tx, ty)};
-    PageAndCrop(image, Geometry{sx, sy, mod(x, w), mod(y, h)});
-
-    image.quality(kImageQuality);
-    image.defineValue("png", "color-type", "0");
-    image.defineValue("png", "bit-depth", "16");
-    image.write(out_dir + "/" + filename);
+    image.read(GetPathToImage(dir, tx, ty));
+    SetupImage(image);
   }
+
+  PageAndCrop(image, Geometry{sx, sy, mod(x, w), mod(y, h)});
+  image.write(out_dir + '/' + filename);
 }
 
 bool TexQuadTreeNode::isImageReady() const {
@@ -223,7 +205,7 @@ void TexQuadTreeNode::createImage() const {
   std::string out_dir = GetImageDir(level_, tx);
   std::string full_path = out_dir + "/" + filename;
 
-  system(("mkdir -p " + std::string{out_dir}).c_str());
+  system(("mkdir -p " + out_dir).c_str());
 
   Image child_im[4][4];
   glm::ivec2 image_offset[4][4];
@@ -288,7 +270,7 @@ void TexQuadTreeNode::createImage() const {
   }
 
   // paste the image parts onto one big image
-  Image image{Geometry(accum_x, accum_y), ColorRGB{}};
+  Image image = EmptyImage(accum_x, accum_y);
   for (int y = 0; y < 4; ++y) {
     for (int x = 0; x < 4; ++x) {
       image.composite(child_im[y][x], image_offset[y][x].x,
@@ -315,9 +297,6 @@ void TexQuadTreeNode::createImage() const {
   Geometry new_geom(new_width, new_height);
   new_geom.aspect(true);
   image.resize(new_geom);
-  image.quality(kImageQuality);
-  image.defineValue("png", "color-type", "0");
-  image.defineValue("png", "bit-depth", "16");
   image.write(full_path);
 }
 
