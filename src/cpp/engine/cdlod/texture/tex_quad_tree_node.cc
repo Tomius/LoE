@@ -13,15 +13,15 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
             {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
 
 void TexQuadTreeNode::load() {
-  char str[100];
+  char str[200];
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
-  sprintf(str, "src/resources/gmted2010_75/%d/%d/%d.jpg", level_, tx, ty);
+  sprintf(str, "%s/%d/%d/%d.png", GlobalHeightMap::base_path, level_, tx, ty);
 
   Magick::Image image(str);
   tex_w_ = image.columns();
   tex_h_ = image.rows();
   data_.resize(tex_w_*tex_h_);
-  image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::CharPixel, data_.data());
+  image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, data_.data());
 }
 
 void TexQuadTreeNode::age() {
@@ -73,9 +73,9 @@ void TexQuadTreeNode::initChild(int i) {
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
                                   int index,
-                                  std::vector<GLubyte>& texture_data,
+                                  std::vector<GLushort>& texture_data,
                                   TexQuadTreeNodeIndex* indices) {
-  float lod_range = 1.5 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
+  float lod_range = 4 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
 
   // check if the node is visible
   if (!bbox_.collidesWithFrustum(frustum)) {
@@ -103,13 +103,13 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   last_used_ = 0;
 }
 
-void TexQuadTreeNode::upload(int index, std::vector<GLubyte>& texture_data,
+void TexQuadTreeNode::upload(int index, std::vector<GLushort>& texture_data,
                              TexQuadTreeNodeIndex* indices) {
   if (data_.empty()) {
     load();
   }
 
-  GLint offset = sizeof(GLubyte) * texture_data.size();
+  GLint offset = texture_data.size();
   indices[index] = TexQuadTreeNodeIndex{
     GLushort(offset >> 16), GLushort(offset % (1 << 16)),
     GLushort(tex_w_), GLushort(tex_h_)

@@ -19,7 +19,7 @@ class TexQuadTree {
   glm::ivec2 min_node_size_;
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
-  std::vector<GLubyte> texture_data_;
+  std::vector<GLushort> texture_data_;
   gl::TextureBuffer tex_buffer_;
   gl::TextureBuffer index_tex_buffer_;
   GLuint textures_[2];
@@ -114,7 +114,7 @@ class TexQuadTree {
     gl::Unbind(tex_buffer_);
 
     gl(BindTexture(GL_TEXTURE_BUFFER, textures_[0]));
-    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, tex_buffer_.expose()));
+    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI, tex_buffer_.expose()));
 
     gl(BindTexture(GL_TEXTURE_BUFFER, 0));
   }

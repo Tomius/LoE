@@ -26,7 +26,7 @@ namespace GlobalHeightMap {
   // Geometry subdivision. This practially contols zooming into the heightmap.
   // If for ex. this is three, that means that a 8x8 geometry (9x9 vertices)
   // corresponds to a 1x1 texture area (2x2 texels)
-  static constexpr long geom_div =
+  static constexpr long geom_div = //0;
     node_dimension_exp >= 5 ? 4 : node_dimension_exp - 1;
 
   static_assert(geom_div < node_dimension_exp, "");

@@ -2,6 +2,6 @@
 
 namespace engine {
 
-const char *GlobalHeightMap::base_path = "src/resources/gmted2010_75/";
+const char *GlobalHeightMap::base_path = "/home/icecool/onlab/src/resources/gmted2010_75";
 
 }

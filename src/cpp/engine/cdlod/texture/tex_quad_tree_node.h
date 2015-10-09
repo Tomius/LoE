@@ -27,9 +27,9 @@ class TexQuadTreeNode {
   void age();
   void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum, int index,
-                   std::vector<GLubyte>& texture_data,
+                   std::vector<GLushort>& texture_data,
                    TexQuadTreeNodeIndex* indices);
-  void upload(int index, std::vector<GLubyte>& texture_data,
+  void upload(int index, std::vector<GLushort>& texture_data,
               TexQuadTreeNodeIndex* indices);
 
   int center_x() const { return x_; }
@@ -46,7 +46,7 @@ class TexQuadTreeNode {
   GLubyte level_;
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
-  std::vector<GLubyte> data_;
+  std::vector<GLushort> data_;
 
   // If a node is not used for this much time (frames), it will be unloaded.
   static const int time_to_live_ = 256;
