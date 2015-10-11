@@ -168,54 +168,103 @@ float CDLODTerrain_estimateDistance(vec2 geom_pos) {
   return length(est_diff);
 }
 
-float CDLODTerrain_getHeight(vec2 geom_sample, out vec3 m_normal) {
-  if (!CDLODTerrain_isValid(vec3(geom_sample.x, 0, geom_sample.y))) {
-    return 0.0;
-  } else {
-    CDLODTerrain_Node node;
-    // Root node
-    node.center = CDLODTerrain_uTexSize/2;
-    node.size = CDLODTerrain_uTexSize;
-    node.level = CDLODTerrain_max_level;
-    node.index = 0;
-
-    float dist = CDLODTerrain_estimateDistance(geom_sample);
-
-    vec2 tex_sample = geom_sample / (1 << CDLODTerrain_uGeomDiv);
-
-    // Find the node that contains the given point (tex_sample).
-    while (dist < 4 * length(vec2(node.size)) && node.level > 0) {
-      node = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
-    }
-
-    float height = CDLODTerrain_fetchHeight(node, tex_sample);
-
-    // neighbours
-    float diff = 1.0 / (1 << node.level);
-    ivec2 node_top_left = node.center - node.size/2;
-    mat3x3 neighbour_heights;
-    for (int x = -1; x <= 1; ++x) {
-      for (int y = -1; y <= 1; ++y) {
-        if (x == 0 && y == 0) {
-          neighbour_heights[x+1][y+1] = height;
-        } else {
-          vec2 neighbour = tex_sample + diff*vec2(x, y);
-          neighbour_heights[x+1][y+1] = CDLODTerrain_fetchHeight(node, neighbour);
-        }
+vec3 CDLODTerrain_fetchNormal(CDLODTerrain_Node node,
+                              vec2 tex_sample,
+                              float height) {
+  // neighbours
+  float diff = 1.0 / (1 << node.level);
+  ivec2 node_top_left = node.center - node.size/2;
+  mat3x3 neighbour_heights;
+  for (int x = -1; x <= 1; ++x) {
+    for (int y = -1; y <= 1; ++y) {
+      if (x == 0 && y == 0) {
+        neighbour_heights[x+1][y+1] = height;
+      } else {
+        vec2 neighbour = tex_sample + diff*vec2(x, y);
+        neighbour_heights[x+1][y+1] = CDLODTerrain_fetchHeight(node, neighbour);
       }
     }
+  }
 
-    float gx = (neighbour_heights[2][0] + 2*neighbour_heights[2][1] + neighbour_heights[2][2]) -
-               (neighbour_heights[0][0] + 2*neighbour_heights[0][1] + neighbour_heights[0][2]);
+  float gx = (neighbour_heights[2][0] + 2*neighbour_heights[2][1] + neighbour_heights[2][2]) -
+             (neighbour_heights[0][0] + 2*neighbour_heights[0][1] + neighbour_heights[0][2]);
 
-    float gy = (neighbour_heights[0][2] + 2*neighbour_heights[1][2] + neighbour_heights[2][2]) -
-               (neighbour_heights[0][0] + 2*neighbour_heights[1][0] + neighbour_heights[2][0]);
+  float gy = (neighbour_heights[0][2] + 2*neighbour_heights[1][2] + neighbour_heights[2][2]) -
+             (neighbour_heights[0][0] + 2*neighbour_heights[1][0] + neighbour_heights[2][0]);
 
-    vec3 u = vec3(2*diff, gx, 0);
-    vec3 v = vec3(0, gy, 2*diff);
-    m_normal = normalize(cross(v, u));
+  vec3 u = vec3(2*diff, gx, 0);
+  vec3 v = vec3(0, gy, 2*diff);
+  return normalize(cross(v, u));
+}
 
-    return height;
+void CDLODTerrain_fetchHeightAndNormal(CDLODTerrain_Node node,
+                                       vec2 tex_sample,
+                                       out float height,
+                                       out vec3 normal) {
+  height = CDLODTerrain_fetchHeight(node, tex_sample);
+  normal = CDLODTerrain_fetchNormal(node, tex_sample, height);
+}
+
+uniform int two = 2;
+
+void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
+                                     float morph,
+                                     out float height,
+                                     out vec3 normal) {
+  if (!CDLODTerrain_isValid(vec3(geom_sample.x, 0, geom_sample.y))) {
+    height = 0.0;
+    normal = vec3(0, 1, 0);
+    return;
+  }
+
+  // Root node
+  CDLODTerrain_Node node;
+  node.center = CDLODTerrain_uTexSize/2;
+  node.size = CDLODTerrain_uTexSize;
+  node.level = CDLODTerrain_max_level;
+  node.index = 0;
+
+  float dist = CDLODTerrain_estimateDistance(geom_sample);
+  vec2 tex_sample = geom_sample / (1 << CDLODTerrain_uGeomDiv);
+
+  // I assume that there will be maximum two morphs
+  CDLODTerrain_Node last_node = node, prev2_node = last_node;
+
+  // Find the node that contains the given point (tex_sample).
+  while (0 < node.level &&
+         CDLODTerrain_uLevel < node.level + CDLODTerrain_uGeomDiv) {
+    prev2_node = last_node;
+    last_node = node;
+    node = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
+  }
+
+  int fetch_count;
+  CDLODTerrain_Node nodes[2];
+  vec3 normals[2];
+  float heights[2];
+
+  if (morph == 0 || CDLODTerrain_uLevel < CDLODTerrain_uGeomDiv) {
+    fetch_count = 1;
+    nodes[0] = node;
+  } else if (morph == 1) {
+    fetch_count = 1;
+    nodes[0] = last_node;
+  } else {
+    fetch_count = 2;
+    nodes[0] = node;
+    nodes[1] = morph > 1 ? prev2_node : last_node;
+  }
+
+  for (int i = 0; i < fetch_count; ++i) {
+    CDLODTerrain_fetchHeightAndNormal(nodes[i], tex_sample, heights[i], normals[i]);
+  }
+
+  if (fetch_count == 1) {
+    height = heights[0];
+    normal = normals[0];
+  } else {
+    height = mix(heights[0], heights[1], fract(morph));
+    normal = mix(normals[0], normals[1], fract(morph));
   }
 }
 
@@ -265,7 +314,8 @@ vec4 CDLODTerrain_modelPos(out vec3 m_normal) {
     dist = CDLODTerrain_estimateDistance(pos);
   }
 
-  float height = CDLODTerrain_getHeight(pos, m_normal);
+  float height;
+  CDLODTerrain_getHeightAndNormal(pos, iteration_count + morph, height, m_normal);
   return vec4(pos.x, height, pos.y, iteration_count + morph);
 }
 

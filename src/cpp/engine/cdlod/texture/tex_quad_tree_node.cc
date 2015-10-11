@@ -75,7 +75,11 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   int index,
                                   std::vector<GLushort>& texture_data,
                                   TexQuadTreeNodeIndex* indices) {
-  float lod_range = 4 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
+  // float lod_range2 = sqrt(double(sx_)*sx_ + double(sz_)*sz_);
+  float scale = 1 << (level_ + GlobalHeightMap::geom_div);
+  float lod_range = 1.5 * GlobalHeightMap::lod_level_distance_multiplier
+                    * scale * GlobalHeightMap::node_dimension;
+  //std::cout << lod_range << " vs " << lod_range2 << std::endl;
 
   // check if the node is visible
   if (!bbox_.collidesWithFrustum(frustum)) {
