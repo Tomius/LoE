@@ -15,20 +15,19 @@ in VertexData {
 uniform mat4 uCameraMatrix;
 uniform sampler2DArray uDiffuseTexture;
 
+uniform float CDLODTerrain_uNodeDimension;
+uniform ivec2 CDLODTerrain_uTexSize;
+uniform int CDLODTerrain_uGeomDiv;
+ivec2 CDLODTerrain_GeomSize = CDLODTerrain_uTexSize << CDLODTerrain_uGeomDiv;
+
 out vec4 fragColor;
 
 const ivec2 kAtlasSize = ivec2(4, 4);
 
 // Quite a weird way to simulate amibent occlusion, but works suprisingly good
 float CalculateLighting(vec3 normal, vec3 light_dir) {
-  return sqrt(dot(normal, light_dir)+1.0) / sqrt(2.0);
+  return (dot(normal, light_dir)+1.0)/2.0;
 }
-
-uniform float CDLODTerrain_uNodeDimension;
-
-uniform ivec2 CDLODTerrain_uTexSize;
-uniform int CDLODTerrain_uGeomDiv;
-ivec2 CDLODTerrain_GeomSize = CDLODTerrain_uTexSize << CDLODTerrain_uGeomDiv;
 
 void handleBorders(ivec2 tex_size, inout ivec3[4] tc,
                    out bool is_on_layer_border) {
@@ -146,17 +145,15 @@ void main() {
   // Lighting
   vec3 w_sun_pos = SunPos();
   float diffuse_power = 0.0;
-  if (dot(vIn.w_pos, w_sun_pos) > 0) {
-    vec3 w_normal = normalize(vIn.w_normal);
-    vec3 w_sun_dir = normalize(w_sun_pos);
-    diffuse_power = CalculateLighting(w_normal, w_sun_dir);
-  }
+  vec3 w_normal = normalize(vIn.w_normal);
+  vec3 w_sun_dir = normalize(w_sun_pos);
+  diffuse_power = CalculateLighting(w_normal, w_sun_dir);
 
   vec3 lighting = vec3(diffuse_power);
 
   float gamma = 2.2;
   vec3 diffuse_color = pow(getColor(), vec3(1/gamma));
-  vec3 final_color = diffuse_color * (0.35 + 0.65*lighting);
+  vec3 final_color = diffuse_color * (0.4 + 0.6*lighting);
 
   fragColor = vec4(final_color, 1);
   // fragColor = vec4(vIn.level/8, vIn.morph/3, 0, 1)*0.25 + 0.75*vec4(final_color, 1);

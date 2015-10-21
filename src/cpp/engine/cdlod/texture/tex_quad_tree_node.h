@@ -14,6 +14,11 @@ struct TexQuadTreeNodeIndex {
   GLushort tex_size_x, tex_size_y;
 };
 
+struct DerivativeInfo {
+  GLushort dx, dy;
+};
+static_assert(sizeof(DerivativeInfo) == 2*sizeof(GLushort), "");
+
 class TexQuadTreeNode {
  public:
   TexQuadTreeNode(int center_x, int center_z,
@@ -27,9 +32,11 @@ class TexQuadTreeNode {
   void age();
   void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum, int index,
-                   std::vector<GLushort>& texture_data,
+                   std::vector<GLushort>& height_data,
+                   std::vector<DerivativeInfo>& normal_data,
                    TexQuadTreeNodeIndex* indices);
-  void upload(int index, std::vector<GLushort>& texture_data,
+  void upload(int index, std::vector<GLushort>& height_data,
+              std::vector<DerivativeInfo>& normal_data,
               TexQuadTreeNodeIndex* indices);
 
   int center_x() const { return x_; }
@@ -41,15 +48,17 @@ class TexQuadTreeNode {
  private:
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
 
-  int x_, z_, sx_, sz_, tex_w_, tex_h_;
-  int last_used_ = 0;
+  int x_, z_;
+  unsigned sx_, sz_, tex_w_, tex_h_;
   GLubyte level_;
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
-  std::vector<GLushort> data_;
+  std::vector<GLushort> height_data_;
+  std::vector<DerivativeInfo> normal_data_;
 
+  int last_used_ = 0;
   // If a node is not used for this much time (frames), it will be unloaded.
-  static const int time_to_live_ = 256;
+  static const int time_to_live_ = 1 << 16;
 };
 
 }

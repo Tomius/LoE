@@ -13,15 +13,59 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
             {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
 
 void TexQuadTreeNode::load() {
-  char str[200];
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
-  sprintf(str, "%s/%d/%d/%d.png", GlobalHeightMap::base_path, level_, tx, ty);
 
-  Magick::Image image(str);
-  tex_w_ = image.columns();
-  tex_h_ = image.rows();
-  data_.resize(tex_w_*tex_h_);
-  image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, data_.data());
+  { // height tex
+    char height_tex[200];
+    sprintf(height_tex, "%s/%d/%d/%d.png",
+            GlobalHeightMap::height_texture_base_path,
+            level_, tx, ty);
+
+    Magick::Image height_image(height_tex);
+    tex_w_ = height_image.columns();
+    tex_h_ = height_image.rows();
+    height_data_.resize(tex_w_*tex_h_);
+
+    height_image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, height_data_.data());
+  }
+
+
+  // placeholder for interleaving
+  std::vector<GLushort> temp;
+  temp.resize(tex_w_*tex_h_);
+  normal_data_.resize(tex_w_*tex_h_);
+
+  { // dx tex
+    char dx_tex[200];
+    sprintf(dx_tex, "%s/%d/%d/%d.png",
+            GlobalHeightMap::dx_texture_base_path,
+            level_, tx, ty);
+
+    Magick::Image dx_image(dx_tex);
+    assert(tex_w_ == dx_image.columns());
+    assert(tex_h_ == dx_image.rows());
+
+    dx_image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
+    for (size_t i = 0; i < temp.size(); ++i) {
+      normal_data_[i].dx = temp[i];
+    }
+  }
+
+  { //dy tex
+    char dy_tex[200];
+    sprintf(dy_tex, "%s/%d/%d/%d.png",
+            GlobalHeightMap::dy_texture_base_path,
+            level_, tx, ty);
+
+    Magick::Image dy_image(dy_tex);
+    assert(tex_w_ == dy_image.columns());
+    assert(tex_h_ == dy_image.rows());
+
+    dy_image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
+    for (size_t i = 0; i < temp.size(); ++i) {
+      normal_data_[i].dy = temp[i];
+    }
+  }
 }
 
 void TexQuadTreeNode::age() {
@@ -73,20 +117,17 @@ void TexQuadTreeNode::initChild(int i) {
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
                                   int index,
-                                  std::vector<GLushort>& texture_data,
+                                  std::vector<GLushort>& height_data,
+                                  std::vector<DerivativeInfo>& normal_data,
                                   TexQuadTreeNodeIndex* indices) {
-  // float lod_range2 = sqrt(double(sx_)*sx_ + double(sz_)*sz_);
-  float scale = 1 << (level_ + GlobalHeightMap::geom_div);
-  float lod_range = 1.5 * GlobalHeightMap::lod_level_distance_multiplier
-                    * scale * GlobalHeightMap::node_dimension;
-  //std::cout << lod_range << " vs " << lod_range2 << std::endl;
+  float lod_range = sqrt(double(sx_)*sx_ + double(sz_)*sz_) * (1 << GlobalHeightMap::geom_div);
 
   // check if the node is visible
   if (!bbox_.collidesWithFrustum(frustum)) {
     return;
   }
 
-  upload(index, texture_data, indices);
+  upload(index, height_data, normal_data, indices);
 
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithSphere(sphere) && level_ != 0)  {
@@ -99,7 +140,8 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
       // call selectNodes on the child (recursive)
       if (child->collidesWithSphere(sphere)) {
-        child->selectNodes(cam_pos, frustum, 4*index+i+1, texture_data, indices);
+        child->selectNodes(cam_pos, frustum, 4*index+i+1,
+                           height_data, normal_data, indices);
       }
     }
   }
@@ -107,18 +149,21 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   last_used_ = 0;
 }
 
-void TexQuadTreeNode::upload(int index, std::vector<GLushort>& texture_data,
+void TexQuadTreeNode::upload(int index, std::vector<GLushort>& height_data,
+                             std::vector<DerivativeInfo>& normal_data,
                              TexQuadTreeNodeIndex* indices) {
-  if (data_.empty()) {
+  if (height_data_.empty()) {
     load();
   }
 
-  GLint offset = texture_data.size();
+  assert (height_data.size() == normal_data.size());
+  GLint offset = height_data.size();
   indices[index] = TexQuadTreeNodeIndex{
     GLushort(offset >> 16), GLushort(offset % (1 << 16)),
     GLushort(tex_w_), GLushort(tex_h_)
   };
-  texture_data.insert(texture_data.end(), data_.begin(), data_.end());
+  height_data.insert(height_data.end(), height_data_.begin(), height_data_.end());
+  normal_data.insert(normal_data.end(), normal_data_.begin(), normal_data_.end());
 }
 
 }  // namespace cdlod

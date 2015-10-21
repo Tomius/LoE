@@ -19,10 +19,13 @@ class TexQuadTree {
   glm::ivec2 min_node_size_;
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
-  std::vector<GLushort> texture_data_;
-  gl::TextureBuffer tex_buffer_;
+
+  std::vector<GLushort> height_data_;
+  std::vector<DerivativeInfo> normal_data_;
+  gl::TextureBuffer height_tex_buffer_;
+  gl::TextureBuffer normal_tex_buffer_;
   gl::TextureBuffer index_tex_buffer_;
-  GLuint textures_[2];
+  GLuint textures_[3];
 
   GLubyte max_node_level(int w, int h) const {
     int x_depth = 1;
@@ -58,7 +61,7 @@ class TexQuadTree {
       , max_node_level_(max_node_level(w, h))
       , root_{w/2, h/2, w, h, max_node_level_} {
     initTexIndexBuffer();
-    gl(GenTextures(2, textures_));
+    gl(GenTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
   }
 
   TexQuadTree(int w, int h, GLubyte max_depth)
@@ -66,11 +69,11 @@ class TexQuadTree {
       , max_node_level_(max_depth)
       , root_{w/2, h/2, w, h, max_node_level_} {
     initTexIndexBuffer();
-    gl(GenTextures(2, textures_));
+    gl(GenTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
   }
 
   ~TexQuadTree() {
-    gl(DeleteTextures(2, textures_));
+    gl(DeleteTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
   }
 
   glm::ivec2 min_node_size() const {
@@ -85,12 +88,16 @@ class TexQuadTree {
     return max_node_level_;
   }
 
-  GLuint texture() const {
+  GLuint height_texture() const {
     return textures_[0];
   }
 
-  GLuint index_texture() const {
+  GLuint normal_texture() const {
     return textures_[1];
+  }
+
+  GLuint index_texture() const {
+    return textures_[2];
   }
 
   void update(Camera const& cam) {
@@ -99,22 +106,32 @@ class TexQuadTree {
       TexQuadTreeNodeIndex* indices = map.data();
       std::memset(indices, 0, map.size());
 
-      texture_data_.clear();
+      height_data_.clear();
+      normal_data_.clear();
       glm::vec3 cam_pos = cam.transform()->pos();
-      root_.selectNodes(cam_pos, cam.frustum(), 0, texture_data_, indices);
+      root_.selectNodes(cam_pos, cam.frustum(), 0,
+                        height_data_, normal_data_, indices);
       root_.age();
     } // unmap indices
 
 
-    gl(BindTexture(GL_TEXTURE_BUFFER, textures_[1]));
+    // TODO: move this to ctor
+    gl(BindTexture(GL_TEXTURE_BUFFER, index_texture()));
     gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA16UI, index_tex_buffer_.expose()));
 
-    gl::Bind(tex_buffer_);
-    tex_buffer_.data(texture_data_, gl::kStreamDraw);
-    gl::Unbind(tex_buffer_);
+    gl::Bind(height_tex_buffer_);
+    height_tex_buffer_.data(height_data_, gl::kStreamDraw);
+    gl::Unbind(height_tex_buffer_);
 
-    gl(BindTexture(GL_TEXTURE_BUFFER, textures_[0]));
-    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI, tex_buffer_.expose()));
+    gl(BindTexture(GL_TEXTURE_BUFFER, height_texture()));
+    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI, height_tex_buffer_.expose()));
+
+    gl::Bind(normal_tex_buffer_);
+    normal_tex_buffer_.data(normal_data_, gl::kStreamDraw);
+    gl::Unbind(normal_tex_buffer_);
+
+    gl(BindTexture(GL_TEXTURE_BUFFER, normal_texture()));
+    gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG16UI, normal_tex_buffer_.expose()));
 
     gl(BindTexture(GL_TEXTURE_BUFFER, 0));
   }
