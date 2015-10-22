@@ -16,7 +16,7 @@ namespace GlobalHeightMap {
   extern const char *dy_texture_base_path;
 
   // CDLOD nodes' extent is (1 << node_dimension_exp)
-  static constexpr int node_dimension_exp = 6;
+  static constexpr int node_dimension_exp = 5;
   static_assert(4 <= node_dimension_exp && node_dimension_exp <= 8, "");
 
   static constexpr int node_dimension = 1 << node_dimension_exp;

@@ -220,7 +220,9 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
   node.level = CDLODTerrain_max_level;
   node.index = 0;
 
-  float dist = CDLODTerrain_estimateDistance(geom_sample) / (1 << CDLODTerrain_uGeomDiv);
+  float dist = CDLODTerrain_estimateDistance(geom_sample);
+  float lod_distance_mult = 1 << (CDLODTerrain_uGeomDiv);
+  dist /= lod_distance_mult;
   vec2 tex_sample = geom_sample / (1 << CDLODTerrain_uGeomDiv);
 
   // I assume that there will be maximum two morphs

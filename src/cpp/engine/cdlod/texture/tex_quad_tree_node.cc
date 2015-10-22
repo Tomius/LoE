@@ -4,15 +4,23 @@
 #include "./tex_quad_tree_node.h"
 #include "../../misc.h"
 
+int frame_counter = 0;
+
 namespace engine {
 namespace cdlod {
 
-TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz, GLubyte level)
-    : x_(x), z_(z), sx_(sx), sz_(sz), level_(level)
+TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz,
+                                 GLubyte level, unsigned index)
+    : x_(x), z_(z), sx_(sx), sz_(sz), index_(index), level_(level)
     , bbox_{{x-sx/2, 0, z-sz/2},
             {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
 
+static int last_frame_counter = 0;
+static int load_counter = 0;
+
 void TexQuadTreeNode::load() {
+  load_counter++;
+
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
 
   { // height tex
@@ -90,22 +98,22 @@ void TexQuadTreeNode::initChild(int i) {
     case 0: { // top left
       int sx = sx_/2, sz = sz_/2;
       children_[0] = make_unique<TexQuadTreeNode>(
-          x_ - (sx - sx/2), z_ - (sz - sz/2), sx, sz, level_-1);
+          x_ - (sx - sx/2), z_ - (sz - sz/2), sx, sz, level_-1, 4*index_+i+1);
     } break;
     case 1: { // top right
       int sx = sx_ - sx_/2, sz = sz_/2;
       children_[1] = make_unique<TexQuadTreeNode>(
-          x_ + sx/2, z_ - (sz - sz/2), sx, sz, level_-1);
+          x_ + sx/2, z_ - (sz - sz/2), sx, sz, level_-1, 4*index_+i+1);
     } break;
     case 2: { // bottom left
       int sx = sx_/2, sz = sz_ - sz_/2;
       children_[2] = make_unique<TexQuadTreeNode>(
-          x_ - (sx - sx/2), z_ + sz/2, sx, sz, level_-1);
+          x_ - (sx - sx/2), z_ + sz/2, sx, sz, level_-1, 4*index_+i+1);
     } break;
     case 3: { // bottom right
       int sx = sx_ - sx_/2, sz = sz_ - sz_/2;
       children_[3] = make_unique<TexQuadTreeNode>(
-          x_ + sx/2, z_ + sz/2, sx, sz, level_-1);
+          x_ + sx/2, z_ + sz/2, sx, sz, level_-1, 4*index_+i+1);
     } break;
     default: {
       throw new std::out_of_range("Tried to index "
@@ -116,32 +124,40 @@ void TexQuadTreeNode::initChild(int i) {
 
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
-                                  int index,
                                   std::vector<GLushort>& height_data,
                                   std::vector<DerivativeInfo>& normal_data,
                                   TexQuadTreeNodeIndex* indices) {
-  float lod_range = sqrt(double(sx_)*sx_ + double(sz_)*sz_) * (1 << GlobalHeightMap::geom_div);
+  // if (frame_counter > last_frame_counter) {
+  //   if (load_counter != 0) {
+  //     std::cout << load_counter << " image was loaded in frame " << last_frame_counter << std::endl;
+  //     load_counter = 0;
+  //   }
+  //   last_frame_counter = frame_counter;
+  // }
+
+  float lod_range = 2*sqrt(double(sx_)*sx_ + double(sz_)*sz_) * (1 << GlobalHeightMap::geom_div);
 
   // check if the node is visible
   if (!bbox_.collidesWithFrustum(frustum)) {
     return;
   }
 
-  upload(index, height_data, normal_data, indices);
-
   Sphere sphere{cam_pos, lod_range};
-  if (bbox_.collidesWithSphere(sphere) && level_ != 0)  {
-    for (int i = 0; i < 4; ++i) {
-      auto& child = children_[i];
+  if (bbox_.collidesWithSphere(sphere))  {
+    upload(height_data, normal_data, indices);
 
-      if (!child) {
-        initChild(i);
-      }
+    if (level_ != 0) {
+      for (int i = 0; i < 4; ++i) {
+        auto& child = children_[i];
 
-      // call selectNodes on the child (recursive)
-      if (child->collidesWithSphere(sphere)) {
-        child->selectNodes(cam_pos, frustum, 4*index+i+1,
-                           height_data, normal_data, indices);
+        if (!child) {
+          initChild(i);
+        }
+
+        // call selectNodes on the child (recursive)
+        if (child->collidesWithSphere(sphere)) {
+          child->selectNodes(cam_pos, frustum, height_data, normal_data, indices);
+        }
       }
     }
   }
@@ -149,18 +165,18 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   last_used_ = 0;
 }
 
-void TexQuadTreeNode::upload(int index, std::vector<GLushort>& height_data,
+void TexQuadTreeNode::upload(std::vector<GLushort>& height_data,
                              std::vector<DerivativeInfo>& normal_data,
                              TexQuadTreeNodeIndex* indices) {
   if (height_data_.empty()) {
     load();
   }
 
-  if (indices[index].tex_size_x == 0) {
+  if (indices[index_].tex_size_x == 0) {
     assert (height_data.size() == normal_data.size());
     GLint offset = height_data.size();
 
-    indices[index] = TexQuadTreeNodeIndex{
+    indices[index_] = TexQuadTreeNodeIndex{
       GLushort(offset >> 16), GLushort(offset % (1 << 16)),
       GLushort(tex_w_), GLushort(tex_h_)
     };

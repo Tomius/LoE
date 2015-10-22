@@ -21,8 +21,8 @@ static_assert(sizeof(DerivativeInfo) == 2*sizeof(GLushort), "");
 
 class TexQuadTreeNode {
  public:
-  TexQuadTreeNode(int center_x, int center_z,
-                  int size_x, int size_z, GLubyte mip_level);
+  TexQuadTreeNode(int center_x, int center_z, int size_x, int size_z,
+                  GLubyte mip_level, unsigned index);
 
   bool collidesWithSphere(const Sphere& sphere) {
     return bbox_.collidesWithSphere(sphere);
@@ -31,11 +31,11 @@ class TexQuadTreeNode {
   void load();
   void age();
   void initChild(int i);
-  void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum, int index,
+  void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
                    std::vector<GLushort>& height_data,
                    std::vector<DerivativeInfo>& normal_data,
                    TexQuadTreeNodeIndex* indices);
-  void upload(int index, std::vector<GLushort>& height_data,
+  void upload(std::vector<GLushort>& height_data,
               std::vector<DerivativeInfo>& normal_data,
               TexQuadTreeNodeIndex* indices);
 
@@ -49,7 +49,7 @@ class TexQuadTreeNode {
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
 
   int x_, z_;
-  unsigned sx_, sz_, tex_w_, tex_h_;
+  unsigned sx_, sz_, tex_w_, tex_h_, index_;
   GLubyte level_;
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];

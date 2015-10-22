@@ -12,6 +12,8 @@
 
 #define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
 
+extern int frame_counter;
+
 namespace engine {
 namespace cdlod {
 
@@ -84,7 +86,7 @@ class TexQuadTree {
               glm::ivec2 min_node_size = {256, 128})
       : min_node_size_{min_node_size}
       , max_node_level_(max_node_level(w, h))
-      , root_{w/2, h/2, w, h, max_node_level_} {
+      , root_{w/2, h/2, w, h, max_node_level_, 0} {
     initTexIndexBuffer();
     initTextures();
   }
@@ -92,7 +94,7 @@ class TexQuadTree {
   TexQuadTree(int w, int h, GLubyte max_depth)
       : min_node_size_{w >> max_depth, h >> max_depth}
       , max_node_level_(max_depth)
-      , root_{w/2, h/2, w, h, max_node_level_} {
+      , root_{w/2, h/2, w, h, max_node_level_, 0} {
     initTexIndexBuffer();
     initTextures();
   }
@@ -148,12 +150,13 @@ class TexQuadTree {
     offset = last_data_size * sizeof(DerivativeInfo);
     uploadSize = (normal_data_.size()-last_data_size) * sizeof(DerivativeInfo);
     assert(offset+uploadSize <= last_data_alloc_ * sizeof(DerivativeInfo));
-    height_tex_buffer_.subData(offset, uploadSize, &normal_data_[last_data_size]);
+    normal_tex_buffer_.subData(offset, uploadSize, &normal_data_[last_data_size]);
     gl::Unbind(normal_tex_buffer_);
   }
 
   void update(Camera const& cam) {
     size_t last_data_size = height_data_.size();
+    frame_counter++;
 
     gl::Bind(index_tex_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
@@ -166,8 +169,8 @@ class TexQuadTree {
       }
 
       glm::vec3 cam_pos = cam.transform()->pos();
-      root_.selectNodes(cam_pos, cam.frustum(), 0,
-                        height_data_, normal_data_, indices);
+      root_.selectNodes(cam_pos, cam.frustum(), height_data_,
+                        normal_data_, indices);
       root_.age();
     } // unmap indices
 
