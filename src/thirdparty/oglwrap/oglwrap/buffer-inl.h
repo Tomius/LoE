@@ -49,7 +49,7 @@ void BufferObject<BUFFER_TYPE>::subData(GLintptr offset, GLsizei size,
     OGLWRAP_CHECK_FOR_DEFAULT_BINDING_EXPLICIT(GL_VERTEX_ARRAY_BINDING);
   }
 
-  gl(BufferSubData(GLenum(BUFFER_TYPE), offset, size, GLenum(data)));
+  gl(BufferSubData(GLenum(BUFFER_TYPE), offset, size, data));
 }
 
 template<BufferType BUFFER_TYPE>

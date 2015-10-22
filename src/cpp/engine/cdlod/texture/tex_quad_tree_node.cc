@@ -156,14 +156,17 @@ void TexQuadTreeNode::upload(int index, std::vector<GLushort>& height_data,
     load();
   }
 
-  assert (height_data.size() == normal_data.size());
-  GLint offset = height_data.size();
-  indices[index] = TexQuadTreeNodeIndex{
-    GLushort(offset >> 16), GLushort(offset % (1 << 16)),
-    GLushort(tex_w_), GLushort(tex_h_)
-  };
-  height_data.insert(height_data.end(), height_data_.begin(), height_data_.end());
-  normal_data.insert(normal_data.end(), normal_data_.begin(), normal_data_.end());
+  if (indices[index].tex_size_x == 0) {
+    assert (height_data.size() == normal_data.size());
+    GLint offset = height_data.size();
+
+    indices[index] = TexQuadTreeNodeIndex{
+      GLushort(offset >> 16), GLushort(offset % (1 << 16)),
+      GLushort(tex_w_), GLushort(tex_h_)
+    };
+    height_data.insert(height_data.end(), height_data_.begin(), height_data_.end());
+    normal_data.insert(normal_data.end(), normal_data_.begin(), normal_data_.end());
+  }
 }
 
 }  // namespace cdlod
