@@ -16,7 +16,7 @@ namespace GlobalHeightMap {
   extern const char *dy_texture_base_path;
 
   // CDLOD nodes' extent is (1 << node_dimension_exp)
-  static constexpr int node_dimension_exp = 5;
+  static constexpr int node_dimension_exp = 4;
   static_assert(4 <= node_dimension_exp && node_dimension_exp <= 8, "");
 
   static constexpr int node_dimension = 1 << node_dimension_exp;
@@ -32,7 +32,7 @@ namespace GlobalHeightMap {
   // corresponds to a 1x1 texture area (2x2 texels)
   static constexpr long geom_div = 4;
 
-  static_assert(geom_div < node_dimension_exp, "");
+  static_assert(geom_div <= node_dimension_exp, "");
 
   // The resolution of the heightmap
   static constexpr long tex_w = 172800, tex_h = 86400;
