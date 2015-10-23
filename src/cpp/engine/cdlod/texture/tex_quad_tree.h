@@ -12,12 +12,11 @@
 
 #define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
 
-extern int frame_counter;
-
 namespace engine {
 namespace cdlod {
 
 class TexQuadTree {
+ private:
   glm::ivec2 min_node_size_;
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
@@ -30,7 +29,10 @@ class TexQuadTree {
   gl::TextureBuffer normal_tex_buffer_;
   gl::TextureBuffer index_tex_buffer_;
   GLuint textures_[3];
-  size_t update_counter = 0;
+
+  size_t update_counter_ = 0;
+  std::set<TexQuadTreeNode*> load_later_;
+  bool worker_thread_should_sleep_;
 
   GLubyte max_node_level(int w, int h) const {
     int x_depth = 1;
@@ -154,14 +156,21 @@ class TexQuadTree {
     gl::Unbind(normal_tex_buffer_);
   }
 
+  void fillCache() {
+    while (!load_later_.empty() && load_count < 1) {
+      auto iter = load_later_.begin();
+      (*iter)->load(load_count);
+      load_later_.erase(iter);
+    }
+  }
+
   void update(Camera const& cam) {
     size_t last_data_size = height_data_.size();
-    frame_counter++;
 
     gl::Bind(index_tex_buffer_); {
       gl::TextureBuffer::TypedMap<TexQuadTreeNodeIndex> map;
       TexQuadTreeNodeIndex* indices = map.data();
-      if (++update_counter % 1000 == 0) {
+      if (++update_counter_ % 1000 == 0) {
         std::memset(indices, 0, index_tex_buffer_size);
         last_data_size = 0;
         height_data_.clear();
@@ -169,8 +178,15 @@ class TexQuadTree {
       }
 
       glm::vec3 cam_pos = cam.transform()->pos();
+      int load_count = 0;
       root_.selectNodes(cam_pos, cam.frustum(), height_data_,
-                        normal_data_, indices);
+                        normal_data_, indices, &load_count, load_later_);
+      fillCache(indices, &load_count);
+      if (load_count > 1) {
+        std::cout << load_count << " image was loaded in frame " << update_counter_ << std::endl;
+        std::cout << "Load later size: " << load_later_.size() << std::endl;
+      }
+      load_later_.clear();
       root_.age();
     } // unmap indices
 

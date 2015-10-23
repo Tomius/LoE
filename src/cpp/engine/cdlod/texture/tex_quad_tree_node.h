@@ -28,16 +28,18 @@ class TexQuadTreeNode {
     return bbox_.collidesWithSphere(sphere);
   }
 
-  void load();
+  void load(int* load_count);
   void age();
   void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
                    std::vector<GLushort>& height_data,
                    std::vector<DerivativeInfo>& normal_data,
-                   TexQuadTreeNodeIndex* indices);
+                   TexQuadTreeNodeIndex* indices,
+                   int* load_count, std::set<TexQuadTreeNode*>& load_later);
   void upload(std::vector<GLushort>& height_data,
               std::vector<DerivativeInfo>& normal_data,
-              TexQuadTreeNodeIndex* indices);
+              TexQuadTreeNodeIndex* indices,
+              int* load_count);
 
   int center_x() const { return x_; }
   int center_z() const { return z_; }

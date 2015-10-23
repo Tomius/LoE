@@ -4,8 +4,6 @@
 #include "./tex_quad_tree_node.h"
 #include "../../misc.h"
 
-int frame_counter = 0;
-
 namespace engine {
 namespace cdlod {
 
@@ -15,11 +13,12 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz,
     , bbox_{{x-sx/2, 0, z-sz/2},
             {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
 
-static int last_frame_counter = 0;
-static int load_counter = 0;
+void TexQuadTreeNode::load(int* load_count) {
+  if (!height_data_.empty()) {
+    return;
+  }
 
-void TexQuadTreeNode::load() {
-  load_counter++;
+  (*load_count)++;
 
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
 
@@ -126,25 +125,15 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
                                   std::vector<GLushort>& height_data,
                                   std::vector<DerivativeInfo>& normal_data,
-                                  TexQuadTreeNodeIndex* indices) {
-  // if (frame_counter > last_frame_counter) {
-  //   if (load_counter != 0) {
-  //     std::cout << load_counter << " image was loaded in frame " << last_frame_counter << std::endl;
-  //     load_counter = 0;
-  //   }
-  //   last_frame_counter = frame_counter;
-  // }
-
+                                  TexQuadTreeNodeIndex* indices,
+                                  int* load_count,
+                                  std::set<TexQuadTreeNode*>& load_later) {
   float lod_range = 2*sqrt(double(sx_)*sx_ + double(sz_)*sz_) * (1 << GlobalHeightMap::geom_div);
 
-  // check if the node is visible
-  if (!bbox_.collidesWithFrustum(frustum)) {
-    return;
-  }
-
   Sphere sphere{cam_pos, lod_range};
-  if (bbox_.collidesWithSphere(sphere))  {
-    upload(height_data, normal_data, indices);
+  if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {
+    last_used_ = 0;
+    upload(height_data, normal_data, indices, load_count);
 
     if (level_ != 0) {
       for (int i = 0; i < 4; ++i) {
@@ -155,22 +144,22 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
         }
 
         // call selectNodes on the child (recursive)
-        if (child->collidesWithSphere(sphere)) {
-          child->selectNodes(cam_pos, frustum, height_data, normal_data, indices);
-        }
+        child->selectNodes(cam_pos, frustum, height_data,
+                           normal_data, indices, load_count, load_later);
       }
     }
+  } else {
+    if (height_data_.empty()) {
+      load_later.insert(this);
+    }
   }
-
-  last_used_ = 0;
 }
 
 void TexQuadTreeNode::upload(std::vector<GLushort>& height_data,
                              std::vector<DerivativeInfo>& normal_data,
-                             TexQuadTreeNodeIndex* indices) {
-  if (height_data_.empty()) {
-    load();
-  }
+                             TexQuadTreeNodeIndex* indices,
+                             int* load_count) {
+  load(load_count);
 
   if (indices[index_].tex_size_x == 0) {
     assert (height_data.size() == normal_data.size());
