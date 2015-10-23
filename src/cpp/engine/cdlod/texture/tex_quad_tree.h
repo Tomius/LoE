@@ -3,8 +3,12 @@
 #ifndef ENGINE_CDLOD_TEXTURE_TEX_QUAD_TREE_H_
 #define ENGINE_CDLOD_TEXTURE_TEX_QUAD_TREE_H_
 
+#include <mutex>
 #include <memory>
+#include <thread>
 #include <algorithm>
+#include <condition_variable>
+
 #include "./tex_quad_tree_node.h"
 #include "../../global_height_map.h"
 #include "../../camera.h"
@@ -30,9 +34,15 @@ class TexQuadTree {
   gl::TextureBuffer index_tex_buffer_;
   GLuint textures_[3];
 
+  // prefetch
   size_t update_counter_ = 0;
   std::set<TexQuadTreeNode*> load_later_;
-  bool worker_thread_should_sleep_;
+  std::mutex load_later_ownership_;
+  std::condition_variable condition_variable_;
+  bool worker_should_quit_ = false;
+  std::thread worker_;
+  int load_count_ = 0;
+  bool worker_thread_should_sleep_ = true;
 
   GLubyte max_node_level(int w, int h) const {
     int x_depth = 1;
@@ -82,53 +92,6 @@ class TexQuadTree {
     gl(BindTexture(GL_TEXTURE_BUFFER, 0));
   }
 
- public:
-  TexQuadTree(int w = GlobalHeightMap::tex_w,
-              int h = GlobalHeightMap::tex_h,
-              glm::ivec2 min_node_size = {256, 128})
-      : min_node_size_{min_node_size}
-      , max_node_level_(max_node_level(w, h))
-      , root_{w/2, h/2, w, h, max_node_level_, 0} {
-    initTexIndexBuffer();
-    initTextures();
-  }
-
-  TexQuadTree(int w, int h, GLubyte max_depth)
-      : min_node_size_{w >> max_depth, h >> max_depth}
-      , max_node_level_(max_depth)
-      , root_{w/2, h/2, w, h, max_node_level_, 0} {
-    initTexIndexBuffer();
-    initTextures();
-  }
-
-  ~TexQuadTree() {
-    gl(DeleteTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
-  }
-
-  glm::ivec2 min_node_size() const {
-    return min_node_size_;
-  }
-
-  TexQuadTreeNode const& root() const {
-    return root_;
-  }
-
-  int max_node_level() const {
-    return max_node_level_;
-  }
-
-  GLuint height_texture() const {
-    return textures_[0];
-  }
-
-  GLuint normal_texture() const {
-    return textures_[1];
-  }
-
-  GLuint index_texture() const {
-    return textures_[2];
-  }
-
   void enlargeBuffers(size_t new_data_size) {
     last_data_alloc_ = 2*new_data_size;
 
@@ -156,12 +119,79 @@ class TexQuadTree {
     gl::Unbind(normal_tex_buffer_);
   }
 
-  void fillCache() {
-    while (!load_later_.empty() && load_count < 1) {
+  void imageLoaderThread() {
+    while (!worker_should_quit_) {
+      // wait until there's something to process
+      std::unique_lock<std::mutex> lk(load_later_ownership_);
+      condition_variable_.wait(lk, [this]{
+        return worker_should_quit_ ||
+          (!load_later_.empty() && !worker_thread_should_sleep_);
+      });
+
+      if (worker_should_quit_) { return; }
+
+      // process one element of load later
       auto iter = load_later_.begin();
-      (*iter)->load(load_count);
+      (*iter)->load(&load_count_);
       load_later_.erase(iter);
     }
+  }
+
+ public:
+  TexQuadTree(int w = GlobalHeightMap::tex_w,
+              int h = GlobalHeightMap::tex_h,
+              glm::ivec2 min_node_size = {256, 128})
+      : min_node_size_{min_node_size}
+      , max_node_level_(max_node_level(w, h))
+      , root_{w/2, h/2, w, h, max_node_level_, 0}
+      , worker_{[this]{imageLoaderThread();}} {
+    initTexIndexBuffer();
+    initTextures();
+  }
+
+  TexQuadTree(int w, int h, GLubyte max_depth)
+      : min_node_size_{w >> max_depth, h >> max_depth}
+      , max_node_level_(max_depth)
+      , root_{w/2, h/2, w, h, max_node_level_, 0}
+      , worker_{[this]{imageLoaderThread();}} {
+    initTexIndexBuffer();
+    initTextures();
+  }
+
+  ~TexQuadTree() {
+    // signal the worker to quit
+    worker_should_quit_ = true;
+    condition_variable_.notify_one();
+
+    // clean up
+    gl(DeleteTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
+
+    // wait until the worker has finished
+    worker_.join();
+  }
+
+  glm::ivec2 min_node_size() const {
+    return min_node_size_;
+  }
+
+  TexQuadTreeNode const& root() const {
+    return root_;
+  }
+
+  int max_node_level() const {
+    return max_node_level_;
+  }
+
+  GLuint height_texture() const {
+    return textures_[0];
+  }
+
+  GLuint normal_texture() const {
+    return textures_[1];
+  }
+
+  GLuint index_texture() const {
+    return textures_[2];
   }
 
   void update(Camera const& cam) {
@@ -178,15 +208,25 @@ class TexQuadTree {
       }
 
       glm::vec3 cam_pos = cam.transform()->pos();
-      int load_count = 0;
-      root_.selectNodes(cam_pos, cam.frustum(), height_data_,
-                        normal_data_, indices, &load_count, load_later_);
-      fillCache(indices, &load_count);
-      if (load_count > 1) {
-        std::cout << load_count << " image was loaded in frame " << update_counter_ << std::endl;
-        std::cout << "Load later size: " << load_later_.size() << std::endl;
+
+      { // lock load_later and select required notes
+        worker_thread_should_sleep_ = true;
+        std::unique_lock<std::mutex> lk(load_later_ownership_);
+        load_count_ = 0;
+        load_later_.clear(); // forget left over load_later data
+        root_.selectNodes(cam_pos, cam.frustum(), height_data_,
+                          normal_data_, indices, &load_count_, load_later_);
+
+        if (load_count_ > 0) {
+          std::cout << load_count_ << " image was loaded in frame "
+                    << update_counter_ << std::endl;
+        }
       }
-      load_later_.clear();
+      if (load_later_.size() > 0) {
+        worker_thread_should_sleep_ = false;
+        condition_variable_.notify_one(); // let the worker run
+      }
+
       root_.age();
     } // unmap indices
 
