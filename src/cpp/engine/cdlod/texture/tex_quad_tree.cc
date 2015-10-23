@@ -95,7 +95,8 @@ void TexQuadTree::imageLoaderThread() {
 
     // process one element of load later
     auto iter = load_later_.begin();
-    (*iter)->load(&load_count_);
+    // (*iter)->upload(height_data_, normal_data_, index_data_);
+    (*iter)->load();
     load_later_.erase(iter);
   }
 }
@@ -133,51 +134,56 @@ TexQuadTree::~TexQuadTree() {
 }
 
 void TexQuadTree::update(Camera const& cam) {
-  size_t last_data_size = height_data_.size();
-
-  // the cached data should expire once in a while
-  if (++update_counter_ % 1000 == 0) {
-    last_data_size = 0;
-    std::memset(index_data_.data(), 0,
-                index_data_.size() * sizeof(index_data_[0]));
-    height_data_.clear();
-    normal_data_.clear();
-  }
-
-  glm::vec3 cam_pos = cam.transform()->pos();
-
-  { // temporarily stop worker thread, and select texture nodes
+  // temporarily stop worker thread, and upload
+  // data for the current rendering frame
+  {
     worker_thread_should_sleep_ = true;
     std::unique_lock<std::mutex> lock{load_later_ownership_};
-    load_count_ = 0;
-    load_later_.clear(); // forget left over load_later data
-    root_.selectNodes(cam_pos, cam.frustum(), height_data_, normal_data_,
-                      index_data_, &load_count_, load_later_);
 
-    if (load_count_ > 0) {
-      std::cout << load_count_ << " image was loaded in frame "
-                << update_counter_ << std::endl;
+    size_t last_data_size = height_data_.size();
+    bool is_first_call = (update_counter_ == 0);
+
+    // the cached data should expire once in a while
+    if (++update_counter_ % 1000 == 0) {
+      last_data_size = 0;
+      std::memset(index_data_.data(), 0,
+                  index_data_.size() * sizeof(index_data_[0]));
+      height_data_.clear();
+      normal_data_.clear();
     }
-  }
+
+    glm::vec3 cam_pos = cam.transform()->pos();
+
+    // Forget load_later data that we couldn't load since last frame. If some
+    // texture wasn't loaded by the worker thread, but it is still needed, then
+    // the selectNodes will add it again. If it won't add it - then it's not
+    // required anymore to render, so it's a good thing that we dropped it.
+    if (!load_later_.empty()) {
+      load_later_.clear();
+    }
+    root_.selectNodes(cam_pos, cam.frustum(), height_data_, normal_data_,
+                      index_data_, load_later_, is_first_call);
+
+    // unload unused textures, and keep track of last use times
+    root_.age();
+
+    // upload the data
+    gl::Bind(index_tex_buffer_);
+    index_tex_buffer_.subData(0, index_data_);
+    gl::Unbind(index_tex_buffer_);
+
+    size_t new_data_size = height_data_.size();
+    if (new_data_size > last_data_alloc_) {
+      enlargeBuffers (new_data_size);
+    } else {
+      uploadNewData (last_data_size);
+    }
+  } // lock expires here
 
   // start worker thread if there's work to do
   if (load_later_.size() > 0) {
     worker_thread_should_sleep_ = false;
     condition_variable_.notify_one(); // let the worker run
-  }
-
-  // unload unused textures, and keep track of last use times
-  root_.age();
-
-  gl::Bind(index_tex_buffer_);
-  index_tex_buffer_.subData(0, index_data_);
-  gl::Unbind(index_tex_buffer_);
-
-  size_t new_data_size = height_data_.size();
-  if (new_data_size > last_data_alloc_) {
-    enlargeBuffers (new_data_size);
-  } else {
-    uploadNewData (last_data_size);
   }
 }
 

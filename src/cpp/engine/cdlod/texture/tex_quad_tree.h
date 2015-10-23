@@ -48,14 +48,13 @@ class TexQuadTree {
   gl::TextureBuffer index_tex_buffer_;
   GLuint textures_[3];
 
-  // prefetch data
+  // anync load data
   size_t update_counter_ = 0;
   std::set<TexQuadTreeNode*> load_later_;
   std::mutex load_later_ownership_;
   std::condition_variable condition_variable_;
   bool worker_should_quit_ = false;
   std::thread worker_;
-  int load_count_ = 0;
   bool worker_thread_should_sleep_ = true;
 
   GLubyte max_node_level(int w, int h) const;

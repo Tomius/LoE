@@ -31,6 +31,7 @@ uniform usamplerBuffer CDLODTerrain_uIndexTexture;
 struct CDLODTerrain_Node {
   ivec2 center, size;
   int level, index;
+  uvec4 data;
 };
 
 float M_PI = 3.14159265359;
@@ -129,10 +130,9 @@ float CDLODTerrain_fetchHeight(int[16] offsets, float[16] weights) {
 
 bool CDLODTerrain_getOffsetsAndWeights(CDLODTerrain_Node node, vec2 tex_sample,
                                        out int[16] offsets, out float[16] weights) {
-  uvec4 data = texelFetch(CDLODTerrain_uIndexTexture, node.index);
-  int base_offset = int((data.x << uint(16)) + data.y);
+  int base_offset = int((node.data.x << uint(16)) + node.data.y);
   ivec2 top_left = node.center - node.size/2;
-  ivec2 tex_size = ivec2(data.z, data.w);
+  ivec2 tex_size = ivec2(node.data.z, node.data.w);
 
   // invalid data
   if (tex_size.x == 0 || tex_size.y == 0) {
@@ -230,7 +230,13 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
   // Find the node that contains the given point (tex_sample).
   while (0 < node.level && dist < node.size.x) {
     last_node = node;
-    node = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
+    CDLODTerrain_Node child = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
+    child.data = texelFetch(CDLODTerrain_uIndexTexture, child.index);
+    if (child.data.z == uint(0)) {
+      break;
+    } else {
+      node = child;
+    }
   }
 
   int fetch_count;
