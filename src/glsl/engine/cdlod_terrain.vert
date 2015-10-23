@@ -225,12 +225,10 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
   dist /= lod_distance_mult;
   vec2 tex_sample = geom_sample / (1 << CDLODTerrain_uGeomDiv);
 
-  // I assume that there will be maximum two morphs
-  CDLODTerrain_Node last_node = node, prev2_node = last_node;
+  CDLODTerrain_Node last_node = node;
 
   // Find the node that contains the given point (tex_sample).
   while (0 < node.level && dist < node.size.x) {
-    prev2_node = last_node;
     last_node = node;
     node = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
   }
@@ -254,7 +252,7 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
   } else {
     fetch_count = 2;
     nodes[0] = node;
-    nodes[1] = morph > 1 ? prev2_node : last_node;
+    nodes[1] =  last_node;
   }
 
   for (int i = 0; i < fetch_count; ++i) {
@@ -265,8 +263,8 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
     height = heights[0];
     normal = normals[0];
   } else {
-    height = mix(heights[0], heights[1], fract(morph));
-    normal = mix(normals[0], normals[1], fract(morph));
+    height = mix(heights[0], heights[1], morph);
+    normal = mix(normals[0], normals[1], morph);
   }
 }
 
