@@ -4,6 +4,10 @@
 #include "./tex_quad_tree_node.h"
 #include "../../misc.h"
 
+#include <thread>
+#include <chrono>
+using namespace std::literals::chrono_literals;
+
 namespace engine {
 namespace cdlod {
 
@@ -14,24 +18,49 @@ TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz,
             {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
 
 void TexQuadTreeNode::load() {
+  Magick::Image height, dx, dy;
+  load_files(height, dx, dy);
+  load(height, dx, dy);
+}
+
+void TexQuadTreeNode::load_files(Magick::Image& height,
+                                 Magick::Image& dx,
+                                 Magick::Image& dy) const {
   if (!height_data_.empty()) {
     return;
   }
 
+  // std::this_thread::sleep_for(5ms);
+
+  char file_path[200];
   int tx = x_ - sx_/2, ty = z_ - sz_/2;
 
+  sprintf(file_path, "%s/%d/%d/%d.png",
+          GlobalHeightMap::height_texture_base_path, level_, tx, ty);
+  height.read(file_path);
+
+  sprintf(file_path, "%s/%d/%d/%d.png",
+          GlobalHeightMap::dx_texture_base_path, level_, tx, ty);
+  dx.read(file_path);
+
+  sprintf(file_path, "%s/%d/%d/%d.png",
+          GlobalHeightMap::dy_texture_base_path, level_, tx, ty);
+  dy.read(file_path);
+}
+
+void TexQuadTreeNode::load(Magick::Image& height,
+                           Magick::Image& dx,
+                           Magick::Image& dy) {
+  if (!height_data_.empty()) {
+    return;
+  }
+
   { // height tex
-    char height_tex[200];
-    sprintf(height_tex, "%s/%d/%d/%d.png",
-            GlobalHeightMap::height_texture_base_path,
-            level_, tx, ty);
-
-    Magick::Image height_image(height_tex);
-    tex_w_ = height_image.columns();
-    tex_h_ = height_image.rows();
+    tex_w_ = height.columns();
+    tex_h_ = height.rows();
     height_data_.resize(tex_w_*tex_h_);
-
-    height_image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, height_data_.data());
+    height.write(0, 0, tex_w_, tex_h_, "R",
+                 MagickCore::ShortPixel, height_data_.data());
   }
 
 
@@ -41,32 +70,19 @@ void TexQuadTreeNode::load() {
   normal_data_.resize(tex_w_*tex_h_);
 
   { // dx tex
-    char dx_tex[200];
-    sprintf(dx_tex, "%s/%d/%d/%d.png",
-            GlobalHeightMap::dx_texture_base_path,
-            level_, tx, ty);
-
-    Magick::Image dx_image(dx_tex);
-    assert(tex_w_ == dx_image.columns());
-    assert(tex_h_ == dx_image.rows());
-
-    dx_image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
+    assert(tex_w_ == dx.columns());
+    assert(tex_h_ == dx.rows());
+    dx.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
     for (size_t i = 0; i < temp.size(); ++i) {
       normal_data_[i].dx = temp[i];
     }
   }
 
   { //dy tex
-    char dy_tex[200];
-    sprintf(dy_tex, "%s/%d/%d/%d.png",
-            GlobalHeightMap::dy_texture_base_path,
-            level_, tx, ty);
+    assert(tex_w_ == dy.columns());
+    assert(tex_h_ == dy.rows());
 
-    Magick::Image dy_image(dy_tex);
-    assert(tex_w_ == dy_image.columns());
-    assert(tex_h_ == dy_image.rows());
-
-    dy_image.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
+    dy.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
     for (size_t i = 0; i < temp.size(); ++i) {
       normal_data_[i].dy = temp[i];
     }

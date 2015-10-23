@@ -84,20 +84,33 @@ void TexQuadTree::uploadNewData(size_t last_data_size) {
 
 void TexQuadTree::imageLoaderThread() {
   while (!worker_should_quit_) {
-    // wait until there's something to process
-    std::unique_lock<std::mutex> lock{load_later_ownership_};
-    condition_variable_.wait(lock, [this]{
-      return worker_should_quit_ ||
-        (!load_later_.empty() && !worker_thread_should_sleep_);
-    });
+    TexQuadTreeNode* nodeToProcess = nullptr;
 
-    if (worker_should_quit_) { return; }
+    {
+      // wait until there's something to process
+      std::unique_lock<std::mutex> lock{load_later_ownership_};
+      condition_variable_.wait(lock, [this]{
+        return worker_should_quit_ ||
+          (!load_later_.empty() && !worker_thread_should_sleep_);
+      });
 
-    // process one element of load later
-    auto iter = load_later_.begin();
-    // (*iter)->upload(height_data_, normal_data_, index_data_);
-    (*iter)->load();
-    load_later_.erase(iter);
+      if (worker_should_quit_) { return; }
+
+      // remove one element from the load_later_ set.
+      auto iter = load_later_.begin();
+      nodeToProcess = *iter;
+      load_later_.erase(iter);
+    }
+
+    // load the image without modifying the node
+    // this is slow - this should not block the rendering.
+    Magick::Image height, dx, dy;
+    nodeToProcess->load_files(height, dx, dy);
+
+    { // update the node data using loaded image files (blocking but fast)
+      std::unique_lock<std::mutex> lock{load_later_ownership_};
+      nodeToProcess->load(height, dx, dy);
+    }
   }
 }
 

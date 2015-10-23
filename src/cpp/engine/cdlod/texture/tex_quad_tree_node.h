@@ -29,6 +29,13 @@ class TexQuadTreeNode {
   }
 
   void load();
+  void load_files(Magick::Image& height,
+                  Magick::Image& dx,
+                  Magick::Image& dy) const;
+  void load(Magick::Image& height,
+            Magick::Image& dx,
+            Magick::Image& dy);
+
   void age();
   void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
