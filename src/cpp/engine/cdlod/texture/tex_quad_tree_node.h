@@ -10,12 +10,12 @@ namespace engine {
 namespace cdlod {
 
 struct TexQuadTreeNodeIndex {
-  GLushort data_offset_hi, data_offset_lo;
-  GLushort tex_size_x, tex_size_y;
+  GLushort data_offset_hi = 0, data_offset_lo = 0;
+  GLushort tex_size_x = 0, tex_size_y = 0;
 };
 
 struct DerivativeInfo {
-  GLushort dx, dy;
+  GLushort dx = 0, dy = 0;
 };
 static_assert(sizeof(DerivativeInfo) == 2*sizeof(GLushort), "");
 
@@ -34,11 +34,11 @@ class TexQuadTreeNode {
   void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
                    std::vector<GLushort>& height_data,
                    std::vector<DerivativeInfo>& normal_data,
-                   TexQuadTreeNodeIndex* indices,
+                   std::vector<TexQuadTreeNodeIndex>& index_data,
                    int* load_count, std::set<TexQuadTreeNode*>& load_later);
   void upload(std::vector<GLushort>& height_data,
               std::vector<DerivativeInfo>& normal_data,
-              TexQuadTreeNodeIndex* indices,
+              std::vector<TexQuadTreeNodeIndex>& index_data,
               int* load_count);
 
   int center_x() const { return x_; }

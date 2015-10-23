@@ -125,7 +125,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
                                   std::vector<GLushort>& height_data,
                                   std::vector<DerivativeInfo>& normal_data,
-                                  TexQuadTreeNodeIndex* indices,
+                                  std::vector<TexQuadTreeNodeIndex>& index_data,
                                   int* load_count,
                                   std::set<TexQuadTreeNode*>& load_later) {
   float lod_range = 2*sqrt(double(sx_)*sx_ + double(sz_)*sz_) * (1 << GlobalHeightMap::geom_div);
@@ -133,7 +133,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {
     last_used_ = 0;
-    upload(height_data, normal_data, indices, load_count);
+    upload(height_data, normal_data, index_data, load_count);
 
     if (level_ != 0) {
       for (int i = 0; i < 4; ++i) {
@@ -144,8 +144,8 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
         }
 
         // call selectNodes on the child (recursive)
-        child->selectNodes(cam_pos, frustum, height_data,
-                           normal_data, indices, load_count, load_later);
+        child->selectNodes(cam_pos, frustum, height_data, normal_data,
+                           index_data, load_count, load_later);
       }
     }
   } else {
@@ -157,18 +157,19 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 
 void TexQuadTreeNode::upload(std::vector<GLushort>& height_data,
                              std::vector<DerivativeInfo>& normal_data,
-                             TexQuadTreeNodeIndex* indices,
+                             std::vector<TexQuadTreeNodeIndex>& index_data,
                              int* load_count) {
   load(load_count);
 
-  if (indices[index_].tex_size_x == 0) {
+  if (index_data[index_].tex_size_x == 0) {
     assert (height_data.size() == normal_data.size());
-    GLint offset = height_data.size();
 
-    indices[index_] = TexQuadTreeNodeIndex{
-      GLushort(offset >> 16), GLushort(offset % (1 << 16)),
-      GLushort(tex_w_), GLushort(tex_h_)
-    };
+    GLint offset = height_data.size();
+    index_data[index_].data_offset_hi = offset >> 16;
+    index_data[index_].data_offset_lo = offset % (1 << 16);
+    index_data[index_].tex_size_x     = tex_w_;
+    index_data[index_].tex_size_y     = tex_h_;
+
     height_data.insert(height_data.end(), height_data_.begin(), height_data_.end());
     normal_data.insert(normal_data.end(), normal_data_.begin(), normal_data_.end());
   }
