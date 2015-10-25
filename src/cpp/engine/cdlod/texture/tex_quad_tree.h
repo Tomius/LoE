@@ -39,7 +39,7 @@ class TexQuadTree {
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
 
-  size_t last_data_alloc_ = 1024*1024;
+  size_t last_data_alloc_ = 32*1024*1024;
   std::vector<GLushort> height_data_;
   std::vector<DerivativeInfo> normal_data_;
   std::vector<TexQuadTreeNodeIndex> index_data_;
@@ -53,8 +53,8 @@ class TexQuadTree {
   std::set<TexQuadTreeNode*> load_later_;
   std::mutex load_later_ownership_;
   std::condition_variable condition_variable_;
-  bool worker_should_quit_ = false;
   std::thread worker_;
+  bool worker_should_quit_ = false;
   bool worker_thread_should_sleep_ = true;
 
   GLubyte max_node_level(int w, int h) const;

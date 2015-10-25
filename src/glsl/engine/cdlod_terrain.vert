@@ -147,8 +147,6 @@ bool CDLODTerrain_getOffsetsAndWeights(CDLODTerrain_Node node, vec2 tex_sample,
 }
 
 vec3 CDLODTerrain_fetchNormal(int level, int[16] offsets, float[16] weights) {
-  float diff = 1.0 / (1 << max(level - CDLODTerrain_uGeomDiv, 0));
-
   float dx = 0.0, dy = 0.0;
   for (int i = 0; i < 16; ++i) {
     vec4 texel = texelFetch(CDLODTerrain_uNormalMap, offsets[i]) * weights[i];
@@ -158,8 +156,9 @@ vec3 CDLODTerrain_fetchNormal(int level, int[16] offsets, float[16] weights) {
   dx *= CDLODTerrain_height_scale;
   dy *= CDLODTerrain_height_scale;
 
-  vec3 u = vec3(2*diff, dx, 0);
-  vec3 v = vec3(0, dy, 2*diff);
+  float real_world_diff = 1 << (level + CDLODTerrain_uGeomDiv);
+  vec3 u = vec3(real_world_diff, dx, 0);
+  vec3 v = vec3(0, dy, real_world_diff);
   return normalize(cross(v, u));
 }
 
@@ -247,12 +246,12 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
   int next_tex_lod_level = 2*node.size.x;
   float max_dist = morph_end * next_tex_lod_level;
   float start_dist = morph_start * next_tex_lod_level;
-  morph = smoothstep(start_dist, max_dist, dist);
+  float normal_morph = smoothstep(start_dist, max_dist, dist);
 
-  if (morph == 0 || CDLODTerrain_uLevel < CDLODTerrain_uGeomDiv) {
+  if (normal_morph == 0 || CDLODTerrain_uLevel < CDLODTerrain_uGeomDiv) {
     fetch_count = 1;
     nodes[0] = node;
-  } else if (morph == 1) {
+  } else if (normal_morph == 1) {
     fetch_count = 1;
     nodes[0] = last_node;
   } else {
@@ -269,8 +268,8 @@ void CDLODTerrain_getHeightAndNormal(vec2 geom_sample,
     height = heights[0];
     normal = normals[0];
   } else {
-    height = mix(heights[0], heights[1], morph);
-    normal = mix(normals[0], normals[1], morph);
+    height = mix(heights[0], heights[1], normal_morph);
+    normal = mix(normals[0], normals[1], normal_morph);
   }
 }
 

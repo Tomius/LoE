@@ -102,6 +102,10 @@ void TexQuadTree::imageLoaderThread() {
       load_later_.erase(iter);
     }
 
+    if (nodeToProcess->is_image_loaded()) {
+      continue;
+    }
+
     // load the image without modifying the node
     // this is slow - this should not block the rendering.
     Magick::Image height, dx, dy;
@@ -171,9 +175,7 @@ void TexQuadTree::update(Camera const& cam) {
     // texture wasn't loaded by the worker thread, but it is still needed, then
     // the selectNodes will add it again. If it won't add it - then it's not
     // required anymore to render, so it's a good thing that we dropped it.
-    if (!load_later_.empty()) {
-      load_later_.clear();
-    }
+    load_later_.clear();
     root_.selectNodes(cam_pos, cam.frustum(), height_data_, normal_data_,
                       index_data_, load_later_, is_first_call);
 

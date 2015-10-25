@@ -53,6 +53,8 @@ class TexQuadTreeNode {
   int size_z() const { return sz_; }
   int level() const { return level_; }
 
+  bool is_image_loaded() const { return !height_data_.empty(); }
+
  private:
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
 

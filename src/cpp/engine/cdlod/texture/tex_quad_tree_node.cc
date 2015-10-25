@@ -26,7 +26,7 @@ void TexQuadTreeNode::load() {
 void TexQuadTreeNode::load_files(Magick::Image& height,
                                  Magick::Image& dx,
                                  Magick::Image& dy) const {
-  if (!height_data_.empty()) {
+  if (is_image_loaded()) {
     return;
   }
 
@@ -51,7 +51,7 @@ void TexQuadTreeNode::load_files(Magick::Image& height,
 void TexQuadTreeNode::load(Magick::Image& height,
                            Magick::Image& dx,
                            Magick::Image& dy) {
-  if (!height_data_.empty()) {
+  if (is_image_loaded()) {
     return;
   }
 
@@ -152,10 +152,10 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
       load();
       upload(height_data, normal_data, index_data);
     } else {
-      if (height_data_.empty()) {
-        load_later.insert(this);
-      } else {
+      if (is_image_loaded()) {
         upload(height_data, normal_data, index_data);
+      } else {
+        load_later.insert(this);
       }
     }
 
@@ -179,7 +179,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 void TexQuadTreeNode::upload(std::vector<GLushort>& height_data,
                              std::vector<DerivativeInfo>& normal_data,
                              std::vector<TexQuadTreeNodeIndex>& index_data) {
-  if (height_data_.empty()) {
+  if (!is_image_loaded()) {
     return;
   }
 
