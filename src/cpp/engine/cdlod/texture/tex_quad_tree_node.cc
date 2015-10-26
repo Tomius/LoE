@@ -8,6 +8,8 @@
 #include <chrono>
 using namespace std::literals::chrono_literals;
 
+#define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
+
 namespace engine {
 namespace cdlod {
 
@@ -95,7 +97,7 @@ void TexQuadTreeNode::age() {
   for (auto& child : children_) {
     if (child) {
       // unload child if its age would exceed the ttl
-      if (child->last_used_ >= time_to_live_) {
+      if (child->last_used_ >= kTimeToLiveInMemory) {
         child.reset();
       } else {
         child->age();
@@ -137,9 +139,13 @@ void TexQuadTreeNode::initChild(int i) {
 
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
-                                  std::vector<GLushort>& height_data,
-                                  std::vector<DerivativeInfo>& normal_data,
+                                  size_t& last_data_alloc,
+                                  size_t& uploaded_texel_count,
+                                  gl::TextureBuffer& height_tex_buffer,
+                                  gl::TextureBuffer& normal_tex_buffer,
+                                  gl::TextureBuffer& index_tex_buffer,
                                   std::vector<TexQuadTreeNodeIndex>& index_data,
+                                  std::vector<TexQuadTreeNode*>& data_owners,
                                   std::set<TexQuadTreeNode*>& load_later,
                                   bool force_load_now) {
   float lod_range = sqrt(double(sx_)*sx_ + double(sz_)*sz_) *
@@ -150,10 +156,12 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     last_used_ = 0;
     if (force_load_now) {
       load();
-      upload(height_data, normal_data, index_data);
+      upload(last_data_alloc, uploaded_texel_count, height_tex_buffer,
+             normal_tex_buffer, index_tex_buffer, index_data, data_owners);
     } else {
       if (is_image_loaded()) {
-        upload(height_data, normal_data, index_data);
+        upload(last_data_alloc, uploaded_texel_count, height_tex_buffer,
+               normal_tex_buffer, index_tex_buffer, index_data, data_owners);
       } else {
         load_later.insert(this);
       }
@@ -169,31 +177,175 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
         }
 
         // call selectNodes on the child (recursive)
-        child->selectNodes(cam_pos, frustum, height_data, normal_data,
-                           index_data, load_later, force_load_now);
+        child->selectNodes(cam_pos, frustum, last_data_alloc,
+                           uploaded_texel_count, height_tex_buffer,
+                           normal_tex_buffer, index_tex_buffer, index_data,
+                           data_owners, load_later, force_load_now);
       }
     }
   }
 }
 
-void TexQuadTreeNode::upload(std::vector<GLushort>& height_data,
-                             std::vector<DerivativeInfo>& normal_data,
-                             std::vector<TexQuadTreeNodeIndex>& index_data) {
+
+static size_t enlargeBuffers(size_t last_data_alloc,
+                             size_t new_texel_count,
+                             gl::TextureBuffer& height_tex_buffer,
+                             gl::TextureBuffer& normal_tex_buffer) {
+  size_t new_data_alloc = 2*new_texel_count;
+
+  static gl::BufferObject<gl::BufferType::kCopyWriteBuffer> copyBuffer;
+  gl::Bind(copyBuffer);
+  gl(BindBuffer(GL_COPY_READ_BUFFER, copyBuffer.expose()));
+
+  // save data to copy buffer, resize, and copy data back
+  gl::Bind(height_tex_buffer);
+  gl(CopyBufferSubData(GL_TEXTURE_BUFFER, // src
+                       GL_COPY_WRITE_BUFFER, // dst
+                       0, // read offset
+                       0, // write offset
+                       last_data_alloc * sizeof(GLushort) // size
+  ));
+  height_tex_buffer.data(new_data_alloc * sizeof(GLushort), nullptr,
+                         gl::kDynamicDraw);
+  gl(CopyBufferSubData(GL_COPY_READ_BUFFER, // src
+                       GL_TEXTURE_BUFFER, // dst
+                       0, // read offset
+                       0, // write offset
+                       last_data_alloc * sizeof(GLushort) // size
+  ));
+
+  gl::Bind(normal_tex_buffer);
+  gl(CopyBufferSubData(GL_TEXTURE_BUFFER, // src
+                       GL_COPY_WRITE_BUFFER, // dst
+                       0, // read offset
+                       0, // write offset
+                       last_data_alloc * sizeof(DerivativeInfo) // size
+  ));
+  normal_tex_buffer.data(new_data_alloc * sizeof(DerivativeInfo), nullptr,
+                         gl::kDynamicDraw);
+  gl(CopyBufferSubData(GL_COPY_READ_BUFFER, // src
+                       GL_TEXTURE_BUFFER, // dst
+                       0, // read offset
+                       0, // write offset
+                       last_data_alloc * sizeof(DerivativeInfo) // size
+  ));
+
+  return new_data_alloc;
+}
+
+static void EfficientSubData(gl::TextureBuffer& buffer,
+                      size_t offset, size_t length, void* src_data) {
+  gl::Bind(buffer);
+  void* dst_data = gl(MapBufferRange(GL_TEXTURE_BUFFER, offset, length,
+                      GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
+                      GL_MAP_UNSYNCHRONIZED_BIT));
+  std::memcpy(dst_data, src_data, length);
+  assert(glUnmapBuffer(GL_TEXTURE_BUFFER) == GL_TRUE);
+}
+
+void TexQuadTreeNode::upload(size_t& last_data_alloc,
+                             size_t& uploaded_texel_count,
+                             gl::TextureBuffer& height_tex_buffer,
+                             gl::TextureBuffer& normal_tex_buffer,
+                             gl::TextureBuffer& index_tex_buffer,
+                             std::vector<TexQuadTreeNodeIndex>& index_data,
+                             std::vector<TexQuadTreeNode*>& data_owners) {
   if (!is_image_loaded()) {
-    return;
+    load();
   }
 
   if (index_data[index_].tex_size_x == 0) {
-    assert (height_data.size() == normal_data.size());
+    // look for empty places first
+    for (int i = 0; i < data_owners.size(); ++i) {
+      TexQuadTreeNode* data_owner = data_owners[i];
 
-    GLint offset = height_data.size();
+      // we can use allocated memory that wasn't used for a while
+      if (data_owner->last_used() > data_owner->kTimeToLiveOnGPU) {
+        // the texture sizes vary, we need an usused place with enough memory
+        if (height_data_.size() <= data_owner->height_data_.size()) {
+          GLint offset =
+            (index_data[data_owner->index_].data_offset_hi << 16) +
+            index_data[data_owner->index_].data_offset_lo;
+
+          index_data[index_].data_offset_hi = offset >> 16;
+          index_data[index_].data_offset_lo = offset % (1 << 16);
+          index_data[index_].tex_size_x     = tex_w_;
+          index_data[index_].tex_size_y     = tex_h_;
+          EfficientSubData(
+              index_tex_buffer,
+              index_ * sizeof(TexQuadTreeNodeIndex),
+              sizeof(TexQuadTreeNodeIndex),
+              &index_data[index_]);
+
+          index_data[data_owner->index_] = TexQuadTreeNodeIndex{};
+          EfficientSubData(
+              index_tex_buffer,
+              data_owner->index_ * sizeof(TexQuadTreeNodeIndex),
+              sizeof(TexQuadTreeNodeIndex),
+              &index_data[data_owner->index_]);
+
+          EfficientSubData(
+            height_tex_buffer,
+            offset * sizeof(GLushort),
+            height_data_.size()*sizeof(GLushort),
+            height_data_.data()
+          );
+
+          EfficientSubData(
+            normal_tex_buffer,
+            offset * sizeof(DerivativeInfo),
+            normal_data_.size()*sizeof(DerivativeInfo),
+            normal_data_.data()
+          );
+
+          data_owners[i] = this;
+
+          return;
+        }
+      }
+    }
+
+    size_t new_texel_count = uploaded_texel_count + height_data_.size();
+    if (new_texel_count > last_data_alloc) {
+      last_data_alloc = enlargeBuffers(
+          last_data_alloc,
+          new_texel_count,
+          height_tex_buffer,
+          normal_tex_buffer
+      );
+    }
+
+    // if we did not find an empty place
+
+    GLint offset = uploaded_texel_count;
+
     index_data[index_].data_offset_hi = offset >> 16;
     index_data[index_].data_offset_lo = offset % (1 << 16);
     index_data[index_].tex_size_x     = tex_w_;
     index_data[index_].tex_size_y     = tex_h_;
 
-    height_data.insert(height_data.end(), height_data_.begin(), height_data_.end());
-    normal_data.insert(normal_data.end(), normal_data_.begin(), normal_data_.end());
+    EfficientSubData(
+        index_tex_buffer,
+        index_ * sizeof(TexQuadTreeNodeIndex),
+        sizeof(TexQuadTreeNodeIndex),
+        &index_data[index_]);
+
+    EfficientSubData(
+        height_tex_buffer,
+        offset * sizeof(GLushort),
+        height_data_.size()*sizeof(GLushort),
+        height_data_.data()
+    );
+
+    EfficientSubData(
+        normal_tex_buffer,
+        offset * sizeof(DerivativeInfo),
+        normal_data_.size()*sizeof(DerivativeInfo),
+        normal_data_.data()
+    );
+
+    data_owners.push_back(this);
+    uploaded_texel_count = new_texel_count;
   }
 }
 

@@ -38,22 +38,38 @@ class TexQuadTreeNode {
 
   void age();
   void initChild(int i);
-  void selectNodes(const glm::vec3& cam_pos, const Frustum& frustum,
-                   std::vector<GLushort>& height_data,
-                   std::vector<DerivativeInfo>& normal_data,
+  void selectNodes(const glm::vec3& cam_pos,
+                   const Frustum& frustum,
+                   size_t& last_data_alloc,
+                   size_t& uploaded_texel_count,
+                   gl::TextureBuffer& height_tex_buffer,
+                   gl::TextureBuffer& normal_tex_buffer,
+                   gl::TextureBuffer& index_tex_buffer,
                    std::vector<TexQuadTreeNodeIndex>& index_data,
-                   std::set<TexQuadTreeNode*>& load_later, bool force_load_now);
-  void upload(std::vector<GLushort>& height_data,
-              std::vector<DerivativeInfo>& normal_data,
-              std::vector<TexQuadTreeNodeIndex>& index_data);
+                   std::vector<TexQuadTreeNode*>& data_owners,
+                   std::set<TexQuadTreeNode*>& load_later,
+                   bool force_load_now);
+  void upload(size_t& last_data_alloc,
+              size_t& uploaded_texel_count,
+              gl::TextureBuffer& height_tex_buffer,
+              gl::TextureBuffer& normal_tex_buffer,
+              gl::TextureBuffer& index_tex_buffer,
+              std::vector<TexQuadTreeNodeIndex>& index_data,
+              std::vector<TexQuadTreeNode*>& data_owners);
 
   int center_x() const { return x_; }
   int center_z() const { return z_; }
   int size_x() const { return sx_; }
   int size_z() const { return sz_; }
   int level() const { return level_; }
+  int index() const { return index_; }
 
   bool is_image_loaded() const { return !height_data_.empty(); }
+  int last_used() const { return last_used_; }
+  const std::vector<GLushort>& height_data() const { return height_data_; }
+  const std::vector<DerivativeInfo>& normal_data() const { return normal_data_; }
+
+  static const int kTimeToLiveOnGPU = 1 << 8;
 
  private:
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
@@ -68,7 +84,8 @@ class TexQuadTreeNode {
 
   int last_used_ = 0;
   // If a node is not used for this much time (frames), it will be unloaded.
-  static const int time_to_live_ = 1 << 16;
+  static const int kTimeToLiveInMemory = 1 << 16;
+  static_assert(kTimeToLiveOnGPU < kTimeToLiveInMemory, "");
 };
 
 }

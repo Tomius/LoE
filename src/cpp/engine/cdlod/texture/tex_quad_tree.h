@@ -39,9 +39,8 @@ class TexQuadTree {
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
 
-  size_t last_data_alloc_ = 32*1024*1024;
-  std::vector<GLushort> height_data_;
-  std::vector<DerivativeInfo> normal_data_;
+  size_t last_data_alloc_ = 64*1024*1024, uploaded_texel_count_ = 0, load_count_ = 0;
+  std::vector<TexQuadTreeNode*> data_owners_;
   std::vector<TexQuadTreeNodeIndex> index_data_;
   gl::TextureBuffer height_tex_buffer_;
   gl::TextureBuffer normal_tex_buffer_;
@@ -66,6 +65,7 @@ class TexQuadTree {
   void uploadNewData(size_t last_data_size);
 
   void imageLoaderThread();
+  void garbageCollect();
 };
 
 }  // namespace cdlod
