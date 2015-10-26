@@ -177,50 +177,49 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
 }
 
 
-static void enlargeBuffers(size_t& last_data_alloc,
-                           size_t new_texel_count,
-                           gl::TextureBuffer& height_tex_buffer,
-                           gl::TextureBuffer& normal_tex_buffer) {
+static void enlargeBuffers(size_t new_texel_count,
+                           StreamingInfo& streaming_info) {
   size_t new_data_alloc = 2*new_texel_count;
 
-  static gl::BufferObject<gl::BufferType::kCopyWriteBuffer> copyBuffer;
-  gl::Bind(copyBuffer);
-  gl(BindBuffer(GL_COPY_READ_BUFFER, copyBuffer.expose()));
+  gl::Bind(streaming_info.copyBuffer);
+  size_t copy_buffer_size = streaming_info.last_data_alloc
+    * std::max(sizeof(HeightData), sizeof(DerivativeInfo));
+  streaming_info.copyBuffer.data(copy_buffer_size, nullptr, gl::kStreamCopy);
 
   // save data to copy buffer, resize, and copy data back
-  gl::Bind(height_tex_buffer);
+  gl::Bind(streaming_info.height_tex_buffer);
   gl(CopyBufferSubData(GL_TEXTURE_BUFFER, // src
                        GL_COPY_WRITE_BUFFER, // dst
                        0, // read offset
                        0, // write offset
-                       last_data_alloc * sizeof(GLushort) // size
+                       streaming_info.last_data_alloc * sizeof(HeightData) // size
   ));
-  height_tex_buffer.data(new_data_alloc * sizeof(GLushort), nullptr,
-                         gl::kDynamicDraw);
-  gl(CopyBufferSubData(GL_COPY_READ_BUFFER, // src
+  streaming_info.height_tex_buffer.data(
+    new_data_alloc * sizeof(HeightData), nullptr, gl::kDynamicDraw);
+  gl(CopyBufferSubData(GL_COPY_WRITE_BUFFER, // src
                        GL_TEXTURE_BUFFER, // dst
                        0, // read offset
                        0, // write offset
-                       last_data_alloc * sizeof(GLushort) // size
+                       streaming_info.last_data_alloc * sizeof(HeightData) // size
   ));
 
-  gl::Bind(normal_tex_buffer);
+  gl::Bind(streaming_info.normal_tex_buffer);
   gl(CopyBufferSubData(GL_TEXTURE_BUFFER, // src
                        GL_COPY_WRITE_BUFFER, // dst
                        0, // read offset
                        0, // write offset
-                       last_data_alloc * sizeof(DerivativeInfo) // size
+                       streaming_info.last_data_alloc * sizeof(DerivativeInfo) // size
   ));
-  normal_tex_buffer.data(new_data_alloc * sizeof(DerivativeInfo), nullptr,
-                         gl::kDynamicDraw);
-  gl(CopyBufferSubData(GL_COPY_READ_BUFFER, // src
+  streaming_info.normal_tex_buffer.data(
+    new_data_alloc * sizeof(DerivativeInfo), nullptr, gl::kDynamicDraw);
+  gl(CopyBufferSubData(GL_COPY_WRITE_BUFFER, // src
                        GL_TEXTURE_BUFFER, // dst
                        0, // read offset
                        0, // write offset
-                       last_data_alloc * sizeof(DerivativeInfo) // size
+                       streaming_info.last_data_alloc * sizeof(DerivativeInfo) // size
   ));
 
-  last_data_alloc = new_data_alloc;
+  streaming_info.last_data_alloc = new_data_alloc;
 }
 
 static void EfficientSubData(gl::TextureBuffer& buffer,
@@ -270,8 +269,8 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
 
           EfficientSubData(
             streaming_info.height_tex_buffer,
-            offset * sizeof(GLushort),
-            height_data_.size()*sizeof(GLushort),
+            offset * sizeof(HeightData),
+            height_data_.size()*sizeof(HeightData),
             height_data_.data()
           );
 
@@ -293,12 +292,7 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
     size_t new_texel_count =
       streaming_info.uploaded_texel_count + height_data_.size();
     if (new_texel_count > streaming_info.last_data_alloc) {
-      enlargeBuffers(
-          streaming_info.last_data_alloc,
-          new_texel_count,
-          streaming_info.height_tex_buffer,
-          streaming_info.normal_tex_buffer
-      );
+      enlargeBuffers(new_texel_count, streaming_info);
     }
 
     GLint offset = streaming_info.uploaded_texel_count;
@@ -316,8 +310,8 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
 
     EfficientSubData(
         streaming_info.height_tex_buffer,
-        offset * sizeof(GLushort),
-        height_data_.size()*sizeof(GLushort),
+        offset * sizeof(HeightData),
+        height_data_.size()*sizeof(HeightData),
         height_data_.data()
     );
 

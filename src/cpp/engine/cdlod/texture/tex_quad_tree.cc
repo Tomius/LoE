@@ -29,7 +29,8 @@ void TexQuadTree::initTexIndexBuffer() {
   streaming_info_.index_data.resize(node_count); // default ctor - all zeros
 
   gl::Bind(streaming_info_.index_tex_buffer);
-  streaming_info_.index_tex_buffer.data(streaming_info_.index_data, gl::kStreamDraw);
+  streaming_info_.index_tex_buffer.data(
+      streaming_info_.index_data, gl::kDynamicDraw);
   gl::Unbind(streaming_info_.index_tex_buffer);
 }
 
@@ -43,7 +44,7 @@ void TexQuadTree::initTextures () {
   gl::Bind(streaming_info_.height_tex_buffer);
   streaming_info_.height_tex_buffer.data(
       streaming_info_.last_data_alloc * sizeof(GLushort),
-      nullptr, gl::kStreamDraw);
+      nullptr, gl::kDynamicDraw);
 
   gl(BindTexture(GL_TEXTURE_BUFFER, height_texture()));
   gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI,
@@ -52,7 +53,7 @@ void TexQuadTree::initTextures () {
   gl::Bind(streaming_info_.normal_tex_buffer);
   streaming_info_.normal_tex_buffer.data(
       streaming_info_.last_data_alloc * sizeof(DerivativeInfo),
-      nullptr, gl::kStreamDraw);
+      nullptr, gl::kDynamicDraw);
 
   gl(BindTexture(GL_TEXTURE_BUFFER, normal_texture()));
   gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG16UI,

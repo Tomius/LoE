@@ -23,11 +23,14 @@ static_assert(sizeof(DerivativeInfo) == 2*sizeof(GLushort), "");
 using HeightData = GLushort;
 
 struct StreamingInfo {
-  size_t last_data_alloc = 64*1024*1024;
+  size_t last_data_alloc = 2*1024*1024;
   size_t uploaded_texel_count = 0;
+
   gl::TextureBuffer height_tex_buffer;
   gl::TextureBuffer normal_tex_buffer;
   gl::TextureBuffer index_tex_buffer;
+  gl::BufferObject<gl::BufferType::kCopyWriteBuffer> copyBuffer;
+
   std::vector<TexQuadTreeNodeIndex> index_data;
   std::vector<TexQuadTreeNode*> data_owners;
 };
