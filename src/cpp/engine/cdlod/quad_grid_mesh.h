@@ -57,10 +57,6 @@ class QuadGridMesh {
   size_t node_count() const {
     return mesh_.node_count();
   }
-
-  std::map<int, int> const& statistics() const {
-    return mesh_.statistics();
-  }
 };
 
 } // namespace cdlod

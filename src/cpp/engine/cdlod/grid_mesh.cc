@@ -60,12 +60,10 @@ void GridMesh::setupRenderData(gl::VertexAttrib attrib) {
 }
 
 void GridMesh::addToRenderList(const glm::vec4& render_data) {
-  statistics_[(int)render_data.w]++;
   render_data_.push_back(render_data);
 }
 
 void GridMesh::clearRenderList() {
-  statistics_.clear();
   render_data_.clear();
 }
 
