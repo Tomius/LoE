@@ -254,7 +254,6 @@ class SpherizedAABBSat {
         return false;
       }
 
-      //std::cout << "Collision " << percent_ << std::endl;
       return true;
     }
   }

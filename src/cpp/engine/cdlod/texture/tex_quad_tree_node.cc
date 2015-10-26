@@ -142,8 +142,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   StreamingInfo& streaming_info,
                                   std::set<TexQuadTreeNode*>& load_later,
                                   bool force_load_now) {
-  float lod_range = sqrt(double(sx_)*sx_ + double(sz_)*sz_) *
-                    (1 << (GlobalHeightMap::geom_div+1));
+  float lod_range = 2 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
 
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {

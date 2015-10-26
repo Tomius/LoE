@@ -24,27 +24,23 @@ namespace GlobalHeightMap {
   // The size of sphere for a CDLOD level is node size * this
   // It should be at least 2, but making it bigger makes distant
   // parts of the terrain appear with more detail.
-  static constexpr double lod_level_distance_multiplier = 4.0;
+  static constexpr double lod_level_distance_multiplier = 6.0;
   static_assert(2 <= lod_level_distance_multiplier, "");
 
   // Geometry subdivision. This practially contols zooming into the heightmap.
   // If for ex. this is three, that means that a 8x8 geometry (9x9 vertices)
   // corresponds to a 1x1 texture area (2x2 texels)
-  static constexpr long geom_div = 4;
+  static constexpr long geom_div = 2;
 
-  static_assert(geom_div <= node_dimension_exp, "");
+  static_assert(geom_div <= 2*node_dimension_exp, "");
 
   // The resolution of the heightmap
   static constexpr long tex_w = 172800, tex_h = 86400;
 
-  // The resolution of the geometry subdivided heightmap.
-  static constexpr long geom_w = tex_w << geom_div;
-  static constexpr long geom_h = tex_h << geom_div;
-
   // The radius of the sphere made of the heightmap
-  static constexpr double sphere_radius = geom_w / 2 / M_PI;
+  static constexpr double sphere_radius = tex_w / 2 / M_PI;
 
-  static constexpr int mt_everest_height = 10000 * (sphere_radius / 6700000);
+  static constexpr int mt_everest_height = 8848 * (sphere_radius / 6371000);
   static constexpr int height_scale = 3;
   static constexpr int max_height = height_scale * mt_everest_height;
 };

@@ -39,8 +39,6 @@ void TerrainMesh::setup(const gl::Program& program, int height_tex_unit,
   gl::Uniform<glm::ivec2>(program, "CDLODTerrain_uTexSize") =
       glm::ivec2(GlobalHeightMap::tex_w, GlobalHeightMap::tex_h);
 
-  gl::Uniform<int>(program, "CDLODTerrain_uGeomDiv") = GlobalHeightMap::geom_div;
-
   gl::Uniform<float>(program, "CDLODTerrain_uNodeDimension") =
       GlobalHeightMap::node_dimension;
 

@@ -33,8 +33,8 @@ class QuadTree {
  public:
   QuadTree()
       : mesh_(GlobalHeightMap::node_dimension)
-      , w_(GlobalHeightMap::geom_w)
-      , h_(GlobalHeightMap::geom_h)
+      , w_(GlobalHeightMap::tex_w)
+      , h_(GlobalHeightMap::tex_h)
       , root_(w_/2, h_/2, max_node_level()) {}
 
   void setupPositions(gl::VertexAttrib attrib) {

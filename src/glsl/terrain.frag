@@ -17,8 +17,6 @@ uniform sampler2DArray uDiffuseTexture;
 
 uniform float CDLODTerrain_uNodeDimension;
 uniform ivec2 CDLODTerrain_uTexSize;
-uniform int CDLODTerrain_uGeomDiv;
-ivec2 CDLODTerrain_GeomSize = CDLODTerrain_uTexSize << CDLODTerrain_uGeomDiv;
 
 out vec4 fragColor;
 
@@ -101,7 +99,7 @@ void bilinearSample(vec3 sample_coord, ivec2 tex_size,
 vec3 getSampleCoord(ivec2 tex_size) {
   vec2 pos = vIn.m_pos.xz;
   vec2 max_tex_coord = tex_size * kAtlasSize;
-  vec2 global_texel_coord = pos * (max_tex_coord / CDLODTerrain_GeomSize);
+  vec2 global_texel_coord = pos * (max_tex_coord / CDLODTerrain_uTexSize);
 
   ivec2 atlas_coord = ivec2(global_texel_coord / tex_size);
   ivec2 global_atlas_elem_texel_top = atlas_coord * tex_size;
