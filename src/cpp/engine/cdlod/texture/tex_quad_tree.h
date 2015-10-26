@@ -39,12 +39,8 @@ class TexQuadTree {
   GLubyte max_node_level_;
   TexQuadTreeNode root_;
 
-  size_t last_data_alloc_ = 64*1024*1024, uploaded_texel_count_ = 0, load_count_ = 0;
-  std::vector<TexQuadTreeNode*> data_owners_;
-  std::vector<TexQuadTreeNodeIndex> index_data_;
-  gl::TextureBuffer height_tex_buffer_;
-  gl::TextureBuffer normal_tex_buffer_;
-  gl::TextureBuffer index_tex_buffer_;
+  size_t load_count_ = 0;
+  StreamingInfo streaming_info_;
   GLuint textures_[3];
 
   // anync load data

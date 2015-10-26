@@ -157,8 +157,8 @@ vec3 CDLODTerrain_fetchNormal(int level, int[16] offsets, float[16] weights) {
   dy *= CDLODTerrain_height_scale;
 
   float real_world_diff = 1 << (level + CDLODTerrain_uGeomDiv);
-  vec3 u = vec3(2*real_world_diff, dx, 0);
-  vec3 v = vec3(0, dy, 2*real_world_diff);
+  vec3 u = vec3(real_world_diff, dx, 0);
+  vec3 v = vec3(0, dy, real_world_diff);
   return normalize(cross(v, u));
 }
 

@@ -26,32 +26,39 @@ void TexQuadTree::initTexIndexBuffer() {
   for (int level = 0; level <= max_node_level_; ++level) {
     node_count += 1 << (2*level); // == pow(4, level)
   }
-  index_data_.resize(node_count); // default ctor - all zeros
+  streaming_info_.index_data.resize(node_count); // default ctor - all zeros
 
-  gl::Bind(index_tex_buffer_);
-  index_tex_buffer_.data(index_data_, gl::kStreamDraw);
-  gl::Unbind(index_tex_buffer_);
+  gl::Bind(streaming_info_.index_tex_buffer);
+  streaming_info_.index_tex_buffer.data(streaming_info_.index_data, gl::kStreamDraw);
+  gl::Unbind(streaming_info_.index_tex_buffer);
 }
 
 void TexQuadTree::initTextures () {
   gl(GenTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
 
   gl(BindTexture(GL_TEXTURE_BUFFER, index_texture()));
-  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA16UI, index_tex_buffer_.expose()));
+  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA16UI,
+      streaming_info_.index_tex_buffer.expose()));
 
-  gl::Bind(height_tex_buffer_);
-  height_tex_buffer_.data(last_data_alloc_ * sizeof(GLushort), nullptr, gl::kStreamDraw);
+  gl::Bind(streaming_info_.height_tex_buffer);
+  streaming_info_.height_tex_buffer.data(
+      streaming_info_.last_data_alloc * sizeof(GLushort),
+      nullptr, gl::kStreamDraw);
 
   gl(BindTexture(GL_TEXTURE_BUFFER, height_texture()));
-  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI, height_tex_buffer_.expose()));
+  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI,
+      streaming_info_.height_tex_buffer.expose()));
 
-  gl::Bind(normal_tex_buffer_);
-  normal_tex_buffer_.data(last_data_alloc_ * sizeof(DerivativeInfo), nullptr, gl::kStreamDraw);
+  gl::Bind(streaming_info_.normal_tex_buffer);
+  streaming_info_.normal_tex_buffer.data(
+      streaming_info_.last_data_alloc * sizeof(DerivativeInfo),
+      nullptr, gl::kStreamDraw);
 
   gl(BindTexture(GL_TEXTURE_BUFFER, normal_texture()));
-  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG16UI, normal_tex_buffer_.expose()));
+  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG16UI,
+     streaming_info_.normal_tex_buffer.expose()));
 
-  gl::Unbind(normal_tex_buffer_);
+  gl::Unbind(streaming_info_.normal_tex_buffer);
   gl(BindTexture(GL_TEXTURE_BUFFER, 0));
 }
 
@@ -132,7 +139,7 @@ void TexQuadTree::update(Camera const& cam) {
     std::unique_lock<std::mutex> lock{load_later_ownership_};
 
     glm::vec3 cam_pos = cam.transform()->pos();
-    bool is_first_call = (update_counter_ == 0);
+    bool force_syncronous_load = (streaming_info_.uploaded_texel_count == 0);
 
     // Forget load_later data that we couldn't load since last frame. If some
     // texture wasn't loaded by the worker thread, but it is still needed, then
@@ -140,10 +147,8 @@ void TexQuadTree::update(Camera const& cam) {
     // required anymore to render, so it's a good thing that we dropped it.
     load_later_.clear();
     load_count_ = 0;
-    root_.selectNodes(cam_pos, cam.frustum(), last_data_alloc_,
-                      uploaded_texel_count_, height_tex_buffer_,
-                      normal_tex_buffer_, index_tex_buffer_,
-                      index_data_, data_owners_, load_later_, is_first_call);
+    root_.selectNodes(cam_pos, cam.frustum(), streaming_info_,
+                      load_later_, force_syncronous_load);
 
     // unload unused textures, and keep track of last use times
     root_.age();

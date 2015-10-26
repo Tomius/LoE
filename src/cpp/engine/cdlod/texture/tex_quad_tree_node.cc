@@ -139,13 +139,7 @@ void TexQuadTreeNode::initChild(int i) {
 
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
-                                  size_t& last_data_alloc,
-                                  size_t& uploaded_texel_count,
-                                  gl::TextureBuffer& height_tex_buffer,
-                                  gl::TextureBuffer& normal_tex_buffer,
-                                  gl::TextureBuffer& index_tex_buffer,
-                                  std::vector<TexQuadTreeNodeIndex>& index_data,
-                                  std::vector<TexQuadTreeNode*>& data_owners,
+                                  StreamingInfo& streaming_info,
                                   std::set<TexQuadTreeNode*>& load_later,
                                   bool force_load_now) {
   float lod_range = sqrt(double(sx_)*sx_ + double(sz_)*sz_) *
@@ -156,12 +150,10 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     last_used_ = 0;
     if (force_load_now) {
       load();
-      upload(last_data_alloc, uploaded_texel_count, height_tex_buffer,
-             normal_tex_buffer, index_tex_buffer, index_data, data_owners);
+      upload(streaming_info);
     } else {
       if (is_image_loaded()) {
-        upload(last_data_alloc, uploaded_texel_count, height_tex_buffer,
-               normal_tex_buffer, index_tex_buffer, index_data, data_owners);
+        upload(streaming_info);
       } else {
         load_later.insert(this);
       }
@@ -177,20 +169,18 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
         }
 
         // call selectNodes on the child (recursive)
-        child->selectNodes(cam_pos, frustum, last_data_alloc,
-                           uploaded_texel_count, height_tex_buffer,
-                           normal_tex_buffer, index_tex_buffer, index_data,
-                           data_owners, load_later, force_load_now);
+        child->selectNodes(cam_pos, frustum, streaming_info,
+                           load_later, force_load_now);
       }
     }
   }
 }
 
 
-static size_t enlargeBuffers(size_t last_data_alloc,
-                             size_t new_texel_count,
-                             gl::TextureBuffer& height_tex_buffer,
-                             gl::TextureBuffer& normal_tex_buffer) {
+static void enlargeBuffers(size_t& last_data_alloc,
+                           size_t new_texel_count,
+                           gl::TextureBuffer& height_tex_buffer,
+                           gl::TextureBuffer& normal_tex_buffer) {
   size_t new_data_alloc = 2*new_texel_count;
 
   static gl::BufferObject<gl::BufferType::kCopyWriteBuffer> copyBuffer;
@@ -230,11 +220,11 @@ static size_t enlargeBuffers(size_t last_data_alloc,
                        last_data_alloc * sizeof(DerivativeInfo) // size
   ));
 
-  return new_data_alloc;
+  last_data_alloc = new_data_alloc;
 }
 
 static void EfficientSubData(gl::TextureBuffer& buffer,
-                      size_t offset, size_t length, void* src_data) {
+                             size_t offset, size_t length, void* src_data) {
   gl::Bind(buffer);
   void* dst_data = gl(MapBufferRange(GL_TEXTURE_BUFFER, offset, length,
                       GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
@@ -243,109 +233,103 @@ static void EfficientSubData(gl::TextureBuffer& buffer,
   assert(glUnmapBuffer(GL_TEXTURE_BUFFER) == GL_TRUE);
 }
 
-void TexQuadTreeNode::upload(size_t& last_data_alloc,
-                             size_t& uploaded_texel_count,
-                             gl::TextureBuffer& height_tex_buffer,
-                             gl::TextureBuffer& normal_tex_buffer,
-                             gl::TextureBuffer& index_tex_buffer,
-                             std::vector<TexQuadTreeNodeIndex>& index_data,
-                             std::vector<TexQuadTreeNode*>& data_owners) {
+void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
   if (!is_image_loaded()) {
     load();
   }
 
-  if (index_data[index_].tex_size_x == 0) {
+  if (streaming_info.index_data[index_].tex_size_x == 0) {
     // look for empty places first
-    for (int i = 0; i < data_owners.size(); ++i) {
-      TexQuadTreeNode* data_owner = data_owners[i];
+    for (int i = 0; i < streaming_info.data_owners.size(); ++i) {
+      TexQuadTreeNode* data_owner = streaming_info.data_owners[i];
 
       // we can use allocated memory that wasn't used for a while
       if (data_owner->last_used() > data_owner->kTimeToLiveOnGPU) {
         // the texture sizes vary, we need an usused place with enough memory
         if (height_data_.size() <= data_owner->height_data_.size()) {
           GLint offset =
-            (index_data[data_owner->index_].data_offset_hi << 16) +
-            index_data[data_owner->index_].data_offset_lo;
+            (streaming_info.index_data[data_owner->index_].data_offset_hi << 16) +
+            streaming_info.index_data[data_owner->index_].data_offset_lo;
 
-          index_data[index_].data_offset_hi = offset >> 16;
-          index_data[index_].data_offset_lo = offset % (1 << 16);
-          index_data[index_].tex_size_x     = tex_w_;
-          index_data[index_].tex_size_y     = tex_h_;
+          streaming_info.index_data[index_].data_offset_hi = offset >> 16;
+          streaming_info.index_data[index_].data_offset_lo = offset % (1 << 16);
+          streaming_info.index_data[index_].tex_size_x     = tex_w_;
+          streaming_info.index_data[index_].tex_size_y     = tex_h_;
           EfficientSubData(
-              index_tex_buffer,
+              streaming_info.index_tex_buffer,
               index_ * sizeof(TexQuadTreeNodeIndex),
               sizeof(TexQuadTreeNodeIndex),
-              &index_data[index_]);
+              &streaming_info.index_data[index_]);
 
-          index_data[data_owner->index_] = TexQuadTreeNodeIndex{};
+          streaming_info.index_data[data_owner->index_] = TexQuadTreeNodeIndex{};
           EfficientSubData(
-              index_tex_buffer,
+              streaming_info.index_tex_buffer,
               data_owner->index_ * sizeof(TexQuadTreeNodeIndex),
               sizeof(TexQuadTreeNodeIndex),
-              &index_data[data_owner->index_]);
+              &streaming_info.index_data[data_owner->index_]);
 
           EfficientSubData(
-            height_tex_buffer,
+            streaming_info.height_tex_buffer,
             offset * sizeof(GLushort),
             height_data_.size()*sizeof(GLushort),
             height_data_.data()
           );
 
           EfficientSubData(
-            normal_tex_buffer,
+            streaming_info.normal_tex_buffer,
             offset * sizeof(DerivativeInfo),
             normal_data_.size()*sizeof(DerivativeInfo),
             normal_data_.data()
           );
 
-          data_owners[i] = this;
+          streaming_info.data_owners[i] = this;
 
           return;
         }
       }
     }
 
-    size_t new_texel_count = uploaded_texel_count + height_data_.size();
-    if (new_texel_count > last_data_alloc) {
-      last_data_alloc = enlargeBuffers(
-          last_data_alloc,
+    // if we did not find an empty place
+    size_t new_texel_count =
+      streaming_info.uploaded_texel_count + height_data_.size();
+    if (new_texel_count > streaming_info.last_data_alloc) {
+      enlargeBuffers(
+          streaming_info.last_data_alloc,
           new_texel_count,
-          height_tex_buffer,
-          normal_tex_buffer
+          streaming_info.height_tex_buffer,
+          streaming_info.normal_tex_buffer
       );
     }
 
-    // if we did not find an empty place
+    GLint offset = streaming_info.uploaded_texel_count;
 
-    GLint offset = uploaded_texel_count;
-
-    index_data[index_].data_offset_hi = offset >> 16;
-    index_data[index_].data_offset_lo = offset % (1 << 16);
-    index_data[index_].tex_size_x     = tex_w_;
-    index_data[index_].tex_size_y     = tex_h_;
+    streaming_info.index_data[index_].data_offset_hi = offset >> 16;
+    streaming_info.index_data[index_].data_offset_lo = offset % (1 << 16);
+    streaming_info.index_data[index_].tex_size_x     = tex_w_;
+    streaming_info.index_data[index_].tex_size_y     = tex_h_;
 
     EfficientSubData(
-        index_tex_buffer,
+        streaming_info.index_tex_buffer,
         index_ * sizeof(TexQuadTreeNodeIndex),
         sizeof(TexQuadTreeNodeIndex),
-        &index_data[index_]);
+        &streaming_info.index_data[index_]);
 
     EfficientSubData(
-        height_tex_buffer,
+        streaming_info.height_tex_buffer,
         offset * sizeof(GLushort),
         height_data_.size()*sizeof(GLushort),
         height_data_.data()
     );
 
     EfficientSubData(
-        normal_tex_buffer,
+        streaming_info.normal_tex_buffer,
         offset * sizeof(DerivativeInfo),
         normal_data_.size()*sizeof(DerivativeInfo),
         normal_data_.data()
     );
 
-    data_owners.push_back(this);
-    uploaded_texel_count = new_texel_count;
+    streaming_info.data_owners.push_back(this);
+    streaming_info.uploaded_texel_count = new_texel_count;
   }
 }
 

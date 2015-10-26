@@ -4,20 +4,11 @@
 #define ENGINE_CDLOD_TEXTURE_TEX_QUAD_TREE_NODE_H_
 
 #include <memory>
+#include "./streaming_info.h"
 #include "../../collision/spherized_aabb.h"
 
 namespace engine {
 namespace cdlod {
-
-struct TexQuadTreeNodeIndex {
-  GLushort data_offset_hi = 0, data_offset_lo = 0;
-  GLushort tex_size_x = 0, tex_size_y = 0;
-};
-
-struct DerivativeInfo {
-  GLushort dx = 0, dy = 0;
-};
-static_assert(sizeof(DerivativeInfo) == 2*sizeof(GLushort), "");
 
 class TexQuadTreeNode {
  public:
@@ -40,22 +31,10 @@ class TexQuadTreeNode {
   void initChild(int i);
   void selectNodes(const glm::vec3& cam_pos,
                    const Frustum& frustum,
-                   size_t& last_data_alloc,
-                   size_t& uploaded_texel_count,
-                   gl::TextureBuffer& height_tex_buffer,
-                   gl::TextureBuffer& normal_tex_buffer,
-                   gl::TextureBuffer& index_tex_buffer,
-                   std::vector<TexQuadTreeNodeIndex>& index_data,
-                   std::vector<TexQuadTreeNode*>& data_owners,
+                   StreamingInfo& streaming_info,
                    std::set<TexQuadTreeNode*>& load_later,
                    bool force_load_now);
-  void upload(size_t& last_data_alloc,
-              size_t& uploaded_texel_count,
-              gl::TextureBuffer& height_tex_buffer,
-              gl::TextureBuffer& normal_tex_buffer,
-              gl::TextureBuffer& index_tex_buffer,
-              std::vector<TexQuadTreeNodeIndex>& index_data,
-              std::vector<TexQuadTreeNode*>& data_owners);
+  void upload(StreamingInfo& streaming_info);
 
   int center_x() const { return x_; }
   int center_z() const { return z_; }
