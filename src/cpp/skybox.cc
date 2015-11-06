@@ -61,6 +61,7 @@ void Skybox::render() {
   auto camera = scene_->camera();
   float scale = (camera->z_near() + camera->z_far()) / 2;
   gl::Uniform<float>(prog_, "uScale") = scale;
+  gl::Uniform<glm::vec3>(prog_, "uCamPos") = cam->transform()->pos();
 
   gl::TemporaryDisable depth_test{gl::kDepthTest};
 
