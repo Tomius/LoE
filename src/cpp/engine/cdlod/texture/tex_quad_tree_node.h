@@ -12,7 +12,8 @@ namespace cdlod {
 
 class TexQuadTreeNode {
  public:
-  TexQuadTreeNode(int center_x, int center_z, int size_x, int size_z,
+  TexQuadTreeNode(double center_x, double center_z,
+                  double size_x, double size_z,
                   GLubyte mip_level, unsigned index);
 
   bool collidesWithSphere(const Sphere& sphere) {
@@ -36,10 +37,25 @@ class TexQuadTreeNode {
                    bool force_load_now);
   void upload(StreamingInfo& streaming_info);
 
-  int center_x() const { return x_; }
-  int center_z() const { return z_; }
-  int size_x() const { return sx_; }
-  int size_z() const { return sz_; }
+  double center_x() const { return x_; }
+  double center_z() const { return z_; }
+  double size_x() const { return sx_; }
+  double size_z() const { return sz_; }
+
+  int int_left_x() const { return int(x_) - int(sx_)/2; }
+  double left_x() const {
+    return level_ >= 0 ? int_left_x() : x_ - sx_ / 2.0;
+  }
+  int int_right_x() const { return int_left_x() + int(sx_); }
+  double right_x() const { return left_x() + sx_; }
+
+  int int_top_z() const { return int(z_) - int(sz_)/2; }
+  double top_z() const {
+    return level_ >= 0 ? int_top_z() : z_ - sz_ / 2.0;
+  }
+  int int_bottom_z() const { return int_top_z() + int(sz_); }
+  double bottom_z() const { return top_z() + sz_; }
+
   int level() const { return level_; }
   int index() const { return index_; }
 
@@ -53,8 +69,8 @@ class TexQuadTreeNode {
  private:
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
 
-  int x_, z_;
-  unsigned sx_, sz_, tex_w_, tex_h_, index_;
+  double x_, z_, sx_, sz_;
+  unsigned tex_w_, tex_h_, index_;
   GLubyte level_;
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];

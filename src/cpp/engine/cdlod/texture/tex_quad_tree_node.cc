@@ -13,11 +13,11 @@ using namespace std::literals::chrono_literals;
 namespace engine {
 namespace cdlod {
 
-TexQuadTreeNode::TexQuadTreeNode(int x, int z, int sx, int sz,
+TexQuadTreeNode::TexQuadTreeNode(double x, double z, double sx, double sz,
                                  GLubyte level, unsigned index)
     : x_(x), z_(z), sx_(sx), sz_(sz), index_(index), level_(level)
-    , bbox_{{x-sx/2, 0, z-sz/2},
-            {x+(sx-sx/2), GlobalHeightMap::max_height, z+(sz-sz/2)}} {}
+    , bbox_{{left_x(), 0, top_z()},
+            {right_x(), GlobalHeightMap::max_height, bottom_z()}} {}
 
 void TexQuadTreeNode::load() {
   Magick::Image height, dx, dy;
@@ -32,22 +32,24 @@ void TexQuadTreeNode::load_files(Magick::Image& height,
     return;
   }
 
-  // std::this_thread::sleep_for(5ms);
-
   char file_path[200];
-  int tx = x_ - sx_/2, ty = z_ - sz_/2;
+  if (level_ >= 0) {
+   int tx = int_left_x(), ty = int_top_z();
 
-  sprintf(file_path, "%s/%d/%d/%d.png",
-          GlobalHeightMap::height_texture_base_path, level_, tx, ty);
-  height.read(file_path);
+    sprintf(file_path, "%s/%d/%d/%d.png",
+            GlobalHeightMap::height_texture_base_path, level_, tx, ty);
+    height.read(file_path);
 
-  sprintf(file_path, "%s/%d/%d/%d.png",
-          GlobalHeightMap::dx_texture_base_path, level_, tx, ty);
-  dx.read(file_path);
+    sprintf(file_path, "%s/%d/%d/%d.png",
+            GlobalHeightMap::dx_texture_base_path, level_, tx, ty);
+    dx.read(file_path);
 
-  sprintf(file_path, "%s/%d/%d/%d.png",
-          GlobalHeightMap::dy_texture_base_path, level_, tx, ty);
-  dy.read(file_path);
+    sprintf(file_path, "%s/%d/%d/%d.png",
+            GlobalHeightMap::dy_texture_base_path, level_, tx, ty);
+    dy.read(file_path);
+  } else {
+    abort();
+  }
 }
 
 void TexQuadTreeNode::load(Magick::Image& height,
@@ -109,26 +111,32 @@ void TexQuadTreeNode::age() {
 void TexQuadTreeNode::initChild(int i) {
   assert(level_ > 0);
 
+  int left_sx = int(sx_)/2;
+  int right_sx = int(sx_) - int(sx_)/2;
+  int top_sz = int(sz_)/2;
+  int bottom_sz = int(sz_) - int(sz_)/2;
+
+  int left_cx = int(x_) - (left_sx - left_sx/2);
+  int right_cx = int(x_) + right_sx/2;
+  int top_cz = int(z_) - (top_sz - top_sz/2);
+  int bottom_cz = int(z_) + bottom_sz/2;
+
   switch (i) {
     case 0: { // top left
-      int sx = sx_/2, sz = sz_/2;
       children_[0] = make_unique<TexQuadTreeNode>(
-          x_ - (sx - sx/2), z_ - (sz - sz/2), sx, sz, level_-1, 4*index_+i+1);
+          left_cx, top_cz, left_sx, top_sz, level_-1, 4*index_+i+1);
     } break;
     case 1: { // top right
-      int sx = sx_ - sx_/2, sz = sz_/2;
       children_[1] = make_unique<TexQuadTreeNode>(
-          x_ + sx/2, z_ - (sz - sz/2), sx, sz, level_-1, 4*index_+i+1);
+          right_cx, top_cz, right_sx, top_sz, level_-1, 4*index_+i+1);
     } break;
     case 2: { // bottom left
-      int sx = sx_/2, sz = sz_ - sz_/2;
       children_[2] = make_unique<TexQuadTreeNode>(
-          x_ - (sx - sx/2), z_ + sz/2, sx, sz, level_-1, 4*index_+i+1);
+          left_cx, bottom_cz, left_sx, bottom_sz, level_-1, 4*index_+i+1);
     } break;
     case 3: { // bottom right
-      int sx = sx_ - sx_/2, sz = sz_ - sz_/2;
       children_[3] = make_unique<TexQuadTreeNode>(
-          x_ + sx/2, z_ + sz/2, sx, sz, level_-1, 4*index_+i+1);
+          right_cx, bottom_cz, right_sx, bottom_sz, level_-1, 4*index_+i+1);
     } break;
     default: {
       throw new std::out_of_range("Tried to index "
@@ -142,7 +150,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   StreamingInfo& streaming_info,
                                   std::set<TexQuadTreeNode*>& load_later,
                                   bool force_load_now) {
-  float lod_range = 2 * sqrt(double(sx_)*sx_ + double(sz_)*sz_);
+  float lod_range = 2 * sqrt(sx_*sx_ + sz_*sz_);
 
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {

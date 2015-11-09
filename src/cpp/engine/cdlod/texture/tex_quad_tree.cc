@@ -105,7 +105,7 @@ TexQuadTree::TexQuadTree(int w /*= GlobalHeightMap::tex_w*/,
                          glm::ivec2 min_node_size /*= {256, 128}*/)
     : min_node_size_{min_node_size}
     , max_node_level_(max_node_level(w, h))
-    , root_{w/2, h/2, w, h, max_node_level_, 0}
+    , root_(w/2, h/2, w, h, max_node_level_, 0)
     , worker_{[this]{imageLoaderThread();}} {
   initTexIndexBuffer();
   initTextures();
@@ -114,7 +114,7 @@ TexQuadTree::TexQuadTree(int w /*= GlobalHeightMap::tex_w*/,
 TexQuadTree::TexQuadTree(int w, int h, GLubyte max_depth)
     : min_node_size_{w >> max_depth, h >> max_depth}
     , max_node_level_(max_depth)
-    , root_{w/2, h/2, w, h, max_node_level_, 0}
+    , root_(w/2, h/2, w, h, max_node_level_, 0)
     , worker_{[this]{imageLoaderThread();}} {
   initTexIndexBuffer();
   initTextures();
