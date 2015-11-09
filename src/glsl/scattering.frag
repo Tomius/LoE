@@ -7,7 +7,7 @@
 #export vec3 Scattering();
 
 uniform ivec2 uTexSize = ivec2 (172800, 86400);
-uniform ivec2 uResolution = ivec2(1920, 1080);
+uniform ivec2 uResolution = ivec2(1920, 1080); // TODO!!!!
 uniform vec3 uCamPos;
 uniform mat3 uCameraMatrix;
 
@@ -23,17 +23,17 @@ const float E = 14.3;             // light intensity
 const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
 const float G_M = -0.85;          // Mie g
 
-float R_INNER = 27516; //uTexSize.x / 2 / PI;
-float R = 1.1 * R_INNER;
+float R_INNER = uTexSize.x / 2 / PI;
+float R = 1.05 * R_INNER;
 float MAX = 10.0 * R;
 float SCALE_H = 20.0 / (R - R_INNER);
 float SCALE_L = 2.0 / (R - R_INNER);
 
-const int NUM_OUT_SCATTER = 8;
-const float FNUM_OUT_SCATTER = 8.0;
+const int NUM_OUT_SCATTER = 5;
+const float FNUM_OUT_SCATTER = 5.0;
 
-const int NUM_IN_SCATTER = 8;
-const float FNUM_IN_SCATTER = 8.0;
+const int NUM_IN_SCATTER = 5;
+const float FNUM_IN_SCATTER = 5.0;
 
 // ray direction
 vec3 ray_dir(float fov, vec2 size, vec2 pos) {
@@ -123,14 +123,15 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
 
   float c  = dot(dir, -l);
   float cc = c * c;
+  vec3 phase = K_R*C_R*phase_reyleigh(cc) + K_M*phase_mie(G_M, c, cc);
 
-  return sum * (K_R * C_R * phase_reyleigh(cc) + K_M * phase_mie(G_M, c, cc)) * E;
+  return E * sum * phase;
 }
 
 vec3 Scattering()
 {
-  // default ray dir
-  vec3 rayDir = inverse(uCameraMatrix) * ray_dir(60.0, uResolution, gl_FragCoord.xy);
+  vec3 rayDir = inverse(uCameraMatrix)
+              * ray_dir(60.0, uResolution, gl_FragCoord.xy);
 
   vec2 e = ray_vs_sphere(uCamPos, rayDir, R);
   if (e.x > e.y) {

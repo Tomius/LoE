@@ -1,6 +1,8 @@
 // Copyright (c) 2015, Tamas Csala
 
 #include "./skybox.h"
+#include "engine/game_engine.h"
+#include "engine/global_height_map.h"
 
 const float day_duration = 512.0f, day_start = 0;
 
@@ -62,6 +64,10 @@ void Skybox::render() {
   float scale = (camera->z_near() + camera->z_far()) / 2;
   gl::Uniform<float>(prog_, "uScale") = scale;
   gl::Uniform<glm::vec3>(prog_, "uCamPos") = cam->transform()->pos();
+  gl::Uniform<glm::ivec2>(prog_, "uResolution") =
+    glm::ivec2(engine::GameEngine::window_size());
+  gl::Uniform<glm::ivec2>(prog_, "uTexSize") =
+    glm::ivec2(engine::GlobalHeightMap::tex_w, engine::GlobalHeightMap::tex_h);
 
   gl::TemporaryDisable depth_test{gl::kDepthTest};
 
