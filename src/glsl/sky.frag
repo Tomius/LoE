@@ -31,7 +31,7 @@ vec3 SkyColor(vec3 look_dir) {
     sun += curr_scale * pow(sun_color, vec3(pow(l, -i*16)));
   }
 
-  return sun / scale;
+  return 1.5 * sun / scale;
 }
 
 // Functions for other objects' lighting computations

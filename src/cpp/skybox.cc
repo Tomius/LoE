@@ -4,7 +4,7 @@
 #include "engine/game_engine.h"
 #include "engine/global_height_map.h"
 
-const float day_duration = 512.0f, day_start = 0;
+const float day_duration = 128.0f, day_start = 0;
 
 Skybox::Skybox(engine::GameObject* parent)
     : engine::Behaviour(parent)
@@ -42,9 +42,9 @@ void Skybox::update() {
 void Skybox::keyAction(int key, int scancode, int action, int mods) {
   if (action == GLFW_PRESS) {
     if (key == GLFW_KEY_KP_ADD) {
-      mult_ = 64.0;
+      mult_ = 16.0;
     } else if (key == GLFW_KEY_KP_SUBTRACT) {
-      mult_ = -64.0;
+      mult_ = -16.0;
     }
   } else if (action == GLFW_RELEASE) {
     if (key == GLFW_KEY_KP_ADD || key == GLFW_KEY_KP_SUBTRACT) {

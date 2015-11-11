@@ -4,11 +4,13 @@
 #version 330
 
 #include "sky.frag"
+#include "dof.frag"
+#include "glow.frag"
 
 out vec4 fragColor;
 
 uniform ivec2 uTexSize;
-uniform ivec2 uResolution;
+uniform vec2 uResolution;
 uniform vec3 uCamPos;
 uniform mat3 uCameraMatrix;
 
@@ -25,16 +27,16 @@ const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
 const float G_M = -0.85;          // Mie g
 
 float R_INNER = uTexSize.x / 2 / PI;
-float R = 1.02 * R_INNER;
+float R = 1.05* R_INNER;
 float MAX = 10.0 * R;
 float SCALE_H = 2.0 / (R - R_INNER);
 float SCALE_L = 0.5 / (R - R_INNER);
 
-const int NUM_OUT_SCATTER = 5;
-const float FNUM_OUT_SCATTER = 5.0;
+const int NUM_OUT_SCATTER = 10;
+const float FNUM_OUT_SCATTER = 10.0;
 
-const int NUM_IN_SCATTER = 5;
-const float FNUM_IN_SCATTER = 5.0;
+const int NUM_IN_SCATTER = 10;
+const float FNUM_IN_SCATTER = 10.0;
 
 // ray direction
 vec3 ray_dir(float fov, vec2 size, vec2 pos) {
@@ -126,27 +128,37 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
   float cc = c * c;
   vec3 phase = K_R*C_R*phase_reyleigh(cc) + K_M*phase_mie(G_M, c, cc);
 
-  float start_density = min(density(o)*max(dot(normalize(o), l) + 0.3, 0), 0.1);
+  float start_density = min(density(o)*max(dot(normalize(o), l) + 0.3, 0), 0.15);
   vec3 random_stuff_that_makes_the_output_look_good =
-    start_density * len * SCALE_L * C_R;
+    12 * start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R +
+    E * sum * phase / 2;
 
-  return random_stuff_that_makes_the_output_look_good +  E * sum * phase;
+  return max(random_stuff_that_makes_the_output_look_good, E * sum * phase);
 }
 
-void main() {
+vec3 Scattering() {
   vec3 rayDir = inverse(uCameraMatrix)
               * ray_dir(60.0, uResolution, gl_FragCoord.xy);
 
   vec2 e = ray_vs_sphere(uCamPos, rayDir, R);
   if (e.x > e.y) {
-    fragColor = vec4(0);
-    return;
+    return vec3(0);
   }
 
   vec2 f = ray_vs_sphere(uCamPos, rayDir, R_INNER);
   if (0 < f.y && f.x < f.y) {
     e.y = min(e.y, f.x);
+  } else if (DistanceFromCamera() < 1000) {
+    e.y = min(e.y, DistanceFromCamera());
   }
 
-  fragColor = vec4(in_scatter(uCamPos, rayDir, e, SunPos ()), 0.75);
+  return in_scatter(uCamPos, rayDir, e, SunPos ());
+}
+
+void main() {
+  FetchNeighbours();
+  vec3 color = Glow() + DoF(CurrentPixel()) + Scattering();
+  color = ToneMap(color);
+
+  fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1);
 }
