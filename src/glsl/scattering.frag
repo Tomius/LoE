@@ -1,13 +1,14 @@
+// Copyright (c) 2015, Tamas Csala
 // Written by GLtracy
 
-#version 440
+#version 330
 
 #include "sky.frag"
 
-#export vec3 Scattering();
+out vec4 fragColor;
 
-uniform ivec2 uTexSize = ivec2 (172800, 86400);
-uniform ivec2 uResolution = ivec2(1920, 1080); // TODO!!!!
+uniform ivec2 uTexSize;
+uniform ivec2 uResolution;
 uniform vec3 uCamPos;
 uniform mat3 uCameraMatrix;
 
@@ -24,10 +25,10 @@ const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
 const float G_M = -0.85;          // Mie g
 
 float R_INNER = uTexSize.x / 2 / PI;
-float R = 1.05 * R_INNER;
+float R = 1.02 * R_INNER;
 float MAX = 10.0 * R;
-float SCALE_H = 20.0 / (R - R_INNER);
-float SCALE_L = 2.0 / (R - R_INNER);
+float SCALE_H = 2.0 / (R - R_INNER);
+float SCALE_L = 0.5 / (R - R_INNER);
 
 const int NUM_OUT_SCATTER = 5;
 const float FNUM_OUT_SCATTER = 5.0;
@@ -108,7 +109,7 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
   vec3 p = o + dir * max(e.x, 0);
   vec3 v = p + step / 2.0;
 
-  vec3 sum = vec3(min(density(o) * max(dot(normalize(o), l) + 0.3, 0), 0.15));
+  vec3 sum = vec3(0.0);
   for (int i = 0; i < NUM_IN_SCATTER; i++) {
     vec2 f = ray_vs_sphere(v, l, R);
     vec3 u = v + l * f.y;
@@ -125,18 +126,27 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
   float cc = c * c;
   vec3 phase = K_R*C_R*phase_reyleigh(cc) + K_M*phase_mie(G_M, c, cc);
 
-  return E * sum * phase;
+  float start_density = min(density(o)*max(dot(normalize(o), l) + 0.3, 0), 0.1);
+  vec3 random_stuff_that_makes_the_output_look_good =
+    start_density * len * SCALE_L * C_R;
+
+  return random_stuff_that_makes_the_output_look_good +  E * sum * phase;
 }
 
-vec3 Scattering()
-{
+void main() {
   vec3 rayDir = inverse(uCameraMatrix)
               * ray_dir(60.0, uResolution, gl_FragCoord.xy);
 
   vec2 e = ray_vs_sphere(uCamPos, rayDir, R);
   if (e.x > e.y) {
-    return vec3(0);
+    fragColor = vec4(0);
+    return;
   }
 
-  return in_scatter(uCamPos, rayDir, e, SunPos ());
+  vec2 f = ray_vs_sphere(uCamPos, rayDir, R_INNER);
+  if (0 < f.y && f.x < f.y) {
+    e.y = min(e.y, f.x);
+  }
+
+  fragColor = vec4(in_scatter(uCamPos, rayDir, e, SunPos ()), 0.75);
 }

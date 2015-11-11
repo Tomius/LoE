@@ -11,6 +11,7 @@
 #include "../skybox.h"
 #include "../terrain.h"
 #include "../fps_display.h"
+#include "../scattering.h"
 
 class MainScene : public engine::Scene {
  public:
@@ -29,6 +30,8 @@ class MainScene : public engine::Scene {
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
         M_PI/3, 2, 3*radius, glm::vec3(-2*radius, 0, 0),
         2, 0.2, 0.005, 1.5, radius, radius);
+
+    addComponent<Scattering>();
 
     set_camera(tp_camera_);
     addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},

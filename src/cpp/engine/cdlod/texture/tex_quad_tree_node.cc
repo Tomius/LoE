@@ -13,9 +13,13 @@ using namespace std::literals::chrono_literals;
 namespace engine {
 namespace cdlod {
 
-TexQuadTreeNode::TexQuadTreeNode(double x, double z, double sx, double sz,
+TexQuadTreeNode::TexQuadTreeNode(TexQuadTreeNode* parent,
+                                 double x, double z, double sx, double sz,
                                  GLubyte level, unsigned index)
-    : x_(x), z_(z), sx_(sx), sz_(sz), index_(index), level_(level)
+    : parent_(parent)
+    , x_(x), z_(z)
+    , sx_(sx), sz_(sz)
+    , index_(index), level_(level)
     , bbox_{{left_x(), 0, top_z()},
             {right_x(), GlobalHeightMap::max_height, bottom_z()}} {}
 
@@ -25,6 +29,31 @@ void TexQuadTreeNode::load() {
   load(height, dx, dy);
 }
 
+std::string TexQuadTreeNode::map_path(const char* base_path) const {
+  char file_path[200];
+  if (level_ >= 0) {
+    int tx = int_left_x(), ty = int_top_z();
+    sprintf(file_path, "%s/%d/%d/%d.png", base_path, level_, tx, ty);
+  } else {
+    double tx = left_x(), ty = top_z();
+    sprintf(file_path, "%s/%d/%f/%f.png", base_path, level_, tx, ty);
+  }
+
+  return file_path;
+}
+
+std::string TexQuadTreeNode::height_map_path() const {
+  return map_path(GlobalHeightMap::height_texture_base_path);
+}
+
+std::string TexQuadTreeNode::dx_map_path() const {
+  return map_path(GlobalHeightMap::dx_texture_base_path);
+}
+
+std::string TexQuadTreeNode::dy_map_path() const {
+  return map_path(GlobalHeightMap::dy_texture_base_path);
+}
+
 void TexQuadTreeNode::load_files(Magick::Image& height,
                                  Magick::Image& dx,
                                  Magick::Image& dy) const {
@@ -32,22 +61,16 @@ void TexQuadTreeNode::load_files(Magick::Image& height,
     return;
   }
 
-  char file_path[200];
   if (level_ >= 0) {
-   int tx = int_left_x(), ty = int_top_z();
-
-    sprintf(file_path, "%s/%d/%d/%d.png",
-            GlobalHeightMap::height_texture_base_path, level_, tx, ty);
-    height.read(file_path);
-
-    sprintf(file_path, "%s/%d/%d/%d.png",
-            GlobalHeightMap::dx_texture_base_path, level_, tx, ty);
-    dx.read(file_path);
-
-    sprintf(file_path, "%s/%d/%d/%d.png",
-            GlobalHeightMap::dy_texture_base_path, level_, tx, ty);
-    dy.read(file_path);
+    height.read(height_map_path());
+    dx.read(dx_map_path());
+    dy.read(dy_map_path());
   } else {
+    assert(parent_ != nullptr);
+    std::string src_height = parent_->height_map_path();
+    std::string dst_height = height_map_path();
+    std::string command =
+    "convert " + src_height + " -filter 'Hermite' -resize 682 foo_hermite.png";
     abort();
   }
 }
@@ -124,19 +147,19 @@ void TexQuadTreeNode::initChild(int i) {
   switch (i) {
     case 0: { // top left
       children_[0] = make_unique<TexQuadTreeNode>(
-          left_cx, top_cz, left_sx, top_sz, level_-1, 4*index_+i+1);
+          this, left_cx, top_cz, left_sx, top_sz, level_-1, 4*index_+i+1);
     } break;
     case 1: { // top right
       children_[1] = make_unique<TexQuadTreeNode>(
-          right_cx, top_cz, right_sx, top_sz, level_-1, 4*index_+i+1);
+          this, right_cx, top_cz, right_sx, top_sz, level_-1, 4*index_+i+1);
     } break;
     case 2: { // bottom left
       children_[2] = make_unique<TexQuadTreeNode>(
-          left_cx, bottom_cz, left_sx, bottom_sz, level_-1, 4*index_+i+1);
+          this, left_cx, bottom_cz, left_sx, bottom_sz, level_-1, 4*index_+i+1);
     } break;
     case 3: { // bottom right
       children_[3] = make_unique<TexQuadTreeNode>(
-          right_cx, bottom_cz, right_sx, bottom_sz, level_-1, 4*index_+i+1);
+          this, right_cx, bottom_cz, right_sx, bottom_sz, level_-1, 4*index_+i+1);
     } break;
     default: {
       throw new std::out_of_range("Tried to index "
@@ -229,14 +252,14 @@ static void enlargeBuffers(size_t new_texel_count,
   streaming_info.last_data_alloc = new_data_alloc;
 }
 
-static void EfficientSubData(gl::TextureBuffer& buffer,
+static void SubData(gl::TextureBuffer& buffer,
                              size_t offset, size_t length, void* src_data) {
   gl::Bind(buffer);
-  void* dst_data = gl(MapBufferRange(GL_TEXTURE_BUFFER, offset, length,
-                      GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
-                      GL_MAP_UNSYNCHRONIZED_BIT));
-  std::memcpy(dst_data, src_data, length);
-  assert(glUnmapBuffer(GL_TEXTURE_BUFFER) == GL_TRUE);
+  buffer.subData(offset, length, src_data);
+  // void* dst_data = gl(MapBufferRange(GL_TEXTURE_BUFFER, offset, length,
+  //                     GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT));
+  // std::memcpy(dst_data, src_data, length);
+  // assert(glUnmapBuffer(GL_TEXTURE_BUFFER) == GL_TRUE);
 }
 
 void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
@@ -261,27 +284,27 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
           streaming_info.index_data[index_].data_offset_lo = offset % (1 << 16);
           streaming_info.index_data[index_].tex_size_x     = tex_w_;
           streaming_info.index_data[index_].tex_size_y     = tex_h_;
-          EfficientSubData(
+          SubData(
               streaming_info.index_tex_buffer,
               index_ * sizeof(TexQuadTreeNodeIndex),
               sizeof(TexQuadTreeNodeIndex),
               &streaming_info.index_data[index_]);
 
           streaming_info.index_data[data_owner->index_] = TexQuadTreeNodeIndex{};
-          EfficientSubData(
+          SubData(
               streaming_info.index_tex_buffer,
               data_owner->index_ * sizeof(TexQuadTreeNodeIndex),
               sizeof(TexQuadTreeNodeIndex),
               &streaming_info.index_data[data_owner->index_]);
 
-          EfficientSubData(
+          SubData(
             streaming_info.height_tex_buffer,
             offset * sizeof(HeightData),
             height_data_.size()*sizeof(HeightData),
             height_data_.data()
           );
 
-          EfficientSubData(
+          SubData(
             streaming_info.normal_tex_buffer,
             offset * sizeof(DerivativeInfo),
             normal_data_.size()*sizeof(DerivativeInfo),
@@ -309,20 +332,20 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
     streaming_info.index_data[index_].tex_size_x     = tex_w_;
     streaming_info.index_data[index_].tex_size_y     = tex_h_;
 
-    EfficientSubData(
+    SubData(
         streaming_info.index_tex_buffer,
         index_ * sizeof(TexQuadTreeNodeIndex),
         sizeof(TexQuadTreeNodeIndex),
         &streaming_info.index_data[index_]);
 
-    EfficientSubData(
+    SubData(
         streaming_info.height_tex_buffer,
         offset * sizeof(HeightData),
         height_data_.size()*sizeof(HeightData),
         height_data_.data()
     );
 
-    EfficientSubData(
+    SubData(
         streaming_info.normal_tex_buffer,
         offset * sizeof(DerivativeInfo),
         normal_data_.size()*sizeof(DerivativeInfo),

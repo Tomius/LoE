@@ -1,7 +1,7 @@
 // Copyright (c) 2015, Tamas Csala
 
-#ifndef LOD_TERRAIN_H_
-#define LOD_TERRAIN_H_
+#ifndef LOE_TERRAIN_H_
+#define LOE_TERRAIN_H_
 
 #include "./skybox.h"
 #include "./shadow.h"
@@ -26,4 +26,4 @@ class Terrain : public engine::GameObject {
   virtual void render() override;
 };
 
-#endif  // LOD_TERRAIN_H_
+#endif  // LOE_TERRAIN_H_

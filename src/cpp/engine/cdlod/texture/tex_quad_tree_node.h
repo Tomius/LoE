@@ -12,7 +12,8 @@ namespace cdlod {
 
 class TexQuadTreeNode {
  public:
-  TexQuadTreeNode(double center_x, double center_z,
+  TexQuadTreeNode(TexQuadTreeNode* parent,
+                  double center_x, double center_z,
                   double size_x, double size_z,
                   GLubyte mip_level, unsigned index);
 
@@ -59,6 +60,11 @@ class TexQuadTreeNode {
   int level() const { return level_; }
   int index() const { return index_; }
 
+  std::string map_path(const char* base_path) const;
+  std::string height_map_path() const;
+  std::string dx_map_path() const;
+  std::string dy_map_path() const;
+
   bool is_image_loaded() const { return !height_data_.empty(); }
   int last_used() const { return last_used_; }
   const std::vector<GLushort>& height_data() const { return height_data_; }
@@ -69,6 +75,7 @@ class TexQuadTreeNode {
  private:
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
 
+  TexQuadTreeNode* parent_;
   double x_, z_, sx_, sz_;
   unsigned tex_w_, tex_h_, index_;
   GLubyte level_;

@@ -1,7 +1,7 @@
 // Copyright (c) 2015, Tamas Csala
 
-#ifndef LOD_FPS_DISPLAY_H_
-#define LOD_FPS_DISPLAY_H_
+#ifndef LOE_FPS_DISPLAY_H_
+#define LOE_FPS_DISPLAY_H_
 
 #include "engine/scene.h"
 #include "engine/behaviour.h"

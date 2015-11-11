@@ -1,7 +1,7 @@
 // Copyright (c) 2015, Tamas Csala
 
-#ifndef LOD_SKYBOX_H_
-#define LOD_SKYBOX_H_
+#ifndef LOE_SKYBOX_H_
+#define LOE_SKYBOX_H_
 
 #include "engine/oglwrap_all.h"
 #include "engine/scene.h"
@@ -31,4 +31,4 @@ class Skybox : public engine::Behaviour {
 };
 
 
-#endif  // LOD_SKYBOX_H_
+#endif  // LOE_SKYBOX_H_

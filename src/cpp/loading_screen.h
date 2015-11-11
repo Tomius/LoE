@@ -1,7 +1,7 @@
 // Copyright (c) 2015, Tamas Csala
 
-#ifndef LOD_LOADING_SCREEN_H_
-#define LOD_LOADING_SCREEN_H_
+#ifndef LOE_LOADING_SCREEN_H_
+#define LOE_LOADING_SCREEN_H_
 
 #include "engine/oglwrap_all.h"
 #include "engine/gui/label.h"
@@ -35,4 +35,4 @@ inline void LoadingScreen() {
   label2.render2D();
 }
 
-#endif  // LOD_LOADING_SCREEN_H_
+#endif  // LOE_LOADING_SCREEN_H_

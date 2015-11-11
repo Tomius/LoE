@@ -60,14 +60,8 @@ void Skybox::render() {
   prog_.update();
   uCameraMatrix_ = glm::mat3(cam->cameraMatrix());
   uProjectionMatrix_ = cam->projectionMatrix();
-  auto camera = scene_->camera();
-  float scale = (camera->z_near() + camera->z_far()) / 2;
+  float scale = (cam->z_near() + cam->z_far()) / 2;
   gl::Uniform<float>(prog_, "uScale") = scale;
-  gl::Uniform<glm::vec3>(prog_, "uCamPos") = cam->transform()->pos();
-  gl::Uniform<glm::ivec2>(prog_, "uResolution") =
-    glm::ivec2(engine::GameEngine::window_size());
-  gl::Uniform<glm::ivec2>(prog_, "uTexSize") =
-    glm::ivec2(engine::GlobalHeightMap::tex_w, engine::GlobalHeightMap::tex_h);
 
   gl::TemporaryDisable depth_test{gl::kDepthTest};
 
