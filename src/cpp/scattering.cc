@@ -9,9 +9,9 @@ Scattering::Scattering(engine::GameObject* parent)
     , rect_({gl::RectangleShape::kPosition})
     , prog_(scene_->shader_manager()->get("rectangle.vert"),
             scene_->shader_manager()->get("scattering.frag"))
-    , uZNear_(prog_, "uZNear")
     , uZFar_(prog_, "uZFar")
     , uResolution_(prog_, "uResolution")
+    , uCamPos_(prog_, "uCamPos")
     , uCameraMatrix_(prog_, "uCameraMatrix") {
 
   gl::Use(prog_);
@@ -29,18 +29,25 @@ Scattering::Scattering(engine::GameObject* parent)
   gl::Unbind(color_tex_);
 
   gl::Bind(depth_tex_);
-  depth_tex_.upload(gl::kDepthComponent, 1, 1,
-                    gl::kDepthComponent, gl::kFloat, nullptr);
+  depth_tex_.upload(gl::kR32F, 1, 1, gl::kRed, gl::kFloat, nullptr);
   depth_tex_.minFilter(gl::kLinear);
   depth_tex_.magFilter(gl::kLinear);
   gl::Unbind(depth_tex_);
 
+  gl::Bind(depth_buffer_);
+  depth_buffer_.storage(gl::kDepthComponent, 1, 1);
+  gl::Unbind(depth_buffer_);
+
   gl::Bind(fbo_);
   fbo_.attachTexture(gl::kColorAttachment0, color_tex_);
-  fbo_.attachTexture(gl::kDepthAttachment, depth_tex_);
+  fbo_.attachTexture(gl::kColorAttachment1, depth_tex_);
+  fbo_.attachBuffer(gl::kDepthAttachment, depth_buffer_);
+
+  GLuint attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+  glDrawBuffers(2, attachments);
+
   fbo_.validate();
   gl::Unbind(fbo_);
-
 }
 
 void Scattering::screenResized(size_t w, size_t h) {
@@ -52,9 +59,12 @@ void Scattering::screenResized(size_t w, size_t h) {
   gl::Unbind(color_tex_);
 
   gl::Bind(depth_tex_);
-  depth_tex_.upload(gl::PixelDataInternalFormat::kDepthComponent32F, w, h,
-                    gl::kDepthComponent, gl::kFloat, nullptr);
+  depth_tex_.upload(gl::kR32F, w, h, gl::kRed, gl::kFloat, nullptr);
   gl::Unbind(depth_tex_);
+
+  gl::Bind(depth_buffer_);
+  depth_buffer_.storage(gl::kDepthComponent, w, h);
+  gl::Unbind(depth_buffer_);
 }
 
 void Scattering::update() {
@@ -74,8 +84,7 @@ void Scattering::render2D() {
 
   auto cam = scene_->camera();
   uCameraMatrix_ = glm::mat3(cam->cameraMatrix());
-  gl::Uniform<glm::vec3>(prog_, "uCamPos") = cam->transform()->pos();
-  uZNear_ = cam->z_near();
+  uCamPos_ = cam->transform()->pos();
   uZFar_ = cam->z_far();
 
   rect_.render();

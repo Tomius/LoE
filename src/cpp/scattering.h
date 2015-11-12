@@ -24,9 +24,11 @@ class Scattering : public engine::Behaviour {
   gl::RectangleShape rect_;
   engine::ShaderProgram prog_;
   gl::Framebuffer fbo_;
+  gl::Renderbuffer depth_buffer_;
   gl::Texture2D color_tex_, depth_tex_;
-  gl::LazyUniform<float> uZNear_, uZFar_;
+  gl::LazyUniform<float> uZFar_;
   gl::LazyUniform<glm::vec2> uResolution_;
+  gl::LazyUniform<glm::vec3> uCamPos_;
   gl::LazyUniform<glm::mat3> uCameraMatrix_;
 };
 

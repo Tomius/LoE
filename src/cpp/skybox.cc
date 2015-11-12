@@ -4,7 +4,7 @@
 #include "engine/game_engine.h"
 #include "engine/global_height_map.h"
 
-const float day_duration = 128.0f, day_start = 0;
+const float day_duration = 256.0f, day_start = 0;
 
 Skybox::Skybox(engine::GameObject* parent)
     : engine::Behaviour(parent)
@@ -60,8 +60,6 @@ void Skybox::render() {
   prog_.update();
   uCameraMatrix_ = glm::mat3(cam->cameraMatrix());
   uProjectionMatrix_ = cam->projectionMatrix();
-  float scale = (cam->z_near() + cam->z_far()) / 2;
-  gl::Uniform<float>(prog_, "uScale") = scale;
 
   gl::TemporaryDisable depth_test{gl::kDepthTest};
 

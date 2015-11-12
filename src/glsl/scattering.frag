@@ -154,5 +154,16 @@ void main() {
   FetchNeighbours();
   vec3 color = Glow() + DoF(CurrentPixel()) + Scattering();
   color = ToneMap(color);
+
+  // vec3 rayDir = inverse(uCameraMatrix)
+  //             * ray_dir(60.0, uResolution, gl_FragCoord.xy);
+
+  // vec2 e = ray_vs_sphere(uCamPos, rayDir, R);
+  // if (e.x > e.y || e.y < 0) {
+  //   return;
+  // }
+  // vec2 f = ray_vs_sphere(uCamPos, rayDir, R_INNER);
+  // color = 0.99*vec3(DistanceFromCamera() / uZFar) + 0.01* color;
+
   fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1);
 }

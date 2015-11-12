@@ -4,6 +4,7 @@
 
 #include "engine/cdlod_terrain.vert"
 
+uniform float uDepthCoef;
 uniform mat4 uProjectionMatrix, uCameraMatrix, uModelMatrix;
 int CDLODTerrain_uLevel;
 
@@ -34,5 +35,8 @@ void main() {
   vOut.c_pos = vec3(c_pos);
 
   vOut.level = CDLODTerrain_uLevel;
-  gl_Position = uProjectionMatrix * c_pos;
+  vec4 projected = uProjectionMatrix * c_pos;
+  projected.z = log2(max(1e-6, 1.0 + projected.w)) * uDepthCoef - 1.0;
+  projected.z *= projected.w;
+  gl_Position = projected;
 }

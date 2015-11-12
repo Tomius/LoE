@@ -14,6 +14,7 @@ Terrain::Terrain(engine::GameObject* parent)
     , mesh_(scene_->shader_manager())
     , prog_(scene_->shader_manager()->get("terrain.vert"),
             scene_->shader_manager()->get("terrain.frag"))
+    , uDepthCoef_(prog_, "uDepthCoef")
     , uProjectionMatrix_(prog_, "uProjectionMatrix")
     , uCameraMatrix_(prog_, "uCameraMatrix")
     , uModelMatrix_(prog_, "uModelMatrix") {
@@ -55,6 +56,7 @@ void Terrain::render() {
   uCameraMatrix_ = cam.cameraMatrix();
   uProjectionMatrix_ = cam.projectionMatrix();
   uModelMatrix_ = transform()->matrix();
+  uDepthCoef_ = 2.0 / log2(cam.z_far() + 1.0);
 
   gl::BindToTexUnit(diffuseTexture_, 2);
   mesh_.render(cam);

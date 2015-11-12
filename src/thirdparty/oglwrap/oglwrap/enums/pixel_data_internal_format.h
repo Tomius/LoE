@@ -5,17 +5,12 @@
 
 #include "../config.h"
 
-#define GL_DEPTH_COMPONENT32F 0x8CAC
-
 namespace OGLWRAP_NAMESPACE_NAME {
 namespace enums {
 
 enum class PixelDataInternalFormat : GLenum {
 #if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEPTH_COMPONENT)
   kDepthComponent = GL_DEPTH_COMPONENT,
-#endif
-#if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEPTH_COMPONENT32F)
-  kDepthComponent32F = GL_DEPTH_COMPONENT32F,
 #endif
 #if OGLWRAP_DEFINE_EVERYTHING || defined(GL_DEPTH_STENCIL)
   kDepthStencil = GL_DEPTH_STENCIL,

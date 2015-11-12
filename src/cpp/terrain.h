@@ -21,6 +21,7 @@ class Terrain : public engine::GameObject {
   engine::ShaderProgram prog_;  // has to be inited after mesh_
 
   gl::Texture2DArray diffuseTexture_;
+  gl::LazyUniform<float> uDepthCoef_;
   gl::LazyUniform<glm::mat4> uProjectionMatrix_, uCameraMatrix_, uModelMatrix_;
 
   virtual void render() override;

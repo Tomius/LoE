@@ -18,7 +18,8 @@ uniform sampler2DArray uDiffuseTexture;
 uniform float CDLODTerrain_uNodeDimension;
 uniform ivec2 CDLODTerrain_uTexSize;
 
-out vec4 fragColor;
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out float fragDepth;
 
 const ivec2 kAtlasSize = ivec2(4, 4);
 
@@ -155,5 +156,6 @@ void main() {
   vec3 final_color = diffuse_color * (0.2 + 0.8*lighting);
 
   fragColor = vec4(final_color, 1);
+  fragDepth = -vIn.c_pos.z;
   // fragColor = vec4(vIn.level/8, vIn.morph/3, 0, 1)*0.25 + 0.75*vec4(final_color, 1);
 }
