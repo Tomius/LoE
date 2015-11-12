@@ -162,7 +162,7 @@ void TexQuadTreeNode::initChild(int i) {
           this, right_cx, bottom_cz, right_sx, bottom_sz, level_-1, 4*index_+i+1);
     } break;
     default: {
-      throw new std::out_of_range("Tried to index "
+      throw std::out_of_range("Tried to index "
           + std::to_string(i) + "th child of a quadtree node.");
     }
   }
@@ -275,7 +275,7 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
       // we can use allocated memory that wasn't used for a while
       if (data_owner->last_used() > data_owner->kTimeToLiveOnGPU) {
         // the texture sizes vary, we need an usused place with enough memory
-        if (height_data_.size() <= data_owner->height_data_.size()) {
+        if (height_data_.size() == data_owner->height_data_.size()) {
           GLint offset =
             (streaming_info.index_data[data_owner->index_].data_offset_hi << 16) +
             streaming_info.index_data[data_owner->index_].data_offset_lo;

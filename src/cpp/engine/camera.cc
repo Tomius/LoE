@@ -70,7 +70,7 @@ void ThirdPersonalCamera::update() {
   prev_cursor_pos = cursor_pos;
 
   // We get invalid diff values at the startup
-  if (first_call_) {
+  if (first_call_ && (diff.x != 0 || diff.y != 0)) {
     diff = glm::dvec2(0, 0);
     first_call_ = false;
   }
@@ -99,9 +99,10 @@ void ThirdPersonalCamera::update() {
   }
 
   double dist_diff_mod = dest_dist_mod_ - curr_dist_mod_;
-  if (fabs(dist_diff_mod) > dt * 2 * mouse_scroll_sensitivity_) {
-    int sign = dist_diff_mod / fabs(dist_diff_mod);
-    curr_dist_mod_ += sign * dt * 2 * mouse_scroll_sensitivity_;
+  if (fabs(dist_diff_mod) > dt * mouse_scroll_sensitivity_) {
+    curr_dist_mod_ *= dist_diff_mod > 0 ?
+      (1 + dt * mouse_scroll_sensitivity_) :
+      (1 - dt * mouse_scroll_sensitivity_);
   }
 
   // Update the position

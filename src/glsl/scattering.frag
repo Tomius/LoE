@@ -27,16 +27,16 @@ const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
 const float G_M = -0.85;          // Mie g
 
 float R_INNER = uTexSize.x / 2 / PI;
-float R = 1.05* R_INNER;
+float R = 1.05 * R_INNER;
 float MAX = 10.0 * R;
-float SCALE_H = 2.0 / (R - R_INNER);
-float SCALE_L = 0.5 / (R - R_INNER);
+float SCALE_H = 8.0 / (R - R_INNER);
+float SCALE_L = 2.0 / (R - R_INNER);
 
-const int NUM_OUT_SCATTER = 10;
-const float FNUM_OUT_SCATTER = 10.0;
+const int NUM_OUT_SCATTER = 5;
+const float FNUM_OUT_SCATTER = 5.0;
 
-const int NUM_IN_SCATTER = 10;
-const float FNUM_IN_SCATTER = 10.0;
+const int NUM_IN_SCATTER = 5;
+const float FNUM_IN_SCATTER = 5.0;
 
 // ray direction
 vec3 ray_dir(float fov, vec2 size, vec2 pos) {
@@ -130,10 +130,11 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
 
   float start_density = min(density(o)*max(dot(normalize(o), l) + 0.3, 0), 0.15);
   vec3 random_stuff_that_makes_the_output_look_good =
-    12 * start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R +
-    E * sum * phase / 2;
+    (DistanceFromCamera() < 0.9*uZFar ? 2 : 20) *
+    start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R;
 
-  return max(random_stuff_that_makes_the_output_look_good, E * sum * phase);
+  float scale = DistanceFromCamera() < 0.9*uZFar ? 0.5 : 1.0;
+  return scale * (random_stuff_that_makes_the_output_look_good + E*sum*phase);
 }
 
 vec3 Scattering() {
@@ -141,17 +142,11 @@ vec3 Scattering() {
               * ray_dir(60.0, uResolution, gl_FragCoord.xy);
 
   vec2 e = ray_vs_sphere(uCamPos, rayDir, R);
-  if (e.x > e.y) {
+  if (e.x > e.y || e.y < 0) {
     return vec3(0);
   }
 
-  vec2 f = ray_vs_sphere(uCamPos, rayDir, R_INNER);
-  if (0 < f.y && f.x < f.y) {
-    e.y = min(e.y, f.x);
-  } else if (DistanceFromCamera() < 1000) {
-    e.y = min(e.y, DistanceFromCamera());
-  }
-
+  e.y = min(e.y, DistanceFromCamera());
   return in_scatter(uCamPos, rayDir, e, SunPos ());
 }
 
@@ -159,6 +154,5 @@ void main() {
   FetchNeighbours();
   vec3 color = Glow() + DoF(CurrentPixel()) + Scattering();
   color = ToneMap(color);
-
   fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1);
 }

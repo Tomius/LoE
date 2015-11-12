@@ -23,7 +23,7 @@ Scattering::Scattering(engine::GameObject* parent)
   prog_.validate();
 
   gl::Bind(color_tex_);
-  color_tex_.upload(gl::kRgb, 1, 1, gl::kRgb, gl::kFloat, nullptr);
+  color_tex_.upload(gl::kRgb16F, 1, 1, gl::kRgb, gl::kFloat, nullptr);
   color_tex_.minFilter(gl::kLinearMipmapLinear);
   color_tex_.magFilter(gl::kLinear);
   gl::Unbind(color_tex_);
@@ -48,11 +48,11 @@ void Scattering::screenResized(size_t w, size_t h) {
   uResolution_ = glm::vec2(w, h);
 
   gl::Bind(color_tex_);
-  color_tex_.upload(gl::kRgb, w, h, gl::kRgb, gl::kFloat, nullptr);
+  color_tex_.upload(gl::kRgb16F, w, h, gl::kRgb, gl::kFloat, nullptr);
   gl::Unbind(color_tex_);
 
   gl::Bind(depth_tex_);
-  depth_tex_.upload(gl::kDepthComponent, w, h,
+  depth_tex_.upload(gl::PixelDataInternalFormat::kDepthComponent32F, w, h,
                     gl::kDepthComponent, gl::kFloat, nullptr);
   gl::Unbind(depth_tex_);
 }

@@ -224,7 +224,7 @@ class ThirdPersonalCamera : public Camera {
   virtual void update() override;
 
   virtual void mouseScrolled(double, double yoffset) override {
-    dest_dist_mod_ -= yoffset / 4.0 * mouse_scroll_sensitivity_;
+    dest_dist_mod_ *= 1 + (-yoffset) * 0.1 * mouse_scroll_sensitivity_;
     if (dest_dist_mod_ < min_dist_mod_) {
       dest_dist_mod_ = min_dist_mod_;
     } else if (dest_dist_mod_ > max_dist_mod_) {

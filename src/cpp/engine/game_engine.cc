@@ -43,6 +43,8 @@ void GameEngine::InitContext() {
     const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_DEPTH_BITS, 32);
+    glfwWindowHint(GLFW_STENCIL_BITS, 0);
 
 #if ENGINE_NO_FULLSCREEN
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,

@@ -34,8 +34,9 @@ void FetchNeighbours() {
   neighbours[8] = Fetch(tex_coord + ivec2(+1, +1));
 }
 
-float Luminance(vec3 color) {
-  return dot(color, vec3(0.2126, 0.7152, 0.0722));
+float Luminance(vec3 c) {
+  return sqrt(0.299 * c.r*c.r + 0.587 * c.g*c.g + 0.114 * c.b*c.b);
+  // return dot(color, vec3(0.2126, 0.7152, 0.0722));
 }
 
 vec3 sqr(vec3 color) {
@@ -58,10 +59,25 @@ vec3 Glow() {
   return sum / 128;
 }
 
+float ToneMap_Internal(float x) {
+  float A = 0.22;
+  float B = 0.30;
+  float C = 0.10;
+  float D = 0.20;
+  float E = 0.01;
+  float F = 0.30;
+
+  return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F)) - E/F;
+}
+
 vec3 ToneMap(vec3 color) {
   float luminance = Luminance(color);
+  if (luminance < 1e-3) {
+    return color;
+  }
 
-  return color * (luminance / (luminance + 1));
+  float newLuminance = ToneMap_Internal(color) / ToneMap_Internal(11.2);
+  return color * newLuminance / luminance;
 }
 
 vec3 CurrentPixel() {

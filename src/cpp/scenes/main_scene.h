@@ -29,7 +29,7 @@ class MainScene : public engine::Scene {
     int radius = engine::GlobalHeightMap::sphere_radius;
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
         M_PI/3, 2, 3*radius, glm::vec3(-2*radius, 0, 0),
-        2, 0.2, 0.005, 1.5, radius, radius);
+        2, 1, 0.003, 4, radius, radius);
 
     addComponent<Scattering>();
 
@@ -58,7 +58,7 @@ class MainScene : public engine::Scene {
 
           tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
               M_PI/3, 2, 3*radius, pos,
-              2, 0.2, 0.005, 1.5, radius, radius);
+              2, 1, 0.003, 4, radius, radius);
           removeComponent(free_fly_camera_);
           free_fly_camera_ = nullptr;
           set_camera(tp_camera_);
@@ -78,7 +78,7 @@ class MainScene : public engine::Scene {
 
   virtual void update() override {
     double height = glm::length(scene_->camera()->transform()->pos());
-    double z_far = height, z_near = z_far/100000;
+    double z_far =  height, z_near = z_far / 10000;
     scene_->camera()->set_z_far(z_far);
     scene_->camera()->set_z_near(z_near);
     if (free_fly_camera_) {

@@ -50,7 +50,7 @@ inline GLuint SphereShape::createAttrib(std::vector<float>* data,
     case kNormal: return createNormals(data);
     case kTexCoord: return createTexCoords(data);
     case kTangent: return createTangents(data);
-    default: throw new std::runtime_error("Unsupported AttributeType");
+    default: throw std::runtime_error("Unsupported AttributeType");
   }
 }
 

@@ -76,7 +76,7 @@ class Program {
 
       gl(AttachShader(program_, shader.expose()));
     } else {
-      throw new std::logic_error{
+      throw std::logic_error{
         "Program::attachShader called on an already linked program."};
     }
 
