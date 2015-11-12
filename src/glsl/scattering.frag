@@ -1,5 +1,5 @@
 // Copyright (c) 2015, Tamas Csala
-// Written by GLtracy
+// Based on GLtracy's shader
 
 #version 330
 
@@ -18,13 +18,12 @@ uniform mat3 uCameraMatrix;
 const float PI = 3.14159265359;
 const float DEG_TO_RAD = PI / 180.0;
 
-
 // scatter const
 const float K_R = 0.166;
 const float K_M = 0.0025;
-const float E = 14.3;             // light intensity
+const float E = 14.3;                   // light intensity
 const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
-const float G_M = -0.85;          // Mie g
+const float G_M = -0.85;                // Mie g
 
 float R_INNER = uTexSize.x / 2 / PI;
 float R = 1.05 * R_INNER;
@@ -117,7 +116,6 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
     vec3 u = v + l * f.y;
 
     float n = (optic(p, v) + optic(v, u)) * (PI * 4.0);
-
     sum += density(v) * exp(-n * (K_R * C_R + K_M));
 
     v += step;
@@ -130,10 +128,9 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
 
   float start_density = min(density(o)*max(dot(normalize(o), l) + 0.3, 0), 0.15);
   vec3 random_stuff_that_makes_the_output_look_good =
-    (DistanceFromCamera() < 0.9*uZFar ? 2 : 20) *
-    start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R;
+    20 * start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R;
 
-  float scale = DistanceFromCamera() < 0.9*uZFar ? 0.5 : 1.0;
+  float scale = min(DistanceFromCamera() * 32 / R_INNER, 1);
   return scale * (random_stuff_that_makes_the_output_look_good + E*sum*phase);
 }
 
@@ -154,16 +151,6 @@ void main() {
   FetchNeighbours();
   vec3 color = Glow() + DoF(CurrentPixel()) + Scattering();
   color = ToneMap(color);
-
-  // vec3 rayDir = inverse(uCameraMatrix)
-  //             * ray_dir(60.0, uResolution, gl_FragCoord.xy);
-
-  // vec2 e = ray_vs_sphere(uCamPos, rayDir, R);
-  // if (e.x > e.y || e.y < 0) {
-  //   return;
-  // }
-  // vec2 f = ray_vs_sphere(uCamPos, rayDir, R_INNER);
-  // color = 0.99*vec3(DistanceFromCamera() / uZFar) + 0.01* color;
 
   fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1);
 }
