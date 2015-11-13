@@ -60,6 +60,7 @@ void Skybox::render() {
   prog_.update();
   uCameraMatrix_ = glm::mat3(cam->cameraMatrix());
   uProjectionMatrix_ = cam->projectionMatrix();
+  gl::Uniform<float>(prog_, "uZFar") = cam->z_far();
 
   gl::TemporaryDisable depth_test{gl::kDepthTest};
 

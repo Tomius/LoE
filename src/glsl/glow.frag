@@ -40,7 +40,7 @@ float Luminance(vec3 c) {
 }
 
 vec3 sqr(vec3 color) {
-  float luminance = min(Luminance(color), 1);
+  float luminance = Luminance(color);
   return (luminance*luminance) * color;
 }
 
@@ -56,7 +56,7 @@ vec3 Glow() {
            + sqr(neighbours[7]) * 2
            + sqr(neighbours[8]);
 
-  return sum / 128;
+  return sum / 16;
 }
 
 float ToneMap_Internal(float x) {

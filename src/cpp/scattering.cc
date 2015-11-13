@@ -69,7 +69,7 @@ void Scattering::screenResized(size_t w, size_t h) {
 
 void Scattering::update() {
   gl::Bind(fbo_);
-  gl::Clear().Color().Depth();
+  gl::Clear().Depth(); // the sky.frag will clear the color attachments
 }
 
 void Scattering::render2D() {

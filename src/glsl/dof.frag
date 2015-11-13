@@ -13,10 +13,9 @@ uniform vec2 uResolution;
 vec2 coord = ivec2(gl_FragCoord.xy) / uResolution;
 int mipmap_count = 1 + int(log2(max(uResolution.x, uResolution.y)));
 
-// see http://web.archive.org/web/20130416194336/http://olivers.posterous.com/linear-depth-in-glsl-for-real
 float DistanceFromCamera_Internal() {
   float depth = texture(uDepthTex, coord).x;
-  return depth == 0.0 ? uZFar : max(depth, 0.0f);
+  return max(depth, 0.0f);
 }
 
 float dist_from_cam = DistanceFromCamera_Internal();
