@@ -28,9 +28,7 @@ class TexQuadTree {
   glm::ivec2 min_node_size() const { return min_node_size_; }
   TexQuadTreeNode const& root() const { return root_; }
   int max_node_level() const { return max_node_level_; }
-  GLuint height_texture() const { return textures_[0]; }
-  GLuint normal_texture() const { return textures_[1]; }
-  GLuint index_texture() const { return textures_[2]; }
+  GLuint texture() const { return texture_; }
 
   void update(Camera const& cam);
 
@@ -41,10 +39,9 @@ class TexQuadTree {
 
   size_t load_count_ = 0;
   StreamingInfo streaming_info_;
-  GLuint textures_[3];
+  GLuint texture_;
 
   // anync load data
-  size_t update_counter_ = 0;
   std::set<TexQuadTreeNode*> load_later_;
   std::mutex load_later_ownership_;
   std::condition_variable condition_variable_;
@@ -54,14 +51,9 @@ class TexQuadTree {
 
   GLubyte max_node_level(int w, int h) const;
 
-  void initTexIndexBuffer();
-  void initTextures ();
-
-  void enlargeBuffers(size_t new_data_size);
-  void uploadNewData(size_t last_data_size);
-
+  void initTextures();
+  void findEmptyPlaces(TexQuadTreeNode* node);
   void imageLoaderThread();
-  void garbageCollect();
 };
 
 }  // namespace cdlod

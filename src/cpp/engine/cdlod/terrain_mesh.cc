@@ -13,8 +13,7 @@ TerrainMesh::TerrainMesh(engine::ShaderManager* manager) {
   manager->publish("engine/cdlod_terrain.vert", vs_src);
 }
 
-void TerrainMesh::setup(const gl::Program& program, int height_tex_unit,
-                        int normal_tex_unit, int index_tex_unit) {
+void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
   gl::Use(program);
 
   quad_tree_.setupPositions(program | "CDLODTerrain_aPosition");
@@ -23,12 +22,8 @@ void TerrainMesh::setup(const gl::Program& program, int height_tex_unit,
   uCamPos_ = engine::make_unique<gl::LazyUniform<glm::vec3>>(
       program, "CDLODTerrain_uCamPos");
 
-  height_tex_unit_ = height_tex_unit;
-  gl::UniformSampler(program, "CDLODTerrain_uHeightMap") = height_tex_unit;
-  normal_tex_unit_ = normal_tex_unit;
-  gl::UniformSampler(program, "CDLODTerrain_uNormalMap") = normal_tex_unit;
-  index_tex_unit_ = index_tex_unit;
-  gl::UniformSampler(program, "CDLODTerrain_uIndexTexture") = index_tex_unit;
+  tex_unit_ = tex_unit;
+  gl::UniformSampler(program, "CDLODTerrain_uHeightMap") = tex_unit;
 
   gl::Uniform<int>(program, "CDLODTerrain_max_level") =
       tex_quad_tree_.max_node_level();
@@ -54,12 +49,8 @@ void TerrainMesh::render(Camera const& cam) {
 
   tex_quad_tree_.update(cam);
 
-  gl(ActiveTexture(GL_TEXTURE0 + height_tex_unit_));
-  gl(BindTexture(GL_TEXTURE_BUFFER, tex_quad_tree_.height_texture()));
-  gl(ActiveTexture(GL_TEXTURE0 + normal_tex_unit_));
-  gl(BindTexture(GL_TEXTURE_BUFFER, tex_quad_tree_.normal_texture()));
-  gl(ActiveTexture(GL_TEXTURE0 + index_tex_unit_));
-  gl(BindTexture(GL_TEXTURE_BUFFER, tex_quad_tree_.index_texture()));
+  gl(ActiveTexture(GL_TEXTURE0 + tex_unit_));
+  gl(BindTexture(GL_TEXTURE_BUFFER, tex_quad_tree_.texture()));
 
   uCamPos_->set(cam.transform()->pos());
 
@@ -68,11 +59,6 @@ void TerrainMesh::render(Camera const& cam) {
 
   quad_tree_.render(cam);
 
-  gl(ActiveTexture(GL_TEXTURE0 + index_tex_unit_));
-  gl(BindTexture(GL_TEXTURE_BUFFER, 0));
-  gl(ActiveTexture(GL_TEXTURE0 + normal_tex_unit_));
-  gl(BindTexture(GL_TEXTURE_BUFFER, 0));
-  gl(ActiveTexture(GL_TEXTURE0 + height_tex_unit_));
   gl(BindTexture(GL_TEXTURE_BUFFER, 0));
 }
 

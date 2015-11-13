@@ -130,7 +130,7 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
   vec3 random_stuff_that_makes_the_output_look_good =
     20 * start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R;
 
-  float scale = min(DistanceFromCamera() * 32 / R_INNER, 1);
+  float scale = smoothstep(0, R_INNER / 32, DistanceFromCamera());
   return scale * (random_stuff_that_makes_the_output_look_good + E*sum*phase);
 }
 

@@ -21,46 +21,19 @@ GLubyte TexQuadTree::max_node_level(int w, int h) const {
   return std::max(x_depth, y_depth) - 1;
 }
 
-void TexQuadTree::initTexIndexBuffer() {
-  size_t node_count = 0;
-  for (int level = 0; level <= max_node_level_; ++level) {
-    node_count += 1 << (2*level); // == pow(4, level)
-  }
-  streaming_info_.index_data.resize(node_count); // default ctor - all zeros
-
-  gl::Bind(streaming_info_.index_tex_buffer);
-  streaming_info_.index_tex_buffer.data(
-      streaming_info_.index_data, gl::kDynamicDraw);
-  gl::Unbind(streaming_info_.index_tex_buffer);
-}
-
 void TexQuadTree::initTextures () {
-  gl(GenTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
-
-  gl(BindTexture(GL_TEXTURE_BUFFER, index_texture()));
-  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RGBA16UI,
-      streaming_info_.index_tex_buffer.expose()));
-
-  gl::Bind(streaming_info_.height_tex_buffer);
-  streaming_info_.height_tex_buffer.data(
+  gl::Bind(streaming_info_.tex_buffer);
+  streaming_info_.tex_buffer.data(
       streaming_info_.last_data_alloc * sizeof(GLushort),
       nullptr, gl::kDynamicDraw);
 
-  gl(BindTexture(GL_TEXTURE_BUFFER, height_texture()));
+  gl(GenTextures(1, &texture_));
+  gl(BindTexture(GL_TEXTURE_BUFFER, texture_));
   gl(TexBuffer(GL_TEXTURE_BUFFER, GL_R16UI,
-      streaming_info_.height_tex_buffer.expose()));
+      streaming_info_.tex_buffer.expose()));
 
-  gl::Bind(streaming_info_.normal_tex_buffer);
-  streaming_info_.normal_tex_buffer.data(
-      streaming_info_.last_data_alloc * sizeof(DerivativeInfo),
-      nullptr, gl::kDynamicDraw);
-
-  gl(BindTexture(GL_TEXTURE_BUFFER, normal_texture()));
-  gl(TexBuffer(GL_TEXTURE_BUFFER, GL_RG16UI,
-     streaming_info_.normal_tex_buffer.expose()));
-
-  gl::Unbind(streaming_info_.normal_tex_buffer);
   gl(BindTexture(GL_TEXTURE_BUFFER, 0));
+  gl::Unbind(streaming_info_.tex_buffer);
 }
 
 void TexQuadTree::imageLoaderThread() {
@@ -72,7 +45,7 @@ void TexQuadTree::imageLoaderThread() {
       std::unique_lock<std::mutex> lock{load_later_ownership_};
       condition_variable_.wait(lock, [this]{
         return worker_should_quit_ ||
-          (load_count_ < 5 && !load_later_.empty() && !worker_thread_should_sleep_);
+          (/*load_count_ < 5 && */!load_later_.empty() && !worker_thread_should_sleep_);
       });
 
       if (worker_should_quit_) { return; }
@@ -107,7 +80,6 @@ TexQuadTree::TexQuadTree(int w /*= GlobalHeightMap::tex_w*/,
     , max_node_level_(max_node_level(w, h))
     , root_(nullptr, w/2, h/2, w, h, max_node_level_, 0)
     , worker_{[this]{imageLoaderThread();}} {
-  initTexIndexBuffer();
   initTextures();
 }
 
@@ -116,7 +88,6 @@ TexQuadTree::TexQuadTree(int w, int h, GLubyte max_depth)
     , max_node_level_(max_depth)
     , root_(nullptr, w/2, h/2, w, h, max_node_level_, 0)
     , worker_{[this]{imageLoaderThread();}} {
-  initTexIndexBuffer();
   initTextures();
 }
 
@@ -126,10 +97,24 @@ TexQuadTree::~TexQuadTree() {
   condition_variable_.notify_one();
 
   // clean up
-  gl(DeleteTextures(sizeof(textures_) / sizeof(textures_[0]), textures_));
+  gl(DeleteTextures(1, &texture_));
 
   // wait until the worker has finished
   worker_.join();
+}
+
+void TexQuadTree::findEmptyPlaces(TexQuadTreeNode* node) {
+  if (node == nullptr || !node->isUploadedToGPU()) {
+    return;
+  }
+
+  if (node->last_used() > TexQuadTreeNode::kTimeToLiveOnGPU) {
+    streaming_info_.empty_places.push_back(node);
+  }
+
+  for (int i = 0; i < 4; ++i) {
+    findEmptyPlaces(node->getChild(i));
+  }
 }
 
 void TexQuadTree::update(Camera const& cam) {
@@ -148,6 +133,8 @@ void TexQuadTree::update(Camera const& cam) {
     // required anymore to render, so it's a good thing that we dropped it.
     load_later_.clear();
     load_count_ = 0;
+    streaming_info_.empty_places.clear();
+    findEmptyPlaces(&root_);
     root_.selectNodes(cam_pos, cam.frustum(), streaming_info_,
                       load_later_, force_syncronous_load);
 

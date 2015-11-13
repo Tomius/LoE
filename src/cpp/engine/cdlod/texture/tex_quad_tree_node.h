@@ -65,10 +65,13 @@ class TexQuadTreeNode {
   std::string dx_map_path() const;
   std::string dy_map_path() const;
 
-  bool is_image_loaded() const { return !height_data_.empty(); }
+  bool is_image_loaded() const { return !data_.empty(); }
+  bool isUploadedToGPU() const { return isUploadedToGPU_; }
   int last_used() const { return last_used_; }
-  const std::vector<GLushort>& height_data() const { return height_data_; }
-  const std::vector<DerivativeInfo>& normal_data() const { return normal_data_; }
+  const std::vector<TexelData>& data() const { return data_; }
+  TexQuadTreeNode* getChild(int i) const {
+    assert(0 <= i && i < 4); return children_[i].get();
+  }
 
   static const int kTimeToLiveOnGPU = 1 << 8;
 
@@ -77,12 +80,12 @@ class TexQuadTreeNode {
 
   TexQuadTreeNode* parent_;
   double x_, z_, sx_, sz_;
-  unsigned tex_w_, tex_h_, index_;
+  unsigned tex_w_, tex_h_, index_, data_start_offset_ = 0;
   GLubyte level_;
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
-  std::vector<GLushort> height_data_;
-  std::vector<DerivativeInfo> normal_data_;
+  std::vector<TexelData> data_;
+  bool isUploadedToGPU_ = false;
 
   int last_used_ = 0;
   // If a node is not used for this much time (frames), it will be unloaded.

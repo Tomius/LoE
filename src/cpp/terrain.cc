@@ -19,7 +19,7 @@ Terrain::Terrain(engine::GameObject* parent)
     , uCameraMatrix_(prog_, "uCameraMatrix")
     , uModelMatrix_(prog_, "uModelMatrix") {
   gl::Use(prog_);
-  mesh_.setup(prog_, 0, 1, 2);
+  mesh_.setup(prog_, 0);
   gl::UniformSampler(prog_, "uDiffuseTexture").set(2);
   gl::Bind(diffuseTexture_);
 

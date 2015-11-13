@@ -23,13 +23,11 @@ uniform int CDLODTerrain_max_level;
 uniform int CDLODTerrain_max_height;
 float CDLODTerrain_height_scale = CDLODTerrain_max_height / ((1 << 16) - 1.0);
 uniform usamplerBuffer CDLODTerrain_uHeightMap;
-uniform usamplerBuffer CDLODTerrain_uNormalMap;
-uniform usamplerBuffer CDLODTerrain_uIndexTexture;
 
 struct CDLODTerrain_Node {
+  int base_offset;
   ivec2 center, size;
-  int level, index;
-  uvec4 data;
+  int level;
 };
 
 float M_PI = 3.14159265359;
@@ -38,6 +36,12 @@ const float morph_end = 0.95, morph_start = 0.8;
 
 float CDLODTerrain_radius = CDLODTerrain_uTexSize.x / 2 / M_PI;
 float CDLODTerrain_cam_height = length(CDLODTerrain_uCamPos) - CDLODTerrain_radius;
+
+int FetchOffset(int offset) {
+  uint hi = texelFetch(CDLODTerrain_uHeightMap, offset).x;
+  uint lo = texelFetch(CDLODTerrain_uHeightMap, offset + 1).x;
+  return int((hi << 16u) + lo);
+}
 
 CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
                                           ivec2 tex_coord) {
@@ -48,13 +52,13 @@ CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
       child.size = ivec2(node.size.x/2, node.size.y/2);
       child.center = node.center + ivec2(-child.size.x + child.size.x/2,
                                          -child.size.y + child.size.y/2);
-      child.index = 4*node.index + 1;
+      child.base_offset = FetchOffset(node.base_offset + 2);
     } else {
       // top right
       child.size = ivec2(node.size.x - node.size.x/2, node.size.y/2);
       child.center = node.center + ivec2(child.size.x/2,
                                          -child.size.y + child.size.y/2);
-      child.index = 4*node.index + 2;
+      child.base_offset = FetchOffset(node.base_offset + 4);
     }
   } else {
     if (tex_coord.x < node.center.x) {
@@ -62,14 +66,14 @@ CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
       child.size = ivec2(node.size.x/2, node.size.y - node.size.y/2);
       child.center = node.center + ivec2(-child.size.x + child.size.x/2,
                                          child.size.y/2);
-      child.index = 4*node.index + 3;
+      child.base_offset = FetchOffset(node.base_offset + 6);
     } else {
       // bottom right
       child.size = ivec2(node.size.x - node.size.x/2,
                          node.size.y - node.size.y/2);
       child.center = node.center + ivec2(child.size.x/2,
                                          child.size.y/2);
-      child.index = 4*node.index + 4;
+      child.base_offset = FetchOffset(node.base_offset + 8);
     }
   }
   child.level = node.level - 1;
@@ -77,7 +81,8 @@ CDLODTerrain_Node CDLODTerrain_getChildOf(CDLODTerrain_Node node,
 }
 
 int CDLODTerrain_CalculateOffset(int base_offset, ivec2 tex_size, ivec2 pos) {
-  return base_offset + (pos.y + kBorderSize.y) * tex_size.x + (pos.x + kBorderSize.x);
+  int x = pos.x + kBorderSize.x, y = pos.y + kBorderSize.y;
+  return base_offset + 10 + 3 * (y*tex_size.x + x);
 }
 
 float CDLODTerrain_BellFunc(float x) {
@@ -106,7 +111,8 @@ void CDLODTerrain_bicubicSample(int base_offset, vec2 sample_pos, ivec2 tex_size
       ivec2 pos = clamp(top_left + ivec2(x, y), ivec2(-2), tex_size + ivec2(1));
       offsets[i] = CDLODTerrain_CalculateOffset(base_offset, tex_size, pos);
 
-      float weight = CDLODTerrain_BellFunc(x - fraction.x) * CDLODTerrain_BellFunc(-y + fraction.y);
+      float weight = CDLODTerrain_BellFunc(x - fraction.x)
+                   * CDLODTerrain_BellFunc(-y + fraction.y);
       weights[i] = weight;
       sum_weight += weight;
       i++;
@@ -126,30 +132,25 @@ float CDLODTerrain_fetchHeight(int[16] offsets, float[16] weights) {
   return height * CDLODTerrain_height_scale;
 }
 
-bool CDLODTerrain_getOffsetsAndWeights(CDLODTerrain_Node node, vec2 tex_sample,
+void CDLODTerrain_getOffsetsAndWeights(CDLODTerrain_Node node, vec2 tex_sample,
                                        out int[16] offsets, out float[16] weights) {
-  int base_offset = int((node.data.x << uint(16)) + node.data.y);
   ivec2 top_left = node.center - node.size/2;
-  ivec2 tex_size = ivec2(node.data.z, node.data.w);
+  ivec2 tex_size = ivec2(
+    texelFetch(CDLODTerrain_uHeightMap, node.base_offset).x,
+    texelFetch(CDLODTerrain_uHeightMap, node.base_offset+1).x);
 
-  // invalid data
-  if (tex_size.x == 0 || tex_size.y == 0) {
-    return false;
-  }
+  vec2 sample_pos = (tex_sample - vec2(top_left))
+                  * ((tex_size-2*kBorderSize) / vec2(node.size));
 
-  vec2 sample_pos = (tex_sample - vec2(top_left)) * ((tex_size-2*kBorderSize) / vec2(node.size));
-
-  CDLODTerrain_bicubicSample(base_offset, sample_pos, tex_size, offsets, weights);
-
-  return true;
+  CDLODTerrain_bicubicSample(node.base_offset, sample_pos,
+                             tex_size, offsets, weights);
 }
 
 vec3 CDLODTerrain_fetchNormal(int level, int[16] offsets, float[16] weights) {
   float dx = 0.0, dy = 0.0;
   for (int i = 0; i < 16; ++i) {
-    vec4 texel = texelFetch(CDLODTerrain_uNormalMap, offsets[i]) * weights[i];
-    dx += texel.x;
-    dy += texel.y;
+    dx += texelFetch(CDLODTerrain_uHeightMap, offsets[i]+1).x * weights[i];
+    dy += texelFetch(CDLODTerrain_uHeightMap, offsets[i]+2).x * weights[i];
   }
   dx *= CDLODTerrain_height_scale;
   dy *= CDLODTerrain_height_scale;
@@ -166,14 +167,9 @@ void CDLODTerrain_fetchHeightAndNormal(CDLODTerrain_Node node,
                                        out vec3 normal) {
   int[16] offsets;
   float[16] weights;
-  bool success = CDLODTerrain_getOffsetsAndWeights(node, tex_sample, offsets, weights);
-  if (success) {
-    height = CDLODTerrain_fetchHeight(offsets, weights);
-    normal = CDLODTerrain_fetchNormal(node.level, offsets, weights);
-  } else {
-    normal = vec3(0, 1, 0);
-    height = 0;
-  }
+  CDLODTerrain_getOffsetsAndWeights(node, tex_sample, offsets, weights);
+  height = CDLODTerrain_fetchHeight(offsets, weights);
+  normal = CDLODTerrain_fetchNormal(node.level, offsets, weights);
 }
 
 vec3 CDLODTerrain_worldPos(vec3 model_pos) {
@@ -215,18 +211,18 @@ void CDLODTerrain_getHeightAndNormal(vec2 tex_sample,
   node.center = CDLODTerrain_uTexSize/2;
   node.size = CDLODTerrain_uTexSize;
   node.level = CDLODTerrain_max_level;
-  node.index = 0;
+  node.base_offset = 0;
 
   float dist = CDLODTerrain_estimateDistance(tex_sample);
 
   CDLODTerrain_Node last_node = node;
 
   // Find the node that contains the given point (tex_sample).
-  while (0 < node.level && dist < node.size.x) {
+  ivec2 i_tex_sample = ivec2(tex_sample);
+  while (0 < node.level && dist < node.size.x/2) {
     last_node = node;
-    CDLODTerrain_Node child = CDLODTerrain_getChildOf(node, ivec2(tex_sample));
-    child.data = texelFetch(CDLODTerrain_uIndexTexture, child.index);
-    if (child.data.z == uint(0)) {
+    CDLODTerrain_Node child = CDLODTerrain_getChildOf(node, i_tex_sample);
+    if (child.base_offset == 0) {
       break;
     } else {
       node = child;
@@ -238,7 +234,7 @@ void CDLODTerrain_getHeightAndNormal(vec2 tex_sample,
   vec3 normals[2];
   float heights[2];
 
-  int next_tex_lod_level = 2*node.size.x;
+  int next_tex_lod_level = node.size.x;
   float max_dist = morph_end * next_tex_lod_level;
   float start_dist = morph_start * next_tex_lod_level;
   float normal_morph = smoothstep(start_dist, max_dist, dist);
@@ -252,7 +248,7 @@ void CDLODTerrain_getHeightAndNormal(vec2 tex_sample,
   } else {
     fetch_count = 2;
     nodes[0] = node;
-    nodes[1] =  last_node;
+    nodes[1] = last_node;
   }
 
   for (int i = 0; i < fetch_count; ++i) {

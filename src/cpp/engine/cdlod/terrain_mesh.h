@@ -14,8 +14,7 @@ namespace cdlod {
 class TerrainMesh {
  public:
   explicit TerrainMesh(engine::ShaderManager* manager);
-  void setup(const gl::Program& program, int height_tex_unit,
-             int normal_tex_unit, int index_tex_unit);
+  void setup(const gl::Program& program, int tex_unit);
   void render(const Camera& cam);
 
  private:
@@ -23,7 +22,7 @@ class TerrainMesh {
   TexQuadTree tex_quad_tree_;
   std::unique_ptr<gl::LazyUniform<glm::vec3>> uCamPos_;
   std::unique_ptr<gl::LazyUniform<GLfloat>> uNodeDimension_;
-  int height_tex_unit_, normal_tex_unit_, index_tex_unit_;
+  int tex_unit_;
 };
 
 }  // namespace cdlod
