@@ -206,6 +206,14 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {
     last_used_ = 0;
+
+    for (int i = 0; i < streaming_info.empty_places.size(); ++i) {
+      if (streaming_info.empty_places[i] == this) {
+        streaming_info.empty_places.erase(streaming_info.empty_places.begin() + i);
+        break;
+      }
+    }
+
     if (force_load_now) {
       load();
       upload(streaming_info);
@@ -281,6 +289,9 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
   for (int i = streaming_info.empty_places.size()-1; i >= 0; --i) {
     TexQuadTreeNode* data_owner = streaming_info.empty_places[i];
     assert(data_owner->isUploadedToGPU_);
+    if (data_owner->last_used_ <= kTimeToLiveOnGPU) {
+      continue;
+    }
 
     // the texture sizes vary, we need an usused place with enough memory
     if (data_.size() == data_owner->data_.size()) {

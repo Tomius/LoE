@@ -17,42 +17,42 @@ class FpsDisplay : public engine::Behaviour {
     fps_ = addComponent<engine::gui::Label>(
              L"FPS:",
              glm::vec2{0.9f, 0.9f},
-             engine::gui::Font{"src/resources/fonts/Vera.ttf", 25,
+             engine::gui::Font{"src/resources/fonts/Vera.ttf", 20,
              glm::vec4(1, 0, 0, 1)});
     fps_->set_horizontal_alignment(Font::HorizontalAlignment::kRight);
 
     geom_nodes_ = addComponent<engine::gui::Label>(
                L"Geometry nodes:",
-               glm::vec2{0.9f, 0.80f},
-               engine::gui::Font{"src/resources/fonts/Vera.ttf", 20,
+               glm::vec2{0.9f, 0.84f},
+               engine::gui::Font{"src/resources/fonts/Vera.ttf", 15,
                glm::vec4(1, 0, 0, 1)});
     geom_nodes_->set_horizontal_alignment(Font::HorizontalAlignment::kRight);
 
     triangle_count_ = addComponent<engine::gui::Label>(
                L"Triangles count:",
-               glm::vec2{0.9f, 0.75f},
-               engine::gui::Font{"src/resources/fonts/Vera.ttf", 20,
+               glm::vec2{0.9f, 0.80f},
+               engine::gui::Font{"src/resources/fonts/Vera.ttf", 15,
                glm::vec4(1, 0, 0, 1)});
     triangle_count_->set_horizontal_alignment(Font::HorizontalAlignment::kRight);
 
     triangle_per_sec_ = addComponent<engine::gui::Label>(
                L"Triangles per sec:",
-               glm::vec2{0.9f, 0.70f},
-               engine::gui::Font{"src/resources/fonts/Vera.ttf", 20,
+               glm::vec2{0.9f, 0.76f},
+               engine::gui::Font{"src/resources/fonts/Vera.ttf", 15,
                glm::vec4(1, 0, 0, 1)});
     triangle_per_sec_->set_horizontal_alignment(Font::HorizontalAlignment::kRight);
 
     texture_nodes_ = addComponent<engine::gui::Label>(
                L"Texture nodes:",
-               glm::vec2{0.9f, 0.6f},
-               engine::gui::Font{"src/resources/fonts/Vera.ttf", 20,
+               glm::vec2{0.9f, 0.70f},
+               engine::gui::Font{"src/resources/fonts/Vera.ttf", 15,
                glm::vec4(1, 0, 0, 1)});
     texture_nodes_->set_horizontal_alignment(Font::HorizontalAlignment::kRight);
 
     memory_usage_ = addComponent<engine::gui::Label>(
                L"GPU memory usage:",
-               glm::vec2{0.9f, 0.55f},
-               engine::gui::Font{"src/resources/fonts/Vera.ttf", 20,
+               glm::vec2{0.9f, 0.66f},
+               engine::gui::Font{"src/resources/fonts/Vera.ttf", 15,
                glm::vec4(1, 0, 0, 1)});
     memory_usage_->set_horizontal_alignment(Font::HorizontalAlignment::kRight);
   }

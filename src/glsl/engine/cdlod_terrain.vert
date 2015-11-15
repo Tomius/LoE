@@ -99,6 +99,25 @@ float CDLODTerrain_BellFunc(float x) {
   }
 }
 
+float CatMullRom(float x) {
+  const float B = 0.0;
+  const float C = 0.5;
+  float f = abs(x);
+
+  if (f < 1.0) {
+    return ((12 - 9*B - 6*C) * (f*f*f) +
+            (-18 + 12*B + 6*C) * (f*f) +
+            (6 - 2*B)) / 6.0;
+  } else if (1.0 <= f && f < 2.0) {
+    return ((-B - 6*C) * (f*f*f) +
+            (6*B + 30*C) * (f*f) +
+            (-12*B - 48*C) * f +
+             8*B + 24*C) / 6.0;
+  } else {
+    return 0.0;
+  }
+}
+
 void CDLODTerrain_bicubicSample(int base_offset, vec2 sample_pos, ivec2 tex_size,
                                 out int[16] offsets, out float[16] weights) {
 

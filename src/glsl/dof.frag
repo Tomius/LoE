@@ -14,8 +14,7 @@ vec2 coord = ivec2(gl_FragCoord.xy) / uResolution;
 int mipmap_count = 1 + int(log2(max(uResolution.x, uResolution.y)));
 
 float DistanceFromCamera_Internal() {
-  float depth = texture(uDepthTex, coord).x;
-  return max(depth, 0.0f);
+  return texture(uDepthTex, coord).x;
 }
 
 float dist_from_cam = DistanceFromCamera_Internal();
@@ -25,8 +24,8 @@ float DistanceFromCamera() {
 }
 
 vec3 DoF(vec3 texel_color) {
-  float level = sqrt(DistanceFromCamera() / uZFar) * 0.5 * (mipmap_count-1);
-  float floor_level = floor(level);
+  float level = DistanceFromCamera() / uZFar * (mipmap_count-1);
+  float floor_level = clamp(floor(level), 0, mipmap_count-1);
   vec3 color = 1.5*texel_color;
   for (int i = 1; i <= floor_level; ++i) {
     color += textureLod(uTex, coord, float(i)).rgb;

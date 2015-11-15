@@ -26,13 +26,13 @@ vec3 SkyColor(vec3 look_dir) {
 
   vec3 sun = vec3(0.0);
   float scale = 0.0;
-  for (int i = 4; i < 64; i += 4) {
+  for (int i = 8; i < 64; i += 4) {
     float curr_scale = pow(1.08, float(i));
     scale += curr_scale;
-    sun += curr_scale * pow(sun_color, vec3(pow(l, -i*8)));
+    sun += curr_scale * pow(sun_color, vec3(pow(l, -i*25)));
   }
 
-  return 10 * sun / scale;
+  return 5 * sun / scale;
 }
 
 // Functions for other objects' lighting computations
