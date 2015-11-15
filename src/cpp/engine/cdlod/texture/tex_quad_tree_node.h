@@ -15,7 +15,7 @@ class TexQuadTreeNode {
   TexQuadTreeNode(TexQuadTreeNode* parent,
                   double center_x, double center_z,
                   double size_x, double size_z,
-                  GLubyte mip_level, unsigned index);
+                  int mip_level, unsigned index);
 
   bool collidesWithSphere(const Sphere& sphere) {
     return bbox_.collidesWithSphere(sphere);
@@ -29,8 +29,7 @@ class TexQuadTreeNode {
             Magick::Image& dx,
             Magick::Image& dy);
 
-  void age();
-  void initChild(int i);
+  void age(StreamingInfo& streaming_info);
   void selectNodes(const glm::vec3& cam_pos,
                    const Frustum& frustum,
                    StreamingInfo& streaming_info,
@@ -81,7 +80,7 @@ class TexQuadTreeNode {
   TexQuadTreeNode* parent_;
   double x_, z_, sx_, sz_;
   unsigned tex_w_, tex_h_, index_, data_start_offset_ = 0;
-  GLubyte level_;
+  int level_;
   BBox bbox_;
   std::unique_ptr<TexQuadTreeNode> children_[4];
   std::vector<TexelData> data_;
@@ -91,6 +90,11 @@ class TexQuadTreeNode {
   // If a node is not used for this much time (frames), it will be unloaded.
   static const int kTimeToLiveInMemory = 1 << 16;
   static_assert(kTimeToLiveOnGPU < kTimeToLiveInMemory, "");
+
+  template<typename T>
+  void initChildInternal(int i);
+
+  void initChild(int i);
 };
 
 }

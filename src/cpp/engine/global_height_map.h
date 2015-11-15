@@ -27,6 +27,8 @@ namespace GlobalHeightMap {
   static constexpr double lod_level_distance_multiplier = 6.0;
   static_assert(2 <= lod_level_distance_multiplier, "");
 
+  static constexpr double texture_level_distance_multiplier = 0.25;
+
   // Geometry subdivision. This practially contols zooming into the heightmap.
   // If for ex. this is three, that means that a 8x8 geometry (9x9 vertices)
   // corresponds to a 1x1 texture area (2x2 texels)
@@ -43,6 +45,9 @@ namespace GlobalHeightMap {
   static constexpr int mt_everest_height = 8848 * (sphere_radius / 6371000);
   static constexpr int height_scale = 3;
   static constexpr int max_height = height_scale * mt_everest_height;
+
+  // statistics
+  extern size_t geom_nodes_count, texture_nodes_count, gpu_mem_usage;
 };
 
 }  // namespace engine

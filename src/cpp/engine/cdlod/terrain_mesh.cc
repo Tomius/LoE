@@ -39,6 +39,9 @@ void TerrainMesh::setup(const gl::Program& program, int tex_unit) {
 
   gl::Uniform<float>(program, "CDLODTerrain_uLodLevelDistanceMultiplier") =
       GlobalHeightMap::lod_level_distance_multiplier;
+
+  gl::Uniform<float>(program, "CDLODTerrain_uTextureLevelDistanceMultiplier") =
+      GlobalHeightMap::texture_level_distance_multiplier;
 }
 
 void TerrainMesh::render(Camera const& cam) {

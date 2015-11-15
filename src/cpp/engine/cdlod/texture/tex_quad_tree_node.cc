@@ -10,12 +10,18 @@ using namespace std::literals::chrono_literals;
 
 #define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
 
+static void SubData(gl::TextureBuffer& buffer,
+                    size_t offset, size_t length, void* src_data) {
+  gl::Bind(buffer);
+  buffer.subData(offset, length, src_data);
+}
+
 namespace engine {
 namespace cdlod {
 
 TexQuadTreeNode::TexQuadTreeNode(TexQuadTreeNode* parent,
                                  double x, double z, double sx, double sz,
-                                 GLubyte level, unsigned index)
+                                 int level, unsigned index)
     : parent_(parent)
     , x_(x), z_(z)
     , sx_(sx), sz_(sz)
@@ -119,33 +125,43 @@ void TexQuadTreeNode::load(Magick::Image& height,
   }
 }
 
-void TexQuadTreeNode::age() {
+void TexQuadTreeNode::age(StreamingInfo& streaming_info) {
   last_used_++;
 
   for (auto& child : children_) {
     if (child) {
       // unload child if its age would exceed the ttl
       if (child->last_used_ >= kTimeToLiveInMemory) {
+        // unload from gpu if still loaded (and is not root)
+        if (child->isUploadedToGPU_ && child->parent_) {
+          unsigned offset_of_start_offset =
+            child->parent_->data_start_offset_ + 2 * (child->index_+1);
+          GLushort data_start_offset_hi_and_lo[2] = {0, 0};
+          SubData(
+            streaming_info.tex_buffer,
+            offset_of_start_offset * sizeof(GLushort),
+            sizeof(data_start_offset_hi_and_lo),
+            &data_start_offset_hi_and_lo);
+        }
         child.reset();
       } else {
-        child->age();
+        child->age(streaming_info);
       }
     }
   }
 }
 
-void TexQuadTreeNode::initChild(int i) {
-  assert(level_ > 0);
+template<typename T>
+void TexQuadTreeNode::initChildInternal(int i) {
+  T left_sx = T(sx_)/2;
+  T right_sx = T(sx_) - T(sx_)/2;
+  T top_sz = T(sz_)/2;
+  T bottom_sz = T(sz_) - T(sz_)/2;
 
-  int left_sx = int(sx_)/2;
-  int right_sx = int(sx_) - int(sx_)/2;
-  int top_sz = int(sz_)/2;
-  int bottom_sz = int(sz_) - int(sz_)/2;
-
-  int left_cx = int(x_) - (left_sx - left_sx/2);
-  int right_cx = int(x_) + right_sx/2;
-  int top_cz = int(z_) - (top_sz - top_sz/2);
-  int bottom_cz = int(z_) + bottom_sz/2;
+  T left_cx = T(x_) - (left_sx - left_sx/2);
+  T right_cx = T(x_) + right_sx/2;
+  T top_cz = T(z_) - (top_sz - top_sz/2);
+  T bottom_cz = T(z_) + bottom_sz/2;
 
   switch (i) {
     case 0: { // top left
@@ -171,12 +187,21 @@ void TexQuadTreeNode::initChild(int i) {
   }
 }
 
+void TexQuadTreeNode::initChild(int i) {
+  if (level_ > 0) {
+    initChildInternal<int>(i);
+  } else {
+    initChildInternal<double>(i);
+  }
+}
+
 void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   const Frustum& frustum,
                                   StreamingInfo& streaming_info,
                                   std::set<TexQuadTreeNode*>& load_later,
                                   bool force_load_now) {
-  float lod_range = sx_;
+  float lod_range = GlobalHeightMap::texture_level_distance_multiplier *
+                    2*sx_;
 
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {
@@ -240,31 +265,42 @@ static void enlargeBuffers(StreamingInfo& streaming_info) {
   streaming_info.last_data_alloc = new_data_alloc;
 }
 
-static void SubData(gl::TextureBuffer& buffer,
-                    size_t offset, size_t length, void* src_data) {
-  gl::Bind(buffer);
-  buffer.subData(offset, length, src_data);
-}
-
 void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
-  if (!is_image_loaded()) {
-    load();
-  }
+  engine::GlobalHeightMap::texture_nodes_count++;
 
   if (isUploadedToGPU_) {
     return;
+  }
+
+  if (!is_image_loaded()) {
+    load();
   }
 
   bool found_empty_place = false;
   // look for empty places first
   for (int i = streaming_info.empty_places.size()-1; i >= 0; --i) {
     TexQuadTreeNode* data_owner = streaming_info.empty_places[i];
+    assert(data_owner->isUploadedToGPU_);
+
     // the texture sizes vary, we need an usused place with enough memory
     if (data_.size() == data_owner->data_.size()) {
       data_start_offset_ = data_owner->data_start_offset_;
-      data_owner->isUploadedToGPU_ = false;
       found_empty_place = true;
       streaming_info.empty_places.erase(streaming_info.empty_places.begin()+i);
+
+      // unload the texture that we are about to replace
+      data_owner->isUploadedToGPU_ = false;
+      if (data_owner->parent_) {
+        unsigned offset_of_start_offset =
+          data_owner->parent_->data_start_offset_ + 2 * (data_owner->index_+1);
+        GLushort data_start_offset_hi_and_lo[2] = {0, 0};
+        SubData(
+          streaming_info.tex_buffer,
+          offset_of_start_offset * sizeof(GLushort),
+          sizeof(data_start_offset_hi_and_lo),
+          &data_start_offset_hi_and_lo);
+      }
+
       break;
     }
   }
@@ -279,6 +315,7 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
 
     data_start_offset_ = streaming_info.uploaded_texel_count;
     streaming_info.uploaded_texel_count = new_texel_count;
+    GlobalHeightMap::gpu_mem_usage = new_texel_count*sizeof(GLushort);
   }
 
   if (parent_) {

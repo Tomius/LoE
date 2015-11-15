@@ -104,11 +104,12 @@ TexQuadTree::~TexQuadTree() {
 }
 
 void TexQuadTree::findEmptyPlaces(TexQuadTreeNode* node) {
-  if (node == nullptr || !node->isUploadedToGPU()) {
+  if (node == nullptr) {
     return;
   }
 
-  if (node->last_used() > TexQuadTreeNode::kTimeToLiveOnGPU) {
+  if (node->isUploadedToGPU() &&
+      node->last_used() > TexQuadTreeNode::kTimeToLiveOnGPU) {
     streaming_info_.empty_places.push_back(node);
   }
 
@@ -134,12 +135,13 @@ void TexQuadTree::update(Camera const& cam) {
     load_later_.clear();
     load_count_ = 0;
     streaming_info_.empty_places.clear();
+    engine::GlobalHeightMap::texture_nodes_count = 0;
     findEmptyPlaces(&root_);
     root_.selectNodes(cam_pos, cam.frustum(), streaming_info_,
                       load_later_, force_syncronous_load);
 
     // unload unused textures, and keep track of last use times
-    root_.age();
+    root_.age(streaming_info_);
   } // lock expires here
 
   // start worker thread if there's work to do

@@ -4,6 +4,7 @@
 #define ENGINE_CDLOD_QUAD_GRID_MESH_H_
 
 #include "grid_mesh.h"
+#include "../global_height_map.h"
 
 namespace engine {
 
@@ -44,10 +45,12 @@ class QuadGridMesh {
   // Adds all four subquads
   void addToRenderList(float offset_x, float offset_y, float scale, float level) {
     addToRenderList(offset_x, offset_y, scale, level, true, true, true, true);
+    engine::GlobalHeightMap::geom_nodes_count++;
   }
 
   void clearRenderList() {
     mesh_.clearRenderList();
+    engine::GlobalHeightMap::geom_nodes_count = 0;
   }
 
   void render() {

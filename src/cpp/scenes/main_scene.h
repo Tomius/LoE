@@ -34,9 +34,6 @@ class MainScene : public engine::Scene {
     addComponent<Scattering>();
 
     set_camera(tp_camera_);
-    addComponent<engine::gui::Label>(L"FPS: ", glm::vec2{0.8f, 0.9f},
-      engine::gui::Font{"src/resources/fonts/Vera.ttf", 30,
-      glm::vec4(1, 0, 0, 1)});
     auto fps = addComponent<FpsDisplay>();
     fps->set_group(1);
   }
