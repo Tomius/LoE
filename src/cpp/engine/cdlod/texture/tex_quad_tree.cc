@@ -45,7 +45,7 @@ void TexQuadTree::imageLoaderThread() {
       std::unique_lock<std::mutex> lock{load_later_ownership_};
       condition_variable_.wait(lock, [this]{
         return worker_should_quit_ ||
-          (/*load_count_ < 5 && */!load_later_.empty() && !worker_thread_should_sleep_);
+          (load_count_ < 5 && !load_later_.empty() && !worker_thread_should_sleep_);
       });
 
       if (worker_should_quit_) { return; }
@@ -110,7 +110,7 @@ void TexQuadTree::findEmptyPlaces(TexQuadTreeNode* node) {
 
   if (node->isUploadedToGPU() &&
       node->last_used() > TexQuadTreeNode::kTimeToLiveOnGPU) {
-    streaming_info_.empty_places.push_back(node);
+    streaming_info_.empty_places.insert(node);
   }
 
   for (int i = 0; i < 4; ++i) {

@@ -9,14 +9,8 @@
 #export vec3 SunColor();
 #export vec3 AmbientColor();
 
-const vec3 kAirColor = vec3(0.32, 0.36, 0.45);
-
 uniform vec3 uSunPos;
 vec3 sun_pos = normalize(uSunPos);
-
-float sky_sqr(float x) {
-  return x*x;
-}
 
 vec3 SkyColor(vec3 look_dir) {
   float look_dir_sun_dist = max(dot(look_dir, sun_pos), 0.0);
@@ -32,7 +26,7 @@ vec3 SkyColor(vec3 look_dir) {
     sun += curr_scale * pow(sun_color, vec3(pow(l, -i*25)));
   }
 
-  return 5 * sun / scale;
+  return 2 * sun / scale;
 }
 
 // Functions for other objects' lighting computations

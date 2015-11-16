@@ -206,13 +206,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {
     last_used_ = 0;
-
-    for (int i = 0; i < streaming_info.empty_places.size(); ++i) {
-      if (streaming_info.empty_places[i] == this) {
-        streaming_info.empty_places.erase(streaming_info.empty_places.begin() + i);
-        break;
-      }
-    }
+    streaming_info.empty_places.erase(this);
 
     if (force_load_now) {
       load();
@@ -286,8 +280,10 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
 
   bool found_empty_place = false;
   // look for empty places first
-  for (int i = streaming_info.empty_places.size()-1; i >= 0; --i) {
-    TexQuadTreeNode* data_owner = streaming_info.empty_places[i];
+  for (auto iter = streaming_info.empty_places.begin();
+            iter != streaming_info.empty_places.end();
+            iter++) {
+    TexQuadTreeNode* data_owner = *iter;
     assert(data_owner->isUploadedToGPU_);
     if (data_owner->last_used_ <= kTimeToLiveOnGPU) {
       continue;
@@ -297,7 +293,7 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
     if (data_.size() == data_owner->data_.size()) {
       data_start_offset_ = data_owner->data_start_offset_;
       found_empty_place = true;
-      streaming_info.empty_places.erase(streaming_info.empty_places.begin()+i);
+      streaming_info.empty_places.erase(iter);
 
       // unload the texture that we are about to replace
       data_owner->isUploadedToGPU_ = false;

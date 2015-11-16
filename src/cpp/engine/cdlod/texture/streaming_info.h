@@ -28,7 +28,7 @@ struct StreamingInfo {
 
   gl::TextureBuffer tex_buffer;
   gl::BufferObject<gl::BufferType::kCopyWriteBuffer> copyBuffer;
-  std::vector<TexQuadTreeNode*> empty_places;
+  std::set<TexQuadTreeNode*> empty_places;
 };
 
 }
