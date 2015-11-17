@@ -4,10 +4,6 @@
 #include "./tex_quad_tree_node.h"
 #include "../../misc.h"
 
-#include <thread>
-#include <chrono>
-using namespace std::literals::chrono_literals;
-
 #define gl(func) OGLWRAP_CHECKED_FUNCTION(func)
 
 static void SubData(gl::TextureBuffer& buffer,
@@ -37,7 +33,7 @@ void TexQuadTreeNode::load() {
 
 std::string TexQuadTreeNode::map_path(const char* base_path) const {
   char file_path[200];
-  if (level_ >= 0) {
+  if (level_ >= GlobalHeightMap::level_offset) {
     int tx = int_left_x(), ty = int_top_z();
     sprintf(file_path, "%s/%d/%d/%d.png", base_path, level_, tx, ty);
   } else {
@@ -67,7 +63,7 @@ void TexQuadTreeNode::load_files(Magick::Image& height,
     return;
   }
 
-  if (level_ >= 0) {
+  if (level_ >= GlobalHeightMap::level_offset) {
     height.read(height_map_path());
     dx.read(dx_map_path());
     dy.read(dy_map_path());
@@ -188,7 +184,7 @@ void TexQuadTreeNode::initChildInternal(int i) {
 }
 
 void TexQuadTreeNode::initChild(int i) {
-  if (level_ > 0) {
+  if (level_ > GlobalHeightMap::level_offset) {
     initChildInternal<int>(i);
   } else {
     initChildInternal<double>(i);
@@ -220,7 +216,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
     }
 
 
-    if (level_ != 0) {
+    if (level_ > GlobalHeightMap::level_offset) {
       for (int i = 0; i < 4; ++i) {
         auto& child = children_[i];
 

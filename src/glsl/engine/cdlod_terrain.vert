@@ -216,6 +216,10 @@ float CDLODTerrain_estimateDistance(vec2 geom_pos) {
   return length(est_diff);
 }
 
+float TexLodDist(CDLODTerrain_Node node) {
+  return node.size.x*CDLODTerrain_uTextureLevelDistanceMultiplier;
+}
+
 void CDLODTerrain_getHeightAndNormal(vec2 tex_sample,
                                      float morph,
                                      out float height,
@@ -233,14 +237,12 @@ void CDLODTerrain_getHeightAndNormal(vec2 tex_sample,
   node.level = CDLODTerrain_max_level;
   node.base_offset = 0;
 
-  float dist = CDLODTerrain_estimateDistance(tex_sample);
-  float texLodDist = node.size.x*CDLODTerrain_uTextureLevelDistanceMultiplier/2;
-
   CDLODTerrain_Node last_node = node;
 
   // Find the node that contains the given point (tex_sample).
   ivec2 i_tex_sample = ivec2(tex_sample);
-  while (0 < node.level && dist < texLodDist) {
+  float dist = CDLODTerrain_estimateDistance(tex_sample);
+  while (0 < node.level && dist < TexLodDist(node)) {
     last_node = node;
     CDLODTerrain_Node child = CDLODTerrain_getChildOf(node, i_tex_sample);
     if (child.base_offset == 0) {
@@ -255,7 +257,7 @@ void CDLODTerrain_getHeightAndNormal(vec2 tex_sample,
   vec3 normals[2];
   float heights[2];
 
-  float next_tex_lod_level = 2*texLodDist;
+  float next_tex_lod_level = TexLodDist(last_node);
   float max_dist = morph_end * next_tex_lod_level;
   float start_dist = morph_start * next_tex_lod_level;
   float normal_morph = smoothstep(start_dist, max_dist, dist);

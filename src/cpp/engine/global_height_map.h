@@ -15,8 +15,10 @@ namespace GlobalHeightMap {
   extern const char *dx_texture_base_path;
   extern const char *dy_texture_base_path;
 
+  static constexpr int level_offset = 0;
+
   // CDLOD nodes' extent is (1 << node_dimension_exp)
-  static constexpr int node_dimension_exp = 4;
+  static constexpr int node_dimension_exp = 5;
   static_assert(4 <= node_dimension_exp && node_dimension_exp <= 8, "");
 
   static constexpr int node_dimension = 1 << node_dimension_exp;
@@ -24,17 +26,18 @@ namespace GlobalHeightMap {
   // The size of sphere for a CDLOD level is node size * this
   // It should be at least 2, but making it bigger makes distant
   // parts of the terrain appear with more detail.
-  static constexpr double lod_level_distance_multiplier = 6.0;
+  static constexpr double lod_level_distance_multiplier = 3.0;
   static_assert(1 <= lod_level_distance_multiplier, "");
 
-  static constexpr double texture_level_distance_multiplier = 0.5;
+  static constexpr double texture_level_distance_multiplier = 0.75;
 
   // Geometry subdivision. This practially contols zooming into the heightmap.
   // If for ex. this is three, that means that a 8x8 geometry (9x9 vertices)
   // corresponds to a 1x1 texture area (2x2 texels)
-  static constexpr long geom_div = 2;
+  static constexpr long geom_div_base = 2;
+  static_assert(geom_div_base <= 2*node_dimension_exp, "");
 
-  static_assert(geom_div <= 2*node_dimension_exp, "");
+  static constexpr long geom_div = geom_div_base - level_offset;
 
   // The resolution of the heightmap
   static constexpr long tex_w = 172800, tex_h = 86400;
