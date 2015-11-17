@@ -25,7 +25,7 @@ namespace GlobalHeightMap {
   // It should be at least 2, but making it bigger makes distant
   // parts of the terrain appear with more detail.
   static constexpr double lod_level_distance_multiplier = 6.0;
-  static_assert(2 <= lod_level_distance_multiplier, "");
+  static_assert(1 <= lod_level_distance_multiplier, "");
 
   static constexpr double texture_level_distance_multiplier = 0.5;
 

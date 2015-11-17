@@ -26,7 +26,7 @@ const ivec2 kAtlasSize = ivec2(4, 4);
 // Quite a weird way to simulate amibent occlusion, but works suprisingly good
 float CalculateLighting(vec3 normal, vec3 light_dir) {
   float d = dot(normal, light_dir);
-  return 0.8*max(d, 0) + 0.2*((d+1)/2);
+  return max(d, 0) + 0.2*(d+1);
 }
 
 void handleBorders(ivec2 tex_size, inout ivec3[4] tc,
@@ -153,7 +153,7 @@ void main() {
 
   float gamma = 2.2;
   vec3 diffuse_color = pow(getColor(), vec3(1/gamma));
-  vec3 final_color = diffuse_color * (0.2 + 0.8*lighting);
+  vec3 final_color = diffuse_color * (0.1 + lighting);
 
   fragColor = vec4(final_color, 1);
   fragDepth = -vIn.c_pos.z;

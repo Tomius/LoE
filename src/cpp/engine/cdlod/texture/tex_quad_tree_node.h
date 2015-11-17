@@ -72,7 +72,7 @@ class TexQuadTreeNode {
     assert(0 <= i && i < 4); return children_[i].get();
   }
 
-  static const int kTimeToLiveOnGPU = 1 << 8;
+  static const int kTimeToLiveOnGPU = 1;
 
  private:
   using BBox = SpherizedAABBSat<GlobalHeightMap::tex_w, GlobalHeightMap::tex_h>;
