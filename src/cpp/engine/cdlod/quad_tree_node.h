@@ -22,6 +22,7 @@ class QuadTreeNode {
     return bbox_.collidesWithSphere(sphere);
   }
 
+  void age();
   void selectNodes(const glm::vec3& cam_pos,
                    const Frustum& frustum,
                    QuadGridMesh& grid_mesh);
@@ -33,11 +34,14 @@ class QuadTreeNode {
   int level_;
   BBox bbox_;
   std::unique_ptr<QuadTreeNode> children_[4];
-  bool children_inited_ = false;
+  int last_used_ = 0;
+
+  // If a node is not used for this much time (frames), it will be unloaded.
+  static const int kTimeToLiveInMemory = 1 << 8;
 
   static bool isVisible(double x, double z, int level);
 
-  void initChildren();
+  bool initChild(int i);
 };
 
 }

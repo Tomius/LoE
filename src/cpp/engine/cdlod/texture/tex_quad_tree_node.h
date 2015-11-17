@@ -88,7 +88,7 @@ class TexQuadTreeNode {
 
   int last_used_ = 0;
   // If a node is not used for this much time (frames), it will be unloaded.
-  static const int kTimeToLiveInMemory = 1 << 16;
+  static const int kTimeToLiveInMemory = 1 << 8;
   static_assert(kTimeToLiveOnGPU < kTimeToLiveInMemory, "");
 
   template<typename T>

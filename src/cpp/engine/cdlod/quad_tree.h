@@ -50,6 +50,8 @@ class QuadTree {
     glm::vec3 cam_pos = cam.transform()->pos();
     root_.selectNodes(cam_pos, cam.frustum(), mesh_);
     mesh_.render();
+
+    root_.age();
   }
 };
 
