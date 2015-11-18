@@ -52,7 +52,7 @@ class TexQuadTree {
   GLubyte max_node_level(int w, int h) const;
 
   void initTextures();
-  void findEmptyPlaces(TexQuadTreeNode* node);
+  void findEmptyPlaces();
   void imageLoaderThread();
 };
 

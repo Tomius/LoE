@@ -29,7 +29,7 @@ class TexQuadTreeNode {
             Magick::Image& dx,
             Magick::Image& dy);
 
-  void age(StreamingInfo& streaming_info);
+  void age();
   void selectNodes(const glm::vec3& cam_pos,
                    const Frustum& frustum,
                    StreamingInfo& streaming_info,
@@ -66,8 +66,11 @@ class TexQuadTreeNode {
 
   bool is_image_loaded() const { return !data_.empty(); }
   bool isUploadedToGPU() const { return isUploadedToGPU_; }
+  void isUploadedToGPU(bool value) { isUploadedToGPU_ = value; }
   int last_used() const { return last_used_; }
+  unsigned data_start_offset() const { return data_start_offset_; }
   const std::vector<TexelData>& data() const { return data_; }
+  TexQuadTreeNode* parent() const { return parent_; }
   TexQuadTreeNode* getChild(int i) const {
     assert(0 <= i && i < 4); return children_[i].get();
   }
@@ -88,7 +91,7 @@ class TexQuadTreeNode {
 
   int last_used_ = 0;
   // If a node is not used for this much time (frames), it will be unloaded.
-  static const int kTimeToLiveInMemory = 1 << 8;
+  static const int kTimeToLiveInMemory = 1 << 16;
   static_assert(kTimeToLiveOnGPU < kTimeToLiveInMemory, "");
 
   template<typename T>

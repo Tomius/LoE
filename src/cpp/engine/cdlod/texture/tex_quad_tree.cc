@@ -103,18 +103,52 @@ TexQuadTree::~TexQuadTree() {
   worker_.join();
 }
 
-void TexQuadTree::findEmptyPlaces(TexQuadTreeNode* node) {
-  if (node == nullptr) {
-    return;
-  }
+static bool CanUnloadNode(TexQuadTreeNode* node) {
+  assert(node != nullptr);
 
-  if (node->isUploadedToGPU() &&
-      node->last_used() > TexQuadTreeNode::kTimeToLiveOnGPU) {
-    streaming_info_.empty_places.insert(node);
-  }
-
+  bool has_child_on_gpu = false;
   for (int i = 0; i < 4; ++i) {
-    findEmptyPlaces(node->getChild(i));
+    TexQuadTreeNode* child = node->getChild(i);
+    if (child && child->isUploadedToGPU()) {
+      has_child_on_gpu = true;
+    }
+  }
+
+  bool exceeds_ttl = node->last_used() > TexQuadTreeNode::kTimeToLiveOnGPU;
+  return node->isUploadedToGPU() && !has_child_on_gpu && exceeds_ttl;
+}
+
+void TexQuadTree::findEmptyPlaces() {
+  gl::Bind(streaming_info_.tex_buffer);
+
+  // unload data from the buffer's end by decrasing buffer size
+  while (!streaming_info_.data_owners.empty() &&
+         CanUnloadNode (streaming_info_.data_owners.back())) {
+    TexQuadTreeNode* node = streaming_info_.data_owners.back();
+    node->isUploadedToGPU(false);
+    if (node->parent()) {
+      unsigned offset_of_start_offset =
+        node->parent()->data_start_offset() + 2 * (node->index()+1);
+      GLushort data_start_offset_hi_and_lo[2] = {0, 0};
+      streaming_info_.tex_buffer.subData(
+        offset_of_start_offset * sizeof(GLushort),
+        sizeof(data_start_offset_hi_and_lo),
+        &data_start_offset_hi_and_lo);
+    }
+
+    size_t uploaded_bytes =
+      sizeof(TextureInfo) + node->data().size() * sizeof(TexelData);
+    streaming_info_.uploaded_texel_count -= uploaded_bytes / sizeof(GLushort);
+    GlobalHeightMap::gpu_mem_usage = streaming_info_.uploaded_texel_count*sizeof(GLushort);
+    streaming_info_.data_owners.pop_back();
+  }
+
+  // mark data to be overriden if it is inside the buffer somewhere
+  streaming_info_.empty_places.clear();
+  for (TexQuadTreeNode* node : streaming_info_.data_owners) {
+    if (CanUnloadNode(node)) {
+      streaming_info_.empty_places.push_back(node);
+    }
   }
 }
 
@@ -134,14 +168,13 @@ void TexQuadTree::update(Camera const& cam) {
     // required anymore to render, so it's a good thing that we dropped it.
     load_later_.clear();
     load_count_ = 0;
-    streaming_info_.empty_places.clear();
     engine::GlobalHeightMap::texture_nodes_count = 0;
-    findEmptyPlaces(&root_);
+    findEmptyPlaces();
     root_.selectNodes(cam_pos, cam.frustum(), streaming_info_,
                       load_later_, force_syncronous_load);
 
     // unload unused textures, and keep track of last use times
-    root_.age(streaming_info_);
+    root_.age();
   } // lock expires here
 
   // start worker thread if there's work to do

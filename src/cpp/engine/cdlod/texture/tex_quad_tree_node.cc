@@ -121,27 +121,16 @@ void TexQuadTreeNode::load(Magick::Image& height,
   }
 }
 
-void TexQuadTreeNode::age(StreamingInfo& streaming_info) {
+void TexQuadTreeNode::age() {
   last_used_++;
 
   for (auto& child : children_) {
     if (child) {
       // unload child if its age would exceed the ttl
-      if (child->last_used_ >= kTimeToLiveInMemory) {
-        // unload from gpu if still loaded (and is not root)
-        if (child->isUploadedToGPU_ && child->parent_) {
-          unsigned offset_of_start_offset =
-            child->parent_->data_start_offset_ + 2 * (child->index_+1);
-          GLushort data_start_offset_hi_and_lo[2] = {0, 0};
-          SubData(
-            streaming_info.tex_buffer,
-            offset_of_start_offset * sizeof(GLushort),
-            sizeof(data_start_offset_hi_and_lo),
-            &data_start_offset_hi_and_lo);
-        }
+      if (!child->isUploadedToGPU_ && kTimeToLiveInMemory <= child->last_used_) {
         child.reset();
       } else {
-        child->age(streaming_info);
+        child->age();
       }
     }
   }
@@ -202,7 +191,6 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {
     last_used_ = 0;
-    streaming_info.empty_places.erase(this);
 
     if (force_load_now) {
       load();
@@ -266,7 +254,7 @@ static void enlargeBuffers(StreamingInfo& streaming_info) {
 void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
   engine::GlobalHeightMap::texture_nodes_count++;
 
-  if (isUploadedToGPU_) {
+  if (isUploadedToGPU_  || (parent_ && !parent_->isUploadedToGPU_)) {
     return;
   }
 
@@ -276,12 +264,10 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
 
   bool found_empty_place = false;
   // look for empty places first
-  for (auto iter = streaming_info.empty_places.begin();
-            iter != streaming_info.empty_places.end();
-            iter++) {
-    TexQuadTreeNode* data_owner = *iter;
-    assert(data_owner->isUploadedToGPU_);
-    if (data_owner->last_used_ <= kTimeToLiveOnGPU) {
+  for (int i = 0; i < streaming_info.empty_places.size(); ++i) {
+    TexQuadTreeNode* data_owner = streaming_info.empty_places[i];
+    if (!data_owner->isUploadedToGPU_ ||
+        data_owner->last_used_ <= kTimeToLiveOnGPU) {
       continue;
     }
 
@@ -289,7 +275,6 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
     if (data_.size() == data_owner->data_.size()) {
       data_start_offset_ = data_owner->data_start_offset_;
       found_empty_place = true;
-      streaming_info.empty_places.erase(iter);
 
       // unload the texture that we are about to replace
       data_owner->isUploadedToGPU_ = false;
@@ -303,6 +288,16 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
           sizeof(data_start_offset_hi_and_lo),
           &data_start_offset_hi_and_lo);
       }
+
+      bool found_data_owner = false;
+      for (int j = 0; j < streaming_info.data_owners.size(); ++j) {
+        if (streaming_info.data_owners[j] == data_owner) {
+          streaming_info.data_owners[j] = this;
+          found_data_owner = true;
+          break;
+        }
+      }
+      assert(found_data_owner);
 
       break;
     }
@@ -319,6 +314,8 @@ void TexQuadTreeNode::upload(StreamingInfo& streaming_info) {
     data_start_offset_ = streaming_info.uploaded_texel_count;
     streaming_info.uploaded_texel_count = new_texel_count;
     GlobalHeightMap::gpu_mem_usage = new_texel_count*sizeof(GLushort);
+
+    streaming_info.data_owners.push_back(this);
   }
 
   if (parent_) {
