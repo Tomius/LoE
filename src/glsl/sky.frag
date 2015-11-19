@@ -16,7 +16,7 @@ vec3 SkyColor(vec3 look_dir) {
   float look_dir_sun_dist = max(dot(look_dir, sun_pos), 0.0);
   float l = look_dir_sun_dist;
 
-  vec3 sun_color = vec3(0.97, 0.95, 0.2);
+  vec3 sun_color = vec3(0.97, 0.935, 0.2);
 
   vec3 sun = vec3(0.0);
   float scale = 0.0;

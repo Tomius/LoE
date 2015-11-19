@@ -26,10 +26,10 @@ const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
 const float G_M = -0.85;                // Mie g
 
 float R_INNER = uTexSize.x / 2 / PI;
-float R = 1.05 * R_INNER;
+float R = 1.02 * R_INNER;
 float MAX = 10.0 * R;
-float SCALE_H = 8.0 / (R - R_INNER);
-float SCALE_L = 2.0 / (R - R_INNER);
+float SCALE_H = 4.0 / (R - R_INNER);
+float SCALE_L = 0.5 / (R - R_INNER);
 
 const int NUM_OUT_SCATTER = 5;
 const float FNUM_OUT_SCATTER = 5.0;
@@ -48,18 +48,18 @@ vec3 ray_dir(float fov, vec2 size, vec2 pos) {
 }
 
 // ray intersects sphere
-// e = -b +/- sqrt(b^2 - c)
-vec2 ray_vs_sphere(vec3 p, vec3 dir, float r) {
-  float b = dot(p, dir);
-  float c = dot(p, p) - r * r;
+vec2 ray_vs_sphere(vec3 rayOrigin, vec3 rayDir, float r) {
+  float a = dot(rayDir, rayDir);
+  float b = 2*dot(rayOrigin, rayDir);
+  float c = dot(rayOrigin, rayOrigin) - r * r;
 
-  float d = b * b - c;
+  float d = b * b - 4*a*c;
   if (d < 0.0) {
     return vec2(MAX, -MAX);
   }
   d = sqrt(d);
 
-  return vec2(-b - d, -b + d);
+  return vec2(-b - d, -b + d) / 2 / a;
 }
 
 // Mie
@@ -126,9 +126,9 @@ vec3 in_scatter(vec3 o, vec3 dir, vec2 e, vec3 l) {
   float cc = c * c;
   vec3 phase = K_R*C_R*phase_reyleigh(cc) + K_M*phase_mie(G_M, c, cc);
 
-  float start_density = min(density(o)*max(dot(normalize(o), l) + 0.3, 0), 0.15);
+  float start_density = min(density(o)*max(dot(normalize(o), l) + 0.2, 0), 0.15);
   vec3 random_stuff_that_makes_the_output_look_good =
-    20 * start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R;
+    25 * start_density * (len * SCALE_L / (len * SCALE_L + 1)) * C_R;
 
   float scale = smoothstep(0, R_INNER / 32, DistanceFromCamera());
   return scale * (random_stuff_that_makes_the_output_look_good + E*sum*phase);

@@ -46,7 +46,7 @@ namespace GlobalHeightMap {
   static constexpr double sphere_radius = tex_w / 2 / M_PI;
 
   static constexpr int mt_everest_height = 8848 * (sphere_radius / 6371000);
-  static constexpr int height_scale = 3;
+  static constexpr int height_scale = 5;
   static constexpr int max_height = height_scale * mt_everest_height;
 
   // statistics
