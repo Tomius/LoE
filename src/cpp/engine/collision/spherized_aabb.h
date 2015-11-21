@@ -119,9 +119,7 @@ static inline glm::dvec3 Model2WorldPos(glm::dvec3 model_pos) {
 template<size_t max_w, size_t max_h>
 class SpherizedAABBSat {
   bool invalid_ = true;
-  bool use_aabb = false;
   SpherizedAABB<max_w, max_h> aabb_;
-  glm::vec2 percent_;
 
   glm::dvec3 normals_[4];
   Interval extents_[4];
@@ -146,13 +144,6 @@ class SpherizedAABBSat {
     maxes.x = std::min<double>(maxes.x, max_w);
     maxes.z = std::min<double>(maxes.z, max_h);
     aabb_ = {mins, maxes};
-
-    percent_ = {(maxes.x - mins.x) * 100 / max_w,
-                (maxes.z - mins.z) * 100 / max_h};
-    if (percent_.x >= 100/16.0 || percent_.y >= 100/16.0) {
-      use_aabb = true;
-      return;
-    }
 
     double radius = GlobalHeightMap::sphere_radius;
     radial_extent_ = {radius + mins.y, radius + maxes.y};
@@ -194,48 +185,74 @@ class SpherizedAABBSat {
       A, B, C, D, E, F, G, H
     };
 
-    glm::dvec3 vertices[8];
-    vertices[A] = {maxes.x, maxes.y, mins.z};
-    vertices[B] = {maxes.x, maxes.y, maxes.z};
-    vertices[C] = {maxes.x, mins.y,  maxes.z};
-    vertices[D] = {maxes.x, mins.y,  mins.z};
-    vertices[E] = {mins.x,  maxes.y, mins.z};
-    vertices[F] = {mins.x,  maxes.y, maxes.z};
-    vertices[G] = {mins.x,  mins.y,  maxes.z};
-    vertices[H] = {mins.x,  mins.y,  mins.z};
+    glm::dvec3 m_vertices[8];
+    m_vertices[A] = {maxes.x, maxes.y, mins.z};
+    m_vertices[B] = {maxes.x, maxes.y, maxes.z};
+    m_vertices[C] = {maxes.x, mins.y,  maxes.z};
+    m_vertices[D] = {maxes.x, mins.y,  mins.z};
+    m_vertices[E] = {mins.x,  maxes.y, mins.z};
+    m_vertices[F] = {mins.x,  maxes.y, maxes.z};
+    m_vertices[G] = {mins.x,  mins.y,  maxes.z};
+    m_vertices[H] = {mins.x,  mins.y,  mins.z};
 
-    for (glm::dvec3& vert : vertices) {
-      vert = Model2WorldPos<max_w, max_h>(vert);
+    glm::dvec3 vertices[8];
+    for (int i = 0; i < 8; ++i) {
+      vertices[i] = Model2WorldPos<max_w, max_h>(m_vertices[i]);
     }
 
     enum {
-      Front, Right, Back, Left
+      Front = 0, Right = 1, Back = 2, Left = 3
     };
 
     // normals are towards the inside of the AABB
-    normals_[Front] = normalize(cross(vertices[G]-vertices[C], vertices[B]-vertices[C]));
-    normals_[Right] = normalize(cross(vertices[C]-vertices[D], vertices[A]-vertices[D]));
-    normals_[Back]  = normalize(cross(vertices[D]-vertices[H], vertices[E]-vertices[H]));
-    normals_[Left]  = normalize(cross(vertices[H]-vertices[G], vertices[F]-vertices[G]));
+    normals_[Front] = GetNormal(vertices, G, C, B, C);
+    normals_[Right] = GetNormal(vertices, C, D, A, D);
+    normals_[Back]  = GetNormal(vertices, D, H, E, H);
+    normals_[Left]  = GetNormal(vertices, H, G, F, G);
 
-    extents_[Front] = {dot(vertices[B], normals_[Front]), dot(vertices[A], normals_[Front])};
-    extents_[Right] = {dot(vertices[A], normals_[Right]), dot(vertices[E], normals_[Right])};
-    extents_[Back]  = {dot(vertices[E], normals_[Back]),  dot(vertices[F], normals_[Back])};
-    extents_[Left]  = {dot(vertices[F], normals_[Left]),  dot(vertices[B], normals_[Left])};
+    extents_[Front] = getExtent(normals_[Front], m_vertices[B], m_vertices[A]);
+    extents_[Right] = getExtent(normals_[Right], m_vertices[A], m_vertices[E]);
+    extents_[Back]  = getExtent(normals_[Back],  m_vertices[H], m_vertices[G]);
+    extents_[Left]  = getExtent(normals_[Left],  m_vertices[F], m_vertices[B]);
+  }
 
-    for (size_t i = 0; i < 4; ++i) {
-      if (extents_[i].max + kEpsilon < extents_[i].min) {
-        std::cout << "Error" << std::endl;
-        abort();
+  static glm::dvec3 GetNormal(glm::dvec3 vertices[], int a, int b, int c, int d) {
+    glm::dvec3 ba = vertices[a]-vertices[b];
+    glm::dvec3 dc = vertices[c]-vertices[d];
+
+    // If one of these are null vectors, we can't use this plane for separation,
+    // so let the normal be null vector, and the (0, 0) intervals will intersect.
+    if (length(ba) < kEpsilon || length(dc) < kEpsilon) {
+      return glm::dvec3();
+    }
+
+    return normalize(cross(ba, dc));
+  }
+
+
+  static Interval getExtent(const glm::dvec3& normal,
+                            const glm::dvec3& m_space_min,
+                            const glm::dvec3& m_space_max) {
+    Interval interval;
+    glm::dvec3 diff = m_space_max - m_space_min;
+    for (int i = 0; i <= 4; ++i) {
+      glm::dvec3 current = Model2WorldPos<max_w, max_h>(m_space_min + i/4.0*diff);
+      double current_projection = dot(current, normal);
+      if (i == 0) {
+        interval.min = current_projection;
+        interval.max = current_projection;
+      } else {
+        interval.min = std::min(interval.min, current_projection);
+        interval.max = std::max(interval.max, current_projection);
       }
     }
+
+    return interval;
   }
 
   virtual bool collidesWithSphere(const Sphere& sphere) const {
     if (invalid_) {
       return false;
-    } else if (use_aabb) {
-      return aabb_.collidesWithSphere (sphere);
     } else {
       for (size_t i = 0; i < 4; ++i) {
         double interval_center = dot(sphere.center(), normals_[i]);

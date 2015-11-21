@@ -48,25 +48,26 @@ vec3 ray_dir(float fov, vec2 size, vec2 pos) {
 }
 
 // ray intersects sphere
+// x = -(b/2) +- sqrt((b/2)^2 - c) when 'a' is 1.0
 vec2 ray_vs_sphere(vec3 rayOrigin, vec3 rayDir, float r) {
-  float a = dot(rayDir, rayDir);
-  float b = 2*dot(rayOrigin, rayDir);
+  // float a = dot(rayDir, rayDir); // so a == 1.0;
+  float b_half = dot(rayOrigin, rayDir);
   float c = dot(rayOrigin, rayOrigin) - r * r;
 
-  float d = b * b - 4*a*c;
-  if (d < 0.0) {
+  float discriminant_per_four = b_half * b_half - c;
+  if (discriminant_per_four < 0.0) {
     return vec2(MAX, -MAX);
   }
-  d = sqrt(d);
+  float d_half = sqrt(discriminant_per_four);
 
-  return vec2(-b - d, -b + d) / 2 / a;
+  return vec2(-b_half - d_half, -b_half + d_half);
 }
 
 // Mie
 // g : (-0.75, -0.999)
-//      3 * (1 - g^2)               1 + c^2
+//      3 * (1 - g^2)                  1 + c^2
 // F = ----------------- * -------------------------------
-//      2 * (2 + g^2)     (1 + g^2 - 2 * g * c)^(3/2)
+//      2 * (2 + g^2)        (1 + g^2 - 2 * g * c)^(3/2)
 float phase_mie(float g, float c, float cc) {
   float gg = g * g;
 

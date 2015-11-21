@@ -16,8 +16,8 @@ void ShaderFile::findExports(std::string &src) {
     // GLSL error messages would be a lot harder to understand.
     exports_ += src.substr(start_pos, line_end - start_pos);
 
-    // remove the export line (but leave the \n)
-    src.erase(export_pos, line_end - export_pos);
+    // remove the export macro (but leave the declaration and the \n)
+    src.erase(export_pos, start_pos - export_pos);
 
     // Search for the next #export
     export_pos = src.find("#export");

@@ -7,7 +7,7 @@
 #export uniform float uZFar;
 
 uniform sampler2D uTex, uDepthTex;
-uniform float uZFar, uDepthCoef;
+uniform float uDepthCoef;
 uniform vec2 uResolution;
 
 vec2 coord = ivec2(gl_FragCoord.xy) / uResolution;
