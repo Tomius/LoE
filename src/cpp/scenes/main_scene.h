@@ -30,10 +30,15 @@ class MainScene : public engine::Scene {
     tp_camera_ = addComponent<engine::ThirdPersonalCamera>(
         M_PI/3, 2, 3*radius, glm::vec3(-2*radius, 0, 0),
         2, 1, 0.005, 4, radius, radius);
+    set_camera(tp_camera_);
+
+    // free_fly_camera_ = addComponent<engine::FreeFlyCamera>(
+    //     M_PI/3, 2, 3*radius, glm::vec3{-18829.6, 19925.4, 3163.6},
+    //     glm::vec3{-18829.6, 19925.4, 3163.6} + glm::vec3{0.498859, -0.0934641, 0.861629}, 0, 0);
+    // set_camera(free_fly_camera_);
 
     addComponent<Scattering>();
 
-    set_camera(tp_camera_);
     auto fps = addComponent<FpsDisplay>();
     fps->set_group(1);
   }

@@ -26,10 +26,10 @@ const vec3  C_R = vec3(0.3, 0.7, 1.0);  // 1 / wavelength ^ 4
 const float G_M = -0.85;                // Mie g
 
 float R_INNER = uTexSize.x / 2 / PI;
-float R = 1.02 * R_INNER;
+float R = 1.01 * R_INNER;
 float MAX = 10.0 * R;
-float SCALE_H = 4.0 / (R - R_INNER);
-float SCALE_L = 0.5 / (R - R_INNER);
+float SCALE_H = 8.0 / (R - R_INNER);
+float SCALE_L = 0.35 / (R - R_INNER);
 
 const int NUM_OUT_SCATTER = 5;
 const float FNUM_OUT_SCATTER = 5.0;

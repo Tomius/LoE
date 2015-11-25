@@ -4,12 +4,14 @@
 #extension GL_ARB_texture_query_lod : enable
 
 #include "sky.frag"
+#include "engine/cdlod_terrain.frag"
 
 in VertexData {
   vec3 w_normal;
   vec3 c_pos, w_pos, m_pos;
   vec2 texCoord;
   float level, morph;
+  vec4 render_data;
 } vIn;
 
 uniform mat4 uCameraMatrix;
@@ -17,16 +19,24 @@ uniform sampler2DArray uDiffuseTexture;
 
 uniform float CDLODTerrain_uNodeDimension;
 uniform ivec2 CDLODTerrain_uTexSize;
+uniform vec3 CDLODTerrain_uCamPos;
 
 layout (location = 0) out vec4 fragColor;
 layout (location = 1) out float fragDepth;
 
 const ivec2 kAtlasSize = ivec2(4, 4);
+const float kShininess = 4;
 
-// Quite a weird way to simulate amibent occlusion, but works suprisingly good
+// Quite a weird way to "simulate" amibent occlusion, but works suprisingly good
 float CalculateLighting(vec3 normal, vec3 light_dir) {
   float d = dot(normal, light_dir);
-  return max(d, 0) + 0.2*(d+1);
+
+  vec3 view_dir = normalize(CDLODTerrain_uCamPos - vIn.w_pos);
+  vec3 half_vec = normalize(light_dir + view_dir);
+  float d2 = dot(half_vec, normal);
+  float specular_power = pow(max(d2, 0), kShininess) + pow(0.25*(d2+1), kShininess);
+
+  return max(d, 0) + 0.05*(d+1) /*+ 0.2*specular_power*/;
 }
 
 void handleBorders(ivec2 tex_size, inout ivec3[4] tc,
@@ -145,7 +155,12 @@ void main() {
   // Lighting
   vec3 w_sun_pos = SunPos();
   float diffuse_power = 0.0;
-  vec3 w_normal = normalize(vIn.w_normal);
+  vec3 m_normal;
+  CDLODTerrain_modelPos(vIn.m_pos.xz, vIn.render_data, m_normal);
+  vec3 m_normal_offseted_pos = vIn.m_pos + m_normal;
+  vec3 w_normal = CDLODTerrain_worldPos(m_normal_offseted_pos) - vIn.w_pos;
+  w_normal = normalize(w_normal);
+
   vec3 w_sun_dir = normalize(w_sun_pos);
   diffuse_power = CalculateLighting(w_normal, w_sun_dir);
 
@@ -153,7 +168,7 @@ void main() {
 
   float gamma = 2.2;
   vec3 diffuse_color = pow(getColor(), vec3(1/gamma));
-  vec3 final_color = diffuse_color * (0.1 + lighting);
+  vec3 final_color = diffuse_color * (0.05 + lighting);
 
   fragColor = vec4(final_color, 1);
   fragDepth = length(vIn.c_pos);

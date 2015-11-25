@@ -10,8 +10,7 @@
 class FpsDisplay : public engine::Behaviour {
  public:
   explicit FpsDisplay(engine::GameObject* parent)
-      : engine::Behaviour(parent), kRefreshInterval(0.1f)
-      , sum_frame_num_(0), sum_time_(0) {
+      : engine::Behaviour(parent), kRefreshInterval(0.1f) {
     using engine::gui::Font;
 
     fps_ = addComponent<engine::gui::Label>(
@@ -58,7 +57,20 @@ class FpsDisplay : public engine::Behaviour {
   }
 
   ~FpsDisplay() {
-    std::cout << "Average FPS: " << sum_frame_num_ / sum_time_ << std::endl;
+    std::cout << "FPS: "
+      << min_fps_ << " min, "
+      << sum_frame_num_ / sum_time_ << " avg, "
+      << max_fps_ << " max" << std::endl;
+
+    std::cout << "Triangles per frame: "
+      << min_triangles_ << "K min, "
+      << sum_triangle_num_ / sum_calls_ << "K avg, "
+      << max_triangles_ << "K max" << std::endl;
+
+    std::cout << "GPU Memory usage: "
+      << min_memu_ << "MB min, "
+      << sum_mem_usage_ / sum_calls_ << "MB avg, "
+      << max_memu_ << "MB max" << std::endl;
   }
 
  private:
@@ -66,42 +78,55 @@ class FpsDisplay : public engine::Behaviour {
   engine::gui::Label *geom_nodes_, *triangle_count_, *triangle_per_sec_;
   engine::gui::Label *texture_nodes_, *memory_usage_;
   const float kRefreshInterval;
-  double sum_frame_num_, sum_time_;
+  double sum_frame_num_ = 0, min_fps_ = 1.0/0.0, max_fps_ = 0;
+  double sum_triangle_num_ = 0, min_triangles_ = 1.0/0.0, max_triangles_ = 0;
+  double sum_mem_usage_ = 0, min_memu_ = 1.0/0.0, max_memu_ = 0;
+  double sum_time_ = -0.1, sum_calls_ = 0, accum_time_ = 0, accum_calls_ = 0;
 
   virtual void update() override {
-    static double accum_time = scene_->camera_time().dt;
-    static int calls = 0;
+    sum_time_ += scene_->camera_time().dt;
+    if (sum_time_ < 0.0) {
+      return;
+    }
+    accum_time_ += scene_->camera_time().dt;
+    accum_calls_++; sum_calls_++;
 
-    calls++;
-    accum_time += scene_->camera_time().dt;
-    double fps = calls / accum_time;
-    if (accum_time > kRefreshInterval) {
-      fps_->set_text(L"FPS: " +
-        std::to_wstring(static_cast<int>(fps)));
+    double fps = accum_calls_ / accum_time_;
+    size_t geom_nodes_count = engine::GlobalHeightMap::geom_nodes_count;
+    size_t triangle_count = (geom_nodes_count
+          << (2*engine::GlobalHeightMap::node_dimension_exp)) / 1000;
+    size_t triangles_per_sec = triangle_count * fps / 1000;
+    size_t gpu_mem_usage = engine::GlobalHeightMap::gpu_mem_usage/1024/1024;
 
-      size_t geom_nodes_count = engine::GlobalHeightMap::geom_nodes_count;
+    sum_frame_num_ += 1;
+    min_fps_ = std::min(min_fps_, fps);
+    max_fps_ = std::max(max_fps_, fps);
+    sum_triangle_num_ += triangle_count;
+    min_triangles_ = std::min<double>(min_triangles_, triangle_count);
+    max_triangles_ = std::max<double>(max_triangles_, triangle_count);
+    sum_mem_usage_ += gpu_mem_usage;
+    min_memu_ = std::min<double>(min_memu_, gpu_mem_usage);
+    max_memu_ = std::max<double>(max_memu_, gpu_mem_usage);
+
+    if (accum_time_ > kRefreshInterval) {
+      fps_->set_text(L"FPS: " + std::to_wstring(static_cast<int>(fps)));
+
       geom_nodes_->set_text(L"Geometry nodes: " +
         std::to_wstring(geom_nodes_count));
 
-      size_t triangle_count = (geom_nodes_count
-          << (2*engine::GlobalHeightMap::node_dimension_exp)) / 1000;
       triangle_count_->set_text(L"Triangles count: " +
         std::to_wstring(triangle_count) + L"K");
 
-      size_t triangles_per_sec = triangle_count * fps / 1000;
       triangle_per_sec_->set_text(L"Triangles per sec: " +
         std::to_wstring(triangles_per_sec) + L"M");
 
       texture_nodes_->set_text(L"Texture nodes: " +
         std::to_wstring(engine::GlobalHeightMap::texture_nodes_count));
 
-      size_t gpu_mem_usage = engine::GlobalHeightMap::gpu_mem_usage/1024/1024;
       memory_usage_->set_text(L"GPU memory usage: " +
         std::to_wstring(gpu_mem_usage) + L"MB");
 
-      sum_frame_num_ += calls;
-      sum_time_ += accum_time;
-      accum_time = calls = 0;
+      accum_time_ = accum_calls_ = 0;
     }
   }
 };

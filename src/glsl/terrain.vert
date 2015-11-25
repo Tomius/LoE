@@ -4,20 +4,24 @@
 
 #include "engine/cdlod_terrain.vert"
 
+in vec2 CDLODTerrain_aPosition;
+in vec4 CDLODTerrain_aRenderData;
+
 uniform float uDepthCoef;
 uniform mat4 uProjectionMatrix, uCameraMatrix, uModelMatrix;
-int CDLODTerrain_uLevel;
 
 out VertexData {
   vec3  w_normal;
   vec3  c_pos, w_pos, m_pos;
   vec2  texCoord;
   float level, morph;
+  vec4 render_data;
 } vOut;
 
 void main() {
   vec3 m_normal;
-  vec4 temp = CDLODTerrain_modelPos(m_normal);
+  vec4 temp = CDLODTerrain_modelPos(CDLODTerrain_aPosition,
+                                    CDLODTerrain_aRenderData, m_normal);
   vec3 m_pos = temp.xyz;
   vOut.morph = temp.w;
   vOut.m_pos = m_pos;
@@ -34,7 +38,8 @@ void main() {
   vec4 c_pos = uCameraMatrix * vec4(offseted_w_pos, 1);
   vOut.c_pos = vec3(c_pos);
 
-  vOut.level = CDLODTerrain_uLevel;
+  vOut.level = CDLODTerrain_aRenderData.w;
+  vOut.render_data = CDLODTerrain_aRenderData;
   vec4 projected = uProjectionMatrix * c_pos;
   projected.z = log2(max(1e-6, 1.0 + projected.w)) * uDepthCoef - 1.0;
   projected.z *= projected.w;

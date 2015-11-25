@@ -65,15 +65,15 @@ void TexQuadTreeNode::load_files(Magick::Image& height,
 
   if (level_ >= GlobalHeightMap::level_offset) {
     height.read(height_map_path());
-    dx.read(dx_map_path());
-    dy.read(dy_map_path());
+    // dx.read(dx_map_path());
+    // dy.read(dy_map_path());
   } else {
-    assert(parent_ != nullptr);
-    std::string src_height = parent_->height_map_path();
-    std::string dst_height = height_map_path();
-    std::string command =
-    "convert " + src_height + " -filter 'Hermite' -resize 682 foo_hermite.png";
-    abort();
+    // assert(parent_ != nullptr);
+    // std::string src_height = parent_->height_map_path();
+    // std::string dst_height = height_map_path();
+    // std::string command =
+    // "convert " + src_height + " -filter 'Hermite' -resize 682 foo_hermite.png";
+    // abort();
   }
 }
 
@@ -100,25 +100,25 @@ void TexQuadTreeNode::load(Magick::Image& height,
   }
 
 
-  { // dx tex
-    assert(tex_w_ == dx.columns());
-    assert(tex_h_ == dx.rows());
+  // { // dx tex
+  //   assert(tex_w_ == dx.columns());
+  //   assert(tex_h_ == dx.rows());
 
-    dx.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
-    for (size_t i = 0; i < temp.size(); ++i) {
-      data_[i].dx = temp[i];
-    }
-  }
+  //   dx.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
+  //   for (size_t i = 0; i < temp.size(); ++i) {
+  //     data_[i].dx = temp[i];
+  //   }
+  // }
 
-  { //dy tex
-    assert(tex_w_ == dy.columns());
-    assert(tex_h_ == dy.rows());
+  // { //dy tex
+  //   assert(tex_w_ == dy.columns());
+  //   assert(tex_h_ == dy.rows());
 
-    dy.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
-    for (size_t i = 0; i < temp.size(); ++i) {
-      data_[i].dy = temp[i];
-    }
-  }
+  //   dy.write(0, 0, tex_w_, tex_h_, "R", MagickCore::ShortPixel, temp.data());
+  //   for (size_t i = 0; i < temp.size(); ++i) {
+  //     data_[i].dy = temp[i];
+  //   }
+  // }
 }
 
 void TexQuadTreeNode::age() {
@@ -185,8 +185,7 @@ void TexQuadTreeNode::selectNodes(const glm::vec3& cam_pos,
                                   StreamingInfo& streaming_info,
                                   std::set<TexQuadTreeNode*>& load_later,
                                   bool force_load_now) {
-  float lod_range = GlobalHeightMap::texture_level_distance_multiplier *
-                    2*sx_;
+  float lod_range = GlobalHeightMap::texture_level_distance_multiplier * sx_;
 
   Sphere sphere{cam_pos, lod_range};
   if (bbox_.collidesWithFrustum(frustum) && bbox_.collidesWithSphere(sphere))  {

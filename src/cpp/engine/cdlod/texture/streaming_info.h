@@ -19,7 +19,7 @@ struct TextureInfo {
 };
 
 struct TexelData {
-  GLushort height = 0, dx = 0, dy = 0;
+  GLushort height = 0;
 };
 
 struct StreamingInfo {

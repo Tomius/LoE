@@ -47,7 +47,7 @@ void GameEngine::InitContext() {
     glfwWindowHint(GLFW_STENCIL_BITS, 0);
 
 #if ENGINE_NO_FULLSCREEN
-    window_ = glfwCreateWindow(vidmode->width, vidmode->height,
+    window_ = glfwCreateWindow(1440, 810,
                                "Land of Earth", nullptr, nullptr);
 #else
     window_ = glfwCreateWindow(vidmode->width, vidmode->height,

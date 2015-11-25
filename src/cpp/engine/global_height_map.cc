@@ -3,7 +3,7 @@
 namespace engine {
 
 const char *GlobalHeightMap::height_texture_base_path =
-  "/home/icecool/onlab/src/resources/gmted2010_75";
+  "/media/icecool/SSData/gmted75/height";
 
 const char *GlobalHeightMap::dx_texture_base_path =
   // "/media/icecool/Data/onlab/src/resources/gmted75/normals/dx";

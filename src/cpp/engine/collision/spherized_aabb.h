@@ -17,7 +17,7 @@ struct Interval {
 };
 
 static inline bool HasIntersection(Interval a, Interval b) {
-  return a.min + kEpsilon < b.max && b.min + kEpsilon < a.max;
+  return a.min - kEpsilon < b.max && b.min - kEpsilon < a.max;
 }
 
 template<size_t max_w, size_t max_h>
