@@ -29,7 +29,7 @@ namespace GlobalHeightMap {
   static constexpr double lod_level_distance_multiplier = 3.0;
   static_assert(1 <= lod_level_distance_multiplier, "");
 
-  static constexpr double texture_level_distance_multiplier = 2.0;
+  static constexpr double texture_level_distance_multiplier = 4.0;
   static_assert(1 <= texture_level_distance_multiplier, "");
 
   // Geometry subdivision. This practially contols zooming into the heightmap.

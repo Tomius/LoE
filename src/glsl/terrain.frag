@@ -158,7 +158,8 @@ void main() {
   vec3 m_normal;
   CDLODTerrain_modelPos(vIn.m_pos.xz, vIn.render_data, m_normal);
   vec3 m_normal_offseted_pos = vIn.m_pos + m_normal;
-  vec3 w_normal = CDLODTerrain_worldPos(m_normal_offseted_pos) - vIn.w_pos;
+  vec3 w_normal = CDLODTerrain_worldPos(m_normal_offseted_pos)
+                  - CDLODTerrain_worldPos(vIn.m_pos);
   w_normal = normalize(w_normal);
 
   vec3 w_sun_dir = normalize(w_sun_pos);
