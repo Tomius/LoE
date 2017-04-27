@@ -1,3 +1,5 @@
+For a newer version of this project, see [Land of Earth Reloaded](https://github.com/Tomius/ReLoEd)
+
 Land of Earth
 =============
 
