@@ -25,6 +25,3 @@ Camera usage (press space to switch between them):
   * mouse move: position
   * mouse scroll: zoom
 
-----------------------
-If you have any problem, please post in the issues tab or mail me at icyplusplus@gmail.com. Any feedback would be appreciated.
-
